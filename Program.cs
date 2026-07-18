@@ -8,9 +8,14 @@ namespace KabyliaTaste
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+
+            // Ensure the SQLite database and all tables are created on first run
+            using (var db = new KabyliaTaste.Data.AppDbContext())
+            {
+                db.Database.EnsureCreated();
+            }
+
             Application.Run(new Main());
         }
     }
