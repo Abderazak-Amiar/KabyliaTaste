@@ -23,6 +23,9 @@
     private System.Windows.Forms.Button btnDelete;
     private System.Windows.Forms.Button btnClear;
     private System.Windows.Forms.DataGridView dgvProducts;
+    private System.Windows.Forms.Panel panelSearch;
+    private System.Windows.Forms.Label lblSearch;
+    private System.Windows.Forms.TextBox txtSearch;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -59,6 +62,9 @@
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
             this.dgvProducts = new System.Windows.Forms.DataGridView();
+            this.panelSearch = new System.Windows.Forms.Panel();
+            this.lblSearch = new System.Windows.Forms.Label();
+            this.txtSearch = new System.Windows.Forms.TextBox();
             this.tabSales = new System.Windows.Forms.TabPage();
             this.tabStats = new System.Windows.Forms.TabPage();
             this.tabSettings = new System.Windows.Forms.TabPage();
@@ -194,8 +200,31 @@
             this.dgvProducts.AllowUserToAddRows = false;
             this.dgvProducts.AllowUserToDeleteRows = false;
             this.dgvProducts.RowHeadersVisible = false;
+            // 
+            // lblSearch
+            // 
+            this.lblSearch.AutoSize = true;
+            this.lblSearch.Location = new System.Drawing.Point(6, 10);
+            this.lblSearch.Name = "lblSearch";
+            this.lblSearch.Text = "Search:";
+            // 
+            // txtSearch
+            // 
+            this.txtSearch.Location = new System.Drawing.Point(60, 7);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Width = 250;
+            this.txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
+            // 
+            // panelSearch
+            // 
+            this.panelSearch.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelSearch.Height = 35;
+            this.panelSearch.Name = "panelSearch";
+            this.panelSearch.Controls.Add(this.lblSearch);
+            this.panelSearch.Controls.Add(this.txtSearch);
             // add controls to tabProducts
             this.tabProducts.Controls.Add(this.dgvProducts);
+            this.tabProducts.Controls.Add(this.panelSearch);
             this.tabProducts.Controls.Add(this.panelLeft);
             // 
             // tabSales
