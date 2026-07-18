@@ -18,6 +18,8 @@
     private System.Windows.Forms.NumericUpDown numPrice;
     private System.Windows.Forms.Label lblQuantity;
     private System.Windows.Forms.NumericUpDown numQuantity;
+    private System.Windows.Forms.Label lblUnit;
+    private System.Windows.Forms.ComboBox cmbUnit;
     private System.Windows.Forms.Button btnAdd;
     private System.Windows.Forms.Button btnUpdate;
     private System.Windows.Forms.Button btnDelete;
@@ -57,6 +59,8 @@
             this.numPrice = new System.Windows.Forms.NumericUpDown();
             this.lblQuantity = new System.Windows.Forms.Label();
             this.numQuantity = new System.Windows.Forms.NumericUpDown();
+            this.lblUnit = new System.Windows.Forms.Label();
+            this.cmbUnit = new System.Windows.Forms.ComboBox();
             this.btnAdd = new System.Windows.Forms.Button();
             this.btnUpdate = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
@@ -106,6 +110,8 @@
             this.panelLeft.Controls.Add(this.numPrice);
             this.panelLeft.Controls.Add(this.lblQuantity);
             this.panelLeft.Controls.Add(this.numQuantity);
+            this.panelLeft.Controls.Add(this.lblUnit);
+            this.panelLeft.Controls.Add(this.cmbUnit);
             this.panelLeft.Controls.Add(this.btnAdd);
             this.panelLeft.Controls.Add(this.btnUpdate);
             this.panelLeft.Controls.Add(this.btnDelete);
@@ -156,9 +162,26 @@
             this.numQuantity.Name = "numQuantity";
             this.numQuantity.Width = 120;
             // 
+            // lblUnit
+            // 
+            this.lblUnit.AutoSize = true;
+            this.lblUnit.Location = new System.Drawing.Point(13, 195);
+            this.lblUnit.Name = "lblUnit";
+            this.lblUnit.Size = new System.Drawing.Size(27, 15);
+            this.lblUnit.Text = "Unit";
+            // 
+            // cmbUnit
+            // 
+            this.cmbUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbUnit.Location = new System.Drawing.Point(13, 213);
+            this.cmbUnit.Name = "cmbUnit";
+            this.cmbUnit.Width = 120;
+            this.cmbUnit.Items.AddRange(new object[] { "Bottle", "Kg", "Piece" });
+            this.cmbUnit.SelectedIndex = 2;
+            // 
             // btnAdd
             // 
-            this.btnAdd.Location = new System.Drawing.Point(13, 200);
+            this.btnAdd.Location = new System.Drawing.Point(13, 255);
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(75, 25);
             this.btnAdd.Text = "Add";
@@ -166,7 +189,7 @@
             // 
             // btnUpdate
             // 
-            this.btnUpdate.Location = new System.Drawing.Point(98, 200);
+            this.btnUpdate.Location = new System.Drawing.Point(98, 255);
             this.btnUpdate.Name = "btnUpdate";
             this.btnUpdate.Size = new System.Drawing.Size(75, 25);
             this.btnUpdate.Text = "Update";
@@ -174,7 +197,7 @@
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(183, 200);
+            this.btnDelete.Location = new System.Drawing.Point(183, 255);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(75, 25);
             this.btnDelete.Text = "Delete";
@@ -182,7 +205,7 @@
             // 
             // btnClear
             // 
-            this.btnClear.Location = new System.Drawing.Point(13, 235);
+            this.btnClear.Location = new System.Drawing.Point(13, 290);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(75, 25);
             this.btnClear.Text = "Clear";

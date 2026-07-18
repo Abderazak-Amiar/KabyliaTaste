@@ -6,6 +6,7 @@ namespace KabyliaTaste
     using System.Windows.Forms;
     using KabyliaTaste.Data;
     using KabyliaTaste.Models;
+    using Microsoft.EntityFrameworkCore;
 
     public partial class Main : Form
     {
@@ -40,7 +41,6 @@ namespace KabyliaTaste
         private void LoadProducts(string filter = "")
         {
             using var db = new AppDbContext();
-            db.Database.EnsureCreated();
             var query = db.Products.OrderBy(p => p.Id).AsQueryable();
             if (!string.IsNullOrEmpty(filter))
                 query = query.Where(p => p.Name.ToLower().Contains(filter.ToLower()));
@@ -75,7 +75,8 @@ namespace KabyliaTaste
             {
                 Name = name,
                 Price = numPrice.Value,
-                Quantity = (int)numQuantity.Value
+                Quantity = (int)numQuantity.Value,
+                Unit = (ProductUnit)cmbUnit.SelectedIndex
             };
             db.Products.Add(product);
             db.SaveChanges();
@@ -102,6 +103,7 @@ namespace KabyliaTaste
             product.Name = updatedName;
             product.Price = numPrice.Value;
             product.Quantity = (int)numQuantity.Value;
+            product.Unit = (ProductUnit)cmbUnit.SelectedIndex;
             db.SaveChanges();
             LoadProducts();
         }
@@ -135,6 +137,7 @@ namespace KabyliaTaste
             txtName.Text = string.Empty;
             numPrice.Value = 0;
             numQuantity.Value = 0;
+            cmbUnit.SelectedIndex = 2; // default: Piece
             selectedProductId = null;
             if (clearSelection && dgvProducts.CurrentRow != null)
             {
@@ -176,6 +179,7 @@ namespace KabyliaTaste
             txtName.Text = product.Name;
             numPrice.Value = product.Price;
             numQuantity.Value = product.Quantity;
+            cmbUnit.SelectedIndex = (int)product.Unit;
         }
 
     private void DgvProducts_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
@@ -211,6 +215,9 @@ namespace KabyliaTaste
         if (dgvProducts.Columns.Contains("Price")) priceVal = row.Cells["Price"].Value;
         if (dgvProducts.Columns.Contains("Quantity")) qtyVal = row.Cells["Quantity"].Value;
 
+        object? unitVal = null;
+        if (dgvProducts.Columns.Contains("Unit")) unitVal = row.Cells["Unit"].Value;
+
         // fallback by index
         if (idVal == null && row.Cells.Count > 0) idVal = row.Cells[0].Value;
         if (nameVal == null && row.Cells.Count > 1) nameVal = row.Cells[1].Value;
@@ -227,6 +234,10 @@ namespace KabyliaTaste
 
         if (int.TryParse(qtyVal?.ToString(), out var qty)) numQuantity.Value = qty;
         else numQuantity.Value = 0;
+
+        if (unitVal is ProductUnit unit) cmbUnit.SelectedIndex = (int)unit;
+        else if (Enum.TryParse<ProductUnit>(unitVal?.ToString(), out var unitParsed)) cmbUnit.SelectedIndex = (int)unitParsed;
+        else cmbUnit.SelectedIndex = 2;
     }
     }
 }
