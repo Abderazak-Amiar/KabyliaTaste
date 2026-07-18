@@ -64,6 +64,11 @@ namespace KabyliaTaste
             }
 
             using var db = new AppDbContext();
+            if (db.Products.Any(p => p.Name.ToLower() == name.ToLower()))
+            {
+                MessageBox.Show("A product with this name already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             var product = new Product
             {
                 Name = name,
@@ -86,7 +91,13 @@ namespace KabyliaTaste
             using var db = new AppDbContext();
             var product = db.Products.Find(selectedProductId.Value);
             if (product == null) return;
-            product.Name = txtName.Text?.Trim() ?? string.Empty;
+            var updatedName = txtName.Text?.Trim() ?? string.Empty;
+            if (db.Products.Any(p => p.Name.ToLower() == updatedName.ToLower() && p.Id != selectedProductId.Value))
+            {
+                MessageBox.Show("A product with this name already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            product.Name = updatedName;
             product.Price = numPrice.Value;
             product.Quantity = (int)numQuantity.Value;
             db.SaveChanges();
