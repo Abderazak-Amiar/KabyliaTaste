@@ -22,6 +22,12 @@ namespace KabyliaTaste
             btnClear.Click += BtnClear_Click;
             dgvProducts.SelectionChanged += DgvProducts_SelectionChanged;
             dgvProducts.CellClick += DgvProducts_CellClick;
+            txtSearch.TextChanged += TxtSearch_TextChanged;
+        }
+
+        private void TxtSearch_TextChanged(object? sender, EventArgs e)
+        {
+            LoadProducts(txtSearch.Text.Trim());
         }
 
         private void Main_Load(object? sender, EventArgs e)
@@ -29,11 +35,14 @@ namespace KabyliaTaste
             LoadProducts();
         }
 
-        private void LoadProducts()
+        private void LoadProducts(string filter = "")
         {
             using var db = new AppDbContext();
             db.Database.EnsureCreated();
-            var list = db.Products.OrderBy(p => p.Id).ToList();
+            var query = db.Products.OrderBy(p => p.Id).AsQueryable();
+            if (!string.IsNullOrEmpty(filter))
+                query = query.Where(p => p.Name.ToLower().Contains(filter.ToLower()));
+            var list = query.ToList();
             dgvProducts.DataSource = list;
         ClearForm(false);
         // auto-select first row if available
