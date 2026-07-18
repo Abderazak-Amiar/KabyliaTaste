@@ -189,7 +189,7 @@ namespace KabyliaTaste
             e.CellStyle.BackColor = qty < 5
                 ? Color.LightCoral
                 : qty <= 10
-                    ? Color.LightSalmon
+                    ? Color.Orange
                     : Color.LightGreen;
         }
     }
