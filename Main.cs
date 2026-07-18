@@ -1,6 +1,7 @@
 namespace KabyliaTaste
 {
     using System;
+    using System.Drawing;
     using System.Linq;
     using System.Windows.Forms;
     using KabyliaTaste.Data;
@@ -22,6 +23,7 @@ namespace KabyliaTaste
             btnClear.Click += BtnClear_Click;
             dgvProducts.SelectionChanged += DgvProducts_SelectionChanged;
             dgvProducts.CellClick += DgvProducts_CellClick;
+            dgvProducts.CellFormatting += DgvProducts_CellFormatting;
             txtSearch.TextChanged += TxtSearch_TextChanged;
         }
 
@@ -64,6 +66,11 @@ namespace KabyliaTaste
             }
 
             using var db = new AppDbContext();
+            if (db.Products.Any(p => p.Name.ToLower() == name.ToLower()))
+            {
+                MessageBox.Show("A product with this name already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             var product = new Product
             {
                 Name = name,
@@ -86,7 +93,13 @@ namespace KabyliaTaste
             using var db = new AppDbContext();
             var product = db.Products.Find(selectedProductId.Value);
             if (product == null) return;
-            product.Name = txtName.Text?.Trim() ?? string.Empty;
+            var updatedName = txtName.Text?.Trim() ?? string.Empty;
+            if (db.Products.Any(p => p.Name.ToLower() == updatedName.ToLower() && p.Id != selectedProductId.Value))
+            {
+                MessageBox.Show("A product with this name already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            product.Name = updatedName;
             product.Price = numPrice.Value;
             product.Quantity = (int)numQuantity.Value;
             db.SaveChanges();
@@ -164,6 +177,22 @@ namespace KabyliaTaste
             numPrice.Value = product.Price;
             numQuantity.Value = product.Quantity;
         }
+
+    private void DgvProducts_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (dgvProducts?.Columns == null || dgvProducts.Columns.Count == 0 || e.RowIndex < 0) return;
+        if (!dgvProducts.Columns.Contains("Quantity")) return;
+        var quantityColumn = dgvProducts.Columns["Quantity"];
+        if (quantityColumn == null || quantityColumn.Index != e.ColumnIndex) return;
+        if (e.Value is int qty && e.CellStyle != null)
+        {
+            e.CellStyle.BackColor = qty < 5
+                ? Color.LightCoral
+                : qty <= 10
+                    ? Color.Orange
+                    : Color.LightGreen;
+        }
+    }
 
     private void DgvProducts_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
