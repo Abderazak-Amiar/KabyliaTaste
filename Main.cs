@@ -1,6 +1,7 @@
 namespace KabyliaTaste
 {
     using System;
+    using System.Drawing;
     using System.Linq;
     using System.Windows.Forms;
     using KabyliaTaste.Data;
@@ -22,6 +23,7 @@ namespace KabyliaTaste
             btnClear.Click += BtnClear_Click;
             dgvProducts.SelectionChanged += DgvProducts_SelectionChanged;
             dgvProducts.CellClick += DgvProducts_CellClick;
+            dgvProducts.CellFormatting += DgvProducts_CellFormatting;
             txtSearch.TextChanged += TxtSearch_TextChanged;
         }
 
@@ -175,6 +177,22 @@ namespace KabyliaTaste
             numPrice.Value = product.Price;
             numQuantity.Value = product.Quantity;
         }
+
+    private void DgvProducts_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (dgvProducts?.Columns == null || dgvProducts.Columns.Count == 0 || e.RowIndex < 0) return;
+        if (!dgvProducts.Columns.Contains("Quantity")) return;
+        var quantityColumn = dgvProducts.Columns["Quantity"];
+        if (quantityColumn == null || quantityColumn.Index != e.ColumnIndex) return;
+        if (e.Value is int qty && e.CellStyle != null)
+        {
+            e.CellStyle.BackColor = qty < 5
+                ? Color.LightCoral
+                : qty <= 10
+                    ? Color.LightSalmon
+                    : Color.LightGreen;
+        }
+    }
 
     private void DgvProducts_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
