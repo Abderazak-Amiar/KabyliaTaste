@@ -1,4 +1,4 @@
-namespace KabyliaTaste
+﻿namespace KabyliaTaste
 {
     using System;
     using System.Drawing;
@@ -11,6 +11,7 @@ namespace KabyliaTaste
     public partial class Main : Form
     {
         private int? selectedProductId = null;
+        private int? selectedSaleId = null;
 
         public Main()
         {
@@ -26,6 +27,15 @@ namespace KabyliaTaste
             dgvProducts.CellClick += DgvProducts_CellClick;
             dgvProducts.CellFormatting += DgvProducts_CellFormatting;
             txtSearch.TextChanged += TxtSearch_TextChanged;
+            // Sales tab events
+            tabControlMain.SelectedIndexChanged += TabControlMain_SelectedIndexChanged;
+            cmbSaleProduct.SelectedIndexChanged += CmbSaleProduct_SelectedIndexChanged;
+            numSaleQuantity.ValueChanged += SaleInputChanged;
+            numSaleQuantity.TextChanged += SaleInputChanged;
+            numSaleUnitPrice.ValueChanged += SaleInputChanged;
+            btnSell.Click += BtnSell_Click;
+            btnDeleteSale.Click += BtnDeleteSale_Click;
+            dgvSales.SelectionChanged += DgvSales_SelectionChanged;
         }
 
         private void TxtSearch_TextChanged(object? sender, EventArgs e)
@@ -238,6 +248,141 @@ namespace KabyliaTaste
         if (unitVal is ProductUnit unit) cmbUnit.SelectedIndex = (int)unit;
         else if (Enum.TryParse<ProductUnit>(unitVal?.ToString(), out var unitParsed)) cmbUnit.SelectedIndex = (int)unitParsed;
         else cmbUnit.SelectedIndex = 2;
+    }
+
+    // ── Sales Tab ────────────────────────────────────────────────────────────
+
+    private void TabControlMain_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (tabControlMain.SelectedTab == tabSales)
+            LoadSalesTab();
+    }
+
+    private void LoadSalesTab()
+    {
+        // populate product combo
+        using var db = new AppDbContext();
+        var products = db.Products.OrderBy(p => p.Name).ToList();
+        cmbSaleProduct.DataSource = products;
+        cmbSaleProduct.DisplayMember = "Name";
+        cmbSaleProduct.ValueMember = "Id";
+
+        LoadSales();
+    }
+
+    private void LoadSales()
+    {
+        using var db = new AppDbContext();
+        var sales = db.Sales
+            .Include(s => s.Product)
+            .OrderByDescending(s => s.SaleDate)
+            .Select(s => new
+            {
+                s.Id,
+                Product = s.Product.Name,
+                s.Quantity,
+                UnitPrice = s.UnitPrice,
+                Total = s.TotalPrice,
+                Date = s.SaleDate
+            })
+            .ToList();
+        dgvSales.DataSource = sales;
+
+        if (dgvSales.Columns.Contains("Date"))
+            dgvSales.Columns["Date"].DefaultCellStyle.Format = "yyyy-MM-dd HH:mm";
+    }
+
+    private void CmbSaleProduct_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (cmbSaleProduct.SelectedValue is int productId)
+        {
+            using var db = new AppDbContext();
+            var product = db.Products.Find(productId);
+            if (product != null)
+                numSaleUnitPrice.Value = product.Price;
+        }
+        UpdateSaleTotal();
+    }
+
+    private void SaleInputChanged(object? sender, EventArgs e) => UpdateSaleTotal();
+
+    private void UpdateSaleTotal()
+    {
+        var qty = decimal.TryParse(numSaleQuantity.Text, out var parsed) ? parsed : numSaleQuantity.Value;
+        lblSaleTotalValue.Text = (qty * numSaleUnitPrice.Value).ToString("F2");
+    }
+
+    private void BtnSell_Click(object? sender, EventArgs e)
+    {
+        if (cmbSaleProduct.SelectedValue is not int productId)
+        {
+            MessageBox.Show("Select a product.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var qty = (int)numSaleQuantity.Value;
+        var unitPrice = numSaleUnitPrice.Value;
+
+        using var db = new AppDbContext();
+        var product = db.Products.Find(productId);
+        if (product == null) return;
+
+        if (qty > product.Quantity)
+        {
+            MessageBox.Show($"Not enough stock. Available: {product.Quantity}.", "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        product.Quantity -= qty;
+
+        var sale = new Sale
+        {
+            ProductId = productId,
+            Quantity = qty,
+            UnitPrice = unitPrice,
+            TotalPrice = qty * unitPrice,
+            SaleDate = DateTime.Now
+        };
+        db.Sales.Add(sale);
+        db.SaveChanges();
+
+        LoadSales();
+        LoadProducts();
+        MessageBox.Show("Sale recorded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private void DgvSales_SelectionChanged(object? sender, EventArgs e)
+    {
+        if (dgvSales.CurrentRow == null) { selectedSaleId = null; return; }
+        var idCell = dgvSales.CurrentRow.Cells["Id"];
+        if (idCell?.Value != null && int.TryParse(idCell.Value.ToString(), out var id))
+            selectedSaleId = id;
+        else
+            selectedSaleId = null;
+    }
+
+    private void BtnDeleteSale_Click(object? sender, EventArgs e)
+    {
+        if (!selectedSaleId.HasValue)
+        {
+            MessageBox.Show("Select a sale to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var ok = MessageBox.Show("Delete this sale? The stock will be restored.", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        if (ok != DialogResult.Yes) return;
+
+        using var db = new AppDbContext();
+        var sale = db.Sales.Include(s => s.Product).FirstOrDefault(s => s.Id == selectedSaleId.Value);
+        if (sale == null) return;
+
+        sale.Product.Quantity += sale.Quantity;
+        db.Sales.Remove(sale);
+        db.SaveChanges();
+
+        selectedSaleId = null;
+        LoadSales();
+        LoadProducts();
     }
     }
 }
