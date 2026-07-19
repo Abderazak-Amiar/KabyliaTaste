@@ -28,6 +28,10 @@
     private System.Windows.Forms.Panel panelSearch;
     private System.Windows.Forms.Label lblSearch;
     private System.Windows.Forms.TextBox txtSearch;
+    private System.Windows.Forms.Panel panelProductPagination;
+    private System.Windows.Forms.Button btnProductPrev;
+    private System.Windows.Forms.Button btnProductNext;
+    private System.Windows.Forms.Label lblProductPage;
     // Sales tab
     private System.Windows.Forms.Panel panelSaleLeft;
     private System.Windows.Forms.Label lblSaleProduct;
@@ -41,6 +45,10 @@
     private System.Windows.Forms.Button btnSell;
     private System.Windows.Forms.Button btnDeleteSale;
     private System.Windows.Forms.DataGridView dgvSales;
+    private System.Windows.Forms.Panel panelSalePagination;
+    private System.Windows.Forms.Button btnSalePrev;
+    private System.Windows.Forms.Button btnSaleNext;
+    private System.Windows.Forms.Label lblSalePage;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -82,6 +90,10 @@
             this.panelSearch = new System.Windows.Forms.Panel();
             this.lblSearch = new System.Windows.Forms.Label();
             this.txtSearch = new System.Windows.Forms.TextBox();
+            this.panelProductPagination = new System.Windows.Forms.Panel();
+            this.btnProductPrev = new System.Windows.Forms.Button();
+            this.btnProductNext = new System.Windows.Forms.Button();
+            this.lblProductPage = new System.Windows.Forms.Label();
             this.tabSales = new System.Windows.Forms.TabPage();
             this.tabStats = new System.Windows.Forms.TabPage();
             this.tabSettings = new System.Windows.Forms.TabPage();
@@ -97,6 +109,10 @@
             this.btnSell = new System.Windows.Forms.Button();
             this.btnDeleteSale = new System.Windows.Forms.Button();
             this.dgvSales = new System.Windows.Forms.DataGridView();
+            this.panelSalePagination = new System.Windows.Forms.Panel();
+            this.btnSalePrev = new System.Windows.Forms.Button();
+            this.btnSaleNext = new System.Windows.Forms.Button();
+            this.lblSalePage = new System.Windows.Forms.Label();
             SuspendLayout();
             // 
             // tabControlMain
@@ -270,8 +286,40 @@
             this.panelSearch.Name = "panelSearch";
             this.panelSearch.Controls.Add(this.lblSearch);
             this.panelSearch.Controls.Add(this.txtSearch);
+            // 
+            // btnProductPrev
+            // 
+            this.btnProductPrev.Text = "< Prev";
+            this.btnProductPrev.Name = "btnProductPrev";
+            this.btnProductPrev.Size = new System.Drawing.Size(70, 25);
+            this.btnProductPrev.Location = new System.Drawing.Point(5, 5);
+            // 
+            // lblProductPage
+            // 
+            this.lblProductPage.Name = "lblProductPage";
+            this.lblProductPage.Text = "Page 1";
+            this.lblProductPage.AutoSize = true;
+            this.lblProductPage.Location = new System.Drawing.Point(85, 9);
+            this.lblProductPage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btnProductNext
+            // 
+            this.btnProductNext.Text = "Next >";
+            this.btnProductNext.Name = "btnProductNext";
+            this.btnProductNext.Size = new System.Drawing.Size(70, 25);
+            this.btnProductNext.Location = new System.Drawing.Point(155, 5);
+            // 
+            // panelProductPagination
+            // 
+            this.panelProductPagination.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelProductPagination.Height = 35;
+            this.panelProductPagination.Name = "panelProductPagination";
+            this.panelProductPagination.Controls.Add(this.btnProductPrev);
+            this.panelProductPagination.Controls.Add(this.lblProductPage);
+            this.panelProductPagination.Controls.Add(this.btnProductNext);
             // add controls to tabProducts
             this.tabProducts.Controls.Add(this.dgvProducts);
+            this.tabProducts.Controls.Add(this.panelProductPagination);
             this.tabProducts.Controls.Add(this.panelSearch);
             this.tabProducts.Controls.Add(this.panelLeft);
             // 
@@ -379,6 +427,37 @@
             this.dgvSales.AllowUserToDeleteRows = false;
             this.dgvSales.RowHeadersVisible = false;
             // 
+            // btnSalePrev
+            // 
+            this.btnSalePrev.Text = "< Prev";
+            this.btnSalePrev.Name = "btnSalePrev";
+            this.btnSalePrev.Size = new System.Drawing.Size(70, 25);
+            this.btnSalePrev.Location = new System.Drawing.Point(5, 5);
+            // 
+            // lblSalePage
+            // 
+            this.lblSalePage.Name = "lblSalePage";
+            this.lblSalePage.Text = "Page 1";
+            this.lblSalePage.AutoSize = true;
+            this.lblSalePage.Location = new System.Drawing.Point(85, 9);
+            this.lblSalePage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btnSaleNext
+            // 
+            this.btnSaleNext.Text = "Next >";
+            this.btnSaleNext.Name = "btnSaleNext";
+            this.btnSaleNext.Size = new System.Drawing.Size(70, 25);
+            this.btnSaleNext.Location = new System.Drawing.Point(155, 5);
+            // 
+            // panelSalePagination
+            // 
+            this.panelSalePagination.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelSalePagination.Height = 35;
+            this.panelSalePagination.Name = "panelSalePagination";
+            this.panelSalePagination.Controls.Add(this.btnSalePrev);
+            this.panelSalePagination.Controls.Add(this.lblSalePage);
+            this.panelSalePagination.Controls.Add(this.btnSaleNext);
+            // 
             // tabSales
             // 
             this.tabSales.Location = new System.Drawing.Point(4, 24);
@@ -389,6 +468,7 @@
             this.tabSales.Text = "Sales";
             this.tabSales.UseVisualStyleBackColor = true;
             this.tabSales.Controls.Add(this.dgvSales);
+            this.tabSales.Controls.Add(this.panelSalePagination);
             this.tabSales.Controls.Add(this.panelSaleLeft);
             // 
             // tabStats
