@@ -44,6 +44,9 @@
     private System.Windows.Forms.Label lblSaleTotalValue;
     private System.Windows.Forms.Button btnSell;
     private System.Windows.Forms.Button btnDeleteSale;
+    private System.Windows.Forms.Label lblBuyerName;
+    private System.Windows.Forms.TextBox txtBuyerName;
+    private System.Windows.Forms.Button btnPrintInvoice;
     private System.Windows.Forms.DataGridView dgvSales;
     private System.Windows.Forms.Panel panelSalePagination;
     private System.Windows.Forms.Button btnSalePrev;
@@ -106,8 +109,11 @@
             this.numSaleUnitPrice = new System.Windows.Forms.NumericUpDown();
             this.lblSaleTotal = new System.Windows.Forms.Label();
             this.lblSaleTotalValue = new System.Windows.Forms.Label();
+            this.lblBuyerName = new System.Windows.Forms.Label();
+            this.txtBuyerName = new System.Windows.Forms.TextBox();
             this.btnSell = new System.Windows.Forms.Button();
             this.btnDeleteSale = new System.Windows.Forms.Button();
+            this.btnPrintInvoice = new System.Windows.Forms.Button();
             this.dgvSales = new System.Windows.Forms.DataGridView();
             this.panelSalePagination = new System.Windows.Forms.Panel();
             this.btnSalePrev = new System.Windows.Forms.Button();
@@ -336,72 +342,28 @@
             this.panelSaleLeft.Controls.Add(this.numSaleUnitPrice);
             this.panelSaleLeft.Controls.Add(this.lblSaleTotal);
             this.panelSaleLeft.Controls.Add(this.lblSaleTotalValue);
+            this.panelSaleLeft.Controls.Add(this.lblBuyerName);
+            this.panelSaleLeft.Controls.Add(this.txtBuyerName);
             this.panelSaleLeft.Controls.Add(this.btnSell);
             this.panelSaleLeft.Controls.Add(this.btnDeleteSale);
+            this.panelSaleLeft.Controls.Add(this.btnPrintInvoice);
             // 
-            // lblSaleProduct
+            // lblBuyerName
             // 
-            this.lblSaleProduct.AutoSize = true;
-            this.lblSaleProduct.Location = new System.Drawing.Point(13, 15);
-            this.lblSaleProduct.Name = "lblSaleProduct";
-            this.lblSaleProduct.Text = "Product";
+            this.lblBuyerName.AutoSize = true;
+            this.lblBuyerName.Location = new System.Drawing.Point(13, 235);
+            this.lblBuyerName.Name = "lblBuyerName";
+            this.lblBuyerName.Text = "Buyer Name (optional)";
             // 
-            // cmbSaleProduct
+            // txtBuyerName
             // 
-            this.cmbSaleProduct.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbSaleProduct.Location = new System.Drawing.Point(13, 35);
-            this.cmbSaleProduct.Name = "cmbSaleProduct";
-            this.cmbSaleProduct.Width = 260;
-            // 
-            // lblSaleQuantity
-            // 
-            this.lblSaleQuantity.AutoSize = true;
-            this.lblSaleQuantity.Location = new System.Drawing.Point(13, 75);
-            this.lblSaleQuantity.Name = "lblSaleQuantity";
-            this.lblSaleQuantity.Text = "Quantity";
-            // 
-            // numSaleQuantity
-            // 
-            this.numSaleQuantity.Location = new System.Drawing.Point(13, 95);
-            this.numSaleQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-            this.numSaleQuantity.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
-            this.numSaleQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
-            this.numSaleQuantity.Name = "numSaleQuantity";
-            this.numSaleQuantity.Width = 120;
-            // 
-            // lblSaleUnitPrice
-            // 
-            this.lblSaleUnitPrice.AutoSize = true;
-            this.lblSaleUnitPrice.Location = new System.Drawing.Point(13, 135);
-            this.lblSaleUnitPrice.Name = "lblSaleUnitPrice";
-            this.lblSaleUnitPrice.Text = "Unit Price";
-            // 
-            // numSaleUnitPrice
-            // 
-            this.numSaleUnitPrice.DecimalPlaces = 2;
-            this.numSaleUnitPrice.Location = new System.Drawing.Point(13, 155);
-            this.numSaleUnitPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
-            this.numSaleUnitPrice.Name = "numSaleUnitPrice";
-            this.numSaleUnitPrice.Width = 120;
-            // 
-            // lblSaleTotal
-            // 
-            this.lblSaleTotal.AutoSize = true;
-            this.lblSaleTotal.Location = new System.Drawing.Point(13, 195);
-            this.lblSaleTotal.Name = "lblSaleTotal";
-            this.lblSaleTotal.Text = "Total";
-            // 
-            // lblSaleTotalValue
-            // 
-            this.lblSaleTotalValue.AutoSize = true;
-            this.lblSaleTotalValue.Location = new System.Drawing.Point(13, 215);
-            this.lblSaleTotalValue.Name = "lblSaleTotalValue";
-            this.lblSaleTotalValue.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblSaleTotalValue.Text = "0.00";
+            this.txtBuyerName.Location = new System.Drawing.Point(13, 255);
+            this.txtBuyerName.Name = "txtBuyerName";
+            this.txtBuyerName.Width = 260;
             // 
             // btnSell
             // 
-            this.btnSell.Location = new System.Drawing.Point(13, 255);
+            this.btnSell.Location = new System.Drawing.Point(13, 290);
             this.btnSell.Name = "btnSell";
             this.btnSell.Size = new System.Drawing.Size(75, 25);
             this.btnSell.Text = "Sell";
@@ -409,17 +371,25 @@
             // 
             // btnDeleteSale
             // 
-            this.btnDeleteSale.Location = new System.Drawing.Point(98, 255);
+            this.btnDeleteSale.Location = new System.Drawing.Point(98, 290);
             this.btnDeleteSale.Name = "btnDeleteSale";
             this.btnDeleteSale.Size = new System.Drawing.Size(90, 25);
             this.btnDeleteSale.Text = "Delete Sale";
             this.btnDeleteSale.UseVisualStyleBackColor = true;
             // 
+            // btnPrintInvoice
+            // 
+            this.btnPrintInvoice.Location = new System.Drawing.Point(13, 325);
+            this.btnPrintInvoice.Name = "btnPrintInvoice";
+            this.btnPrintInvoice.Size = new System.Drawing.Size(120, 25);
+            this.btnPrintInvoice.Text = "🖨 Print Invoice";
+            this.btnPrintInvoice.UseVisualStyleBackColor = true;
+            // 
             // dgvSales
             // 
             this.dgvSales.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvSales.Location = new System.Drawing.Point(303, 3);
             this.dgvSales.Name = "dgvSales";
-            this.dgvSales.ReadOnly = true;
             this.dgvSales.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvSales.MultiSelect = false;
             this.dgvSales.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
@@ -457,9 +427,10 @@
             this.panelSalePagination.Controls.Add(this.btnSalePrev);
             this.panelSalePagination.Controls.Add(this.lblSalePage);
             this.panelSalePagination.Controls.Add(this.btnSaleNext);
-            // 
-            // tabSales
-            // 
+            // add controls to tabSales
+            this.tabSales.Controls.Add(this.dgvSales);
+            this.tabSales.Controls.Add(this.panelSalePagination);
+            this.tabSales.Controls.Add(this.panelSaleLeft);
             this.tabSales.Location = new System.Drawing.Point(4, 24);
             this.tabSales.Name = "tabSales";
             this.tabSales.Padding = new System.Windows.Forms.Padding(3);
@@ -467,40 +438,71 @@
             this.tabSales.TabIndex = 1;
             this.tabSales.Text = "Sales";
             this.tabSales.UseVisualStyleBackColor = true;
-            this.tabSales.Controls.Add(this.dgvSales);
-            this.tabSales.Controls.Add(this.panelSalePagination);
-            this.tabSales.Controls.Add(this.panelSaleLeft);
-            // 
             // tabStats
-            // 
             this.tabStats.Location = new System.Drawing.Point(4, 24);
             this.tabStats.Name = "tabStats";
-            this.tabStats.Padding = new System.Windows.Forms.Padding(3);
             this.tabStats.Size = new System.Drawing.Size(792, 422);
             this.tabStats.TabIndex = 2;
             this.tabStats.Text = "Stats";
             this.tabStats.UseVisualStyleBackColor = true;
-            // 
             // tabSettings
-            // 
             this.tabSettings.Location = new System.Drawing.Point(4, 24);
             this.tabSettings.Name = "tabSettings";
-            this.tabSettings.Padding = new System.Windows.Forms.Padding(3);
             this.tabSettings.Size = new System.Drawing.Size(792, 422);
             this.tabSettings.TabIndex = 3;
             this.tabSettings.Text = "Settings";
             this.tabSettings.UseVisualStyleBackColor = true;
+            // lblSaleProduct
+            this.lblSaleProduct.AutoSize = true;
+            this.lblSaleProduct.Location = new System.Drawing.Point(13, 15);
+            this.lblSaleProduct.Name = "lblSaleProduct";
+            this.lblSaleProduct.Text = "Product";
+            // cmbSaleProduct
+            this.cmbSaleProduct.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbSaleProduct.Location = new System.Drawing.Point(13, 35);
+            this.cmbSaleProduct.Name = "cmbSaleProduct";
+            this.cmbSaleProduct.Width = 260;
+            // lblSaleQuantity
+            this.lblSaleQuantity.AutoSize = true;
+            this.lblSaleQuantity.Location = new System.Drawing.Point(13, 75);
+            this.lblSaleQuantity.Name = "lblSaleQuantity";
+            this.lblSaleQuantity.Text = "Quantity";
+            // numSaleQuantity
+            this.numSaleQuantity.Location = new System.Drawing.Point(13, 95);
+            this.numSaleQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            this.numSaleQuantity.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+            this.numSaleQuantity.Name = "numSaleQuantity";
+            this.numSaleQuantity.Width = 120;
+            // lblSaleUnitPrice
+            this.lblSaleUnitPrice.AutoSize = true;
+            this.lblSaleUnitPrice.Location = new System.Drawing.Point(13, 135);
+            this.lblSaleUnitPrice.Name = "lblSaleUnitPrice";
+            this.lblSaleUnitPrice.Text = "Unit Price";
+            // numSaleUnitPrice
+            this.numSaleUnitPrice.DecimalPlaces = 2;
+            this.numSaleUnitPrice.Location = new System.Drawing.Point(13, 155);
+            this.numSaleUnitPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+            this.numSaleUnitPrice.Name = "numSaleUnitPrice";
+            this.numSaleUnitPrice.Width = 120;
+            // lblSaleTotal
+            this.lblSaleTotal.AutoSize = true;
+            this.lblSaleTotal.Location = new System.Drawing.Point(13, 195);
+            this.lblSaleTotal.Name = "lblSaleTotal";
+            this.lblSaleTotal.Text = "Total:";
+            // lblSaleTotalValue
+            this.lblSaleTotalValue.AutoSize = true;
+            this.lblSaleTotalValue.Location = new System.Drawing.Point(60, 195);
+            this.lblSaleTotalValue.Name = "lblSaleTotalValue";
+            this.lblSaleTotalValue.Text = "0.00";
             // 
             // Main
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1000, 600);
             this.Controls.Add(this.tabControlMain);
-            Name = "Main";
-            Text = "Kabylia Taste";
-            Load += Main_Load;
-            ResumeLayout(false);
+            this.Name = "Main";
+            this.Text = "KabyliaTaste";
+            this.ResumeLayout(false);
+
         }
 
         #endregion

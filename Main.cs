@@ -32,7 +32,6 @@
             dgvProducts.CellClick += DgvProducts_CellClick;
             dgvProducts.CellFormatting += DgvProducts_CellFormatting;
             txtSearch.TextChanged += TxtSearch_TextChanged;
-            // Sales tab events
             tabControlMain.SelectedIndexChanged += TabControlMain_SelectedIndexChanged;
             btnProductPrev.Click += BtnProductPrev_Click;
             btnProductNext.Click += BtnProductNext_Click;
@@ -42,6 +41,8 @@
             numSaleUnitPrice.ValueChanged += SaleInputChanged;
             btnSell.Click += BtnSell_Click;
             btnDeleteSale.Click += BtnDeleteSale_Click;
+            btnPrintInvoice.Click += BtnPrintInvoice_Click;
+            txtBuyerName.TextChanged += TxtBuyerName_TextChanged;
             dgvSales.SelectionChanged += DgvSales_SelectionChanged;
             btnSalePrev.Click += BtnSalePrev_Click;
             btnSaleNext.Click += BtnSaleNext_Click;
@@ -324,9 +325,85 @@
         if (dgvSales.Columns.Contains("Date"))
             dgvSales.Columns["Date"].DefaultCellStyle.Format = "yyyy-MM-dd HH:mm";
 
+        RefreshInvoiceCheckboxColumn();
+
         lblSalePage.Text = $"Page {_currentSalePage} / {totalPages}";
         btnSalePrev.Enabled = _currentSalePage > 1;
         btnSaleNext.Enabled = _currentSalePage < totalPages;
+    }
+
+    private void TxtBuyerName_TextChanged(object? sender, EventArgs e)
+    {
+        RefreshInvoiceCheckboxColumn();
+    }
+
+    private void RefreshInvoiceCheckboxColumn()
+    {
+        bool show = !string.IsNullOrWhiteSpace(txtBuyerName.Text);
+
+        if (!dgvSales.Columns.Contains("Select"))
+        {
+            var chk = new DataGridViewCheckBoxColumn
+            {
+                Name = "Select",
+                HeaderText = "✔",
+                Width = 40,
+                DisplayIndex = 0,
+                FlatStyle = FlatStyle.Standard,
+                ReadOnly = false
+            };
+            dgvSales.Columns.Add(chk);
+        }
+
+        dgvSales.Columns["Select"].Visible = show;
+
+        // Make all data columns read-only; only the checkbox column stays editable
+        dgvSales.ReadOnly = false;
+        foreach (DataGridViewColumn col in dgvSales.Columns)
+        {
+            if (col.Name != "Select")
+                col.ReadOnly = true;
+        }
+    }
+
+    private void BtnPrintInvoice_Click(object? sender, EventArgs e)
+    {
+        var buyerName = txtBuyerName.Text.Trim();
+        if (string.IsNullOrWhiteSpace(buyerName))
+        {
+            MessageBox.Show("Enter a buyer name to enable invoice printing.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var selectedIds = new System.Collections.Generic.List<int>();
+        foreach (DataGridViewRow row in dgvSales.Rows)
+        {
+            if (dgvSales.Columns.Contains("Select") &&
+                row.Cells["Select"] is DataGridViewCheckBoxCell chkCell &&
+                chkCell.Value is true)
+            {
+                if (row.Cells["Id"]?.Value != null &&
+                    int.TryParse(row.Cells["Id"].Value.ToString(), out var rowId))
+                    selectedIds.Add(rowId);
+            }
+        }
+
+        if (selectedIds.Count == 0)
+        {
+            MessageBox.Show("Select at least one sale to include in the invoice.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        using var db = new AppDbContext();
+        var sales = db.Sales
+            .Include(s => s.Product)
+            .Where(s => selectedIds.Contains(s.Id))
+            .ToList();
+
+        foreach (var s in sales)
+            s.BuyerName = buyerName;
+
+        new KabyliaTaste.Services.InvoicePrinter(sales, buyerName).PrintPreview();
     }
 
     private void CmbSaleProduct_SelectedIndexChanged(object? sender, EventArgs e)

@@ -1,0 +1,15 @@
+private void BtnPrintInvoice_Click(object? sender, EventArgs e)
+{
+    if (!selectedSaleId.HasValue)
+    {
+        MessageBox.Show("Select a sale to print an invoice.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        return;
+    }
+
+    using var db = new AppDbContext();
+    var sale = db.Sales.Include(s => s.Product).FirstOrDefault(s => s.Id == selectedSaleId.Value);
+    if (sale == null) return;
+
+    var printer = new Services.InvoicePrinter(sale);
+    printer.PrintPreview(); // or printer.Print() to send directly to printer
+}

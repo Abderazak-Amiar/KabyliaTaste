@@ -9,5 +9,6 @@ namespace KabyliaTaste.Models
         public decimal UnitPrice { get; set; }
         public decimal TotalPrice { get; set; }
         public DateTime SaleDate { get; set; }
+        public string? BuyerName { get; set; }
     }
 }
