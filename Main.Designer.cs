@@ -28,6 +28,19 @@
     private System.Windows.Forms.Panel panelSearch;
     private System.Windows.Forms.Label lblSearch;
     private System.Windows.Forms.TextBox txtSearch;
+    // Sales tab
+    private System.Windows.Forms.Panel panelSaleLeft;
+    private System.Windows.Forms.Label lblSaleProduct;
+    private System.Windows.Forms.ComboBox cmbSaleProduct;
+    private System.Windows.Forms.Label lblSaleQuantity;
+    private System.Windows.Forms.NumericUpDown numSaleQuantity;
+    private System.Windows.Forms.Label lblSaleUnitPrice;
+    private System.Windows.Forms.NumericUpDown numSaleUnitPrice;
+    private System.Windows.Forms.Label lblSaleTotal;
+    private System.Windows.Forms.Label lblSaleTotalValue;
+    private System.Windows.Forms.Button btnSell;
+    private System.Windows.Forms.Button btnDeleteSale;
+    private System.Windows.Forms.DataGridView dgvSales;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -72,6 +85,18 @@
             this.tabSales = new System.Windows.Forms.TabPage();
             this.tabStats = new System.Windows.Forms.TabPage();
             this.tabSettings = new System.Windows.Forms.TabPage();
+            this.panelSaleLeft = new System.Windows.Forms.Panel();
+            this.lblSaleProduct = new System.Windows.Forms.Label();
+            this.cmbSaleProduct = new System.Windows.Forms.ComboBox();
+            this.lblSaleQuantity = new System.Windows.Forms.Label();
+            this.numSaleQuantity = new System.Windows.Forms.NumericUpDown();
+            this.lblSaleUnitPrice = new System.Windows.Forms.Label();
+            this.numSaleUnitPrice = new System.Windows.Forms.NumericUpDown();
+            this.lblSaleTotal = new System.Windows.Forms.Label();
+            this.lblSaleTotalValue = new System.Windows.Forms.Label();
+            this.btnSell = new System.Windows.Forms.Button();
+            this.btnDeleteSale = new System.Windows.Forms.Button();
+            this.dgvSales = new System.Windows.Forms.DataGridView();
             SuspendLayout();
             // 
             // tabControlMain
@@ -250,6 +275,110 @@
             this.tabProducts.Controls.Add(this.panelSearch);
             this.tabProducts.Controls.Add(this.panelLeft);
             // 
+            // panelSaleLeft
+            // 
+            this.panelSaleLeft.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panelSaleLeft.Width = 300;
+            this.panelSaleLeft.Padding = new System.Windows.Forms.Padding(10);
+            this.panelSaleLeft.Controls.Add(this.lblSaleProduct);
+            this.panelSaleLeft.Controls.Add(this.cmbSaleProduct);
+            this.panelSaleLeft.Controls.Add(this.lblSaleQuantity);
+            this.panelSaleLeft.Controls.Add(this.numSaleQuantity);
+            this.panelSaleLeft.Controls.Add(this.lblSaleUnitPrice);
+            this.panelSaleLeft.Controls.Add(this.numSaleUnitPrice);
+            this.panelSaleLeft.Controls.Add(this.lblSaleTotal);
+            this.panelSaleLeft.Controls.Add(this.lblSaleTotalValue);
+            this.panelSaleLeft.Controls.Add(this.btnSell);
+            this.panelSaleLeft.Controls.Add(this.btnDeleteSale);
+            // 
+            // lblSaleProduct
+            // 
+            this.lblSaleProduct.AutoSize = true;
+            this.lblSaleProduct.Location = new System.Drawing.Point(13, 15);
+            this.lblSaleProduct.Name = "lblSaleProduct";
+            this.lblSaleProduct.Text = "Product";
+            // 
+            // cmbSaleProduct
+            // 
+            this.cmbSaleProduct.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbSaleProduct.Location = new System.Drawing.Point(13, 35);
+            this.cmbSaleProduct.Name = "cmbSaleProduct";
+            this.cmbSaleProduct.Width = 260;
+            // 
+            // lblSaleQuantity
+            // 
+            this.lblSaleQuantity.AutoSize = true;
+            this.lblSaleQuantity.Location = new System.Drawing.Point(13, 75);
+            this.lblSaleQuantity.Name = "lblSaleQuantity";
+            this.lblSaleQuantity.Text = "Quantity";
+            // 
+            // numSaleQuantity
+            // 
+            this.numSaleQuantity.Location = new System.Drawing.Point(13, 95);
+            this.numSaleQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            this.numSaleQuantity.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+            this.numSaleQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            this.numSaleQuantity.Name = "numSaleQuantity";
+            this.numSaleQuantity.Width = 120;
+            // 
+            // lblSaleUnitPrice
+            // 
+            this.lblSaleUnitPrice.AutoSize = true;
+            this.lblSaleUnitPrice.Location = new System.Drawing.Point(13, 135);
+            this.lblSaleUnitPrice.Name = "lblSaleUnitPrice";
+            this.lblSaleUnitPrice.Text = "Unit Price";
+            // 
+            // numSaleUnitPrice
+            // 
+            this.numSaleUnitPrice.DecimalPlaces = 2;
+            this.numSaleUnitPrice.Location = new System.Drawing.Point(13, 155);
+            this.numSaleUnitPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+            this.numSaleUnitPrice.Name = "numSaleUnitPrice";
+            this.numSaleUnitPrice.Width = 120;
+            // 
+            // lblSaleTotal
+            // 
+            this.lblSaleTotal.AutoSize = true;
+            this.lblSaleTotal.Location = new System.Drawing.Point(13, 195);
+            this.lblSaleTotal.Name = "lblSaleTotal";
+            this.lblSaleTotal.Text = "Total";
+            // 
+            // lblSaleTotalValue
+            // 
+            this.lblSaleTotalValue.AutoSize = true;
+            this.lblSaleTotalValue.Location = new System.Drawing.Point(13, 215);
+            this.lblSaleTotalValue.Name = "lblSaleTotalValue";
+            this.lblSaleTotalValue.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblSaleTotalValue.Text = "0.00";
+            // 
+            // btnSell
+            // 
+            this.btnSell.Location = new System.Drawing.Point(13, 255);
+            this.btnSell.Name = "btnSell";
+            this.btnSell.Size = new System.Drawing.Size(75, 25);
+            this.btnSell.Text = "Sell";
+            this.btnSell.UseVisualStyleBackColor = true;
+            // 
+            // btnDeleteSale
+            // 
+            this.btnDeleteSale.Location = new System.Drawing.Point(98, 255);
+            this.btnDeleteSale.Name = "btnDeleteSale";
+            this.btnDeleteSale.Size = new System.Drawing.Size(90, 25);
+            this.btnDeleteSale.Text = "Delete Sale";
+            this.btnDeleteSale.UseVisualStyleBackColor = true;
+            // 
+            // dgvSales
+            // 
+            this.dgvSales.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvSales.Name = "dgvSales";
+            this.dgvSales.ReadOnly = true;
+            this.dgvSales.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvSales.MultiSelect = false;
+            this.dgvSales.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvSales.AllowUserToAddRows = false;
+            this.dgvSales.AllowUserToDeleteRows = false;
+            this.dgvSales.RowHeadersVisible = false;
+            // 
             // tabSales
             // 
             this.tabSales.Location = new System.Drawing.Point(4, 24);
@@ -259,6 +388,8 @@
             this.tabSales.TabIndex = 1;
             this.tabSales.Text = "Sales";
             this.tabSales.UseVisualStyleBackColor = true;
+            this.tabSales.Controls.Add(this.dgvSales);
+            this.tabSales.Controls.Add(this.panelSaleLeft);
             // 
             // tabStats
             // 

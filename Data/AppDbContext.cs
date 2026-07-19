@@ -6,6 +6,7 @@ namespace KabyliaTaste.Data
     public class AppDbContext : DbContext
     {
         public DbSet<Product> Products { get; set; } = null!;
+        public DbSet<Sale> Sales { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
