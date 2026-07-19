@@ -12,6 +12,11 @@
     {
         private int? selectedProductId = null;
         private int? selectedSaleId = null;
+        private int _currentSalePage = 1;
+        private const int SalePageSize = 20;
+        private int _currentProductPage = 1;
+        private const int ProductPageSize = 20;
+        private string _productFilter = "";
 
         public Main()
         {
@@ -29,6 +34,8 @@
             txtSearch.TextChanged += TxtSearch_TextChanged;
             // Sales tab events
             tabControlMain.SelectedIndexChanged += TabControlMain_SelectedIndexChanged;
+            btnProductPrev.Click += BtnProductPrev_Click;
+            btnProductNext.Click += BtnProductNext_Click;
             cmbSaleProduct.SelectedIndexChanged += CmbSaleProduct_SelectedIndexChanged;
             numSaleQuantity.ValueChanged += SaleInputChanged;
             numSaleQuantity.TextChanged += SaleInputChanged;
@@ -36,10 +43,13 @@
             btnSell.Click += BtnSell_Click;
             btnDeleteSale.Click += BtnDeleteSale_Click;
             dgvSales.SelectionChanged += DgvSales_SelectionChanged;
+            btnSalePrev.Click += BtnSalePrev_Click;
+            btnSaleNext.Click += BtnSaleNext_Click;
         }
 
         private void TxtSearch_TextChanged(object? sender, EventArgs e)
         {
+            _currentProductPage = 1;
             LoadProducts(txtSearch.Text.Trim());
         }
 
@@ -50,12 +60,26 @@
 
         private void LoadProducts(string filter = "")
         {
+            _productFilter = filter;
             using var db = new AppDbContext();
             var query = db.Products.OrderBy(p => p.Id).AsQueryable();
             if (!string.IsNullOrEmpty(filter))
                 query = query.Where(p => p.Name.ToLower().Contains(filter.ToLower()));
-            var list = query.ToList();
+
+            var totalCount = query.Count();
+            var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)ProductPageSize));
+            _currentProductPage = Math.Clamp(_currentProductPage, 1, totalPages);
+
+            var list = query
+                .Skip((_currentProductPage - 1) * ProductPageSize)
+                .Take(ProductPageSize)
+                .ToList();
             dgvProducts.DataSource = list;
+
+            lblProductPage.Text = $"Page {_currentProductPage} / {totalPages}";
+            btnProductPrev.Enabled = _currentProductPage > 1;
+            btnProductNext.Enabled = _currentProductPage < totalPages;
+
         ClearForm(false);
         // auto-select first row if available
         if (dgvProducts.Rows.Count > 0)
@@ -90,6 +114,7 @@
             };
             db.Products.Add(product);
             db.SaveChanges();
+            _currentProductPage = 1;
             LoadProducts();
         }
 
@@ -115,6 +140,7 @@
             product.Quantity = (int)numQuantity.Value;
             product.Unit = (ProductUnit)cmbUnit.SelectedIndex;
             db.SaveChanges();
+            _currentProductPage = 1;
             LoadProducts();
         }
 
@@ -134,6 +160,7 @@
             if (product == null) return;
             db.Products.Remove(product);
             db.SaveChanges();
+            _currentProductPage = 1;
             LoadProducts();
         }
 
@@ -273,9 +300,15 @@
     private void LoadSales()
     {
         using var db = new AppDbContext();
+        var totalCount = db.Sales.Count();
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)SalePageSize));
+        _currentSalePage = Math.Clamp(_currentSalePage, 1, totalPages);
+
         var sales = db.Sales
             .Include(s => s.Product)
             .OrderByDescending(s => s.SaleDate)
+            .Skip((_currentSalePage - 1) * SalePageSize)
+            .Take(SalePageSize)
             .Select(s => new
             {
                 s.Id,
@@ -290,6 +323,10 @@
 
         if (dgvSales.Columns.Contains("Date"))
             dgvSales.Columns["Date"].DefaultCellStyle.Format = "yyyy-MM-dd HH:mm";
+
+        lblSalePage.Text = $"Page {_currentSalePage} / {totalPages}";
+        btnSalePrev.Enabled = _currentSalePage > 1;
+        btnSaleNext.Enabled = _currentSalePage < totalPages;
     }
 
     private void CmbSaleProduct_SelectedIndexChanged(object? sender, EventArgs e)
@@ -346,6 +383,7 @@
         db.Sales.Add(sale);
         db.SaveChanges();
 
+        _currentSalePage = 1;
         LoadSales();
         LoadProducts();
         MessageBox.Show("Sale recorded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -381,8 +419,33 @@
         db.SaveChanges();
 
         selectedSaleId = null;
+        _currentSalePage = 1;
         LoadSales();
         LoadProducts();
+    }
+
+    private void BtnSalePrev_Click(object? sender, EventArgs e)
+    {
+        _currentSalePage--;
+        LoadSales();
+    }
+
+    private void BtnSaleNext_Click(object? sender, EventArgs e)
+    {
+        _currentSalePage++;
+        LoadSales();
+    }
+
+    private void BtnProductPrev_Click(object? sender, EventArgs e)
+    {
+        _currentProductPage--;
+        LoadProducts(_productFilter);
+    }
+
+    private void BtnProductNext_Click(object? sender, EventArgs e)
+    {
+        _currentProductPage++;
+        LoadProducts(_productFilter);
     }
     }
 }
