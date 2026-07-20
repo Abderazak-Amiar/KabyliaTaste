@@ -534,6 +534,7 @@
         using var db = new AppDbContext();
         var stats = db.Sales
             .Include(s => s.Product)
+            .AsEnumerable()                          // switch to client-side evaluation here
             .GroupBy(s => s.Product.Name)
             .Select(g => new
             {
@@ -550,7 +551,9 @@
 
         var totalProfit = stats.Sum(x => x.Profit);
         lblTotalProfitValue.Text = totalProfit.ToString("F2");
-        lblTotalProfitValue.ForeColor = totalProfit >= 0 ? System.Drawing.Color.Green : System.Drawing.Color.Red;
+        lblTotalProfitValue.ForeColor = totalProfit >= 0
+            ? System.Drawing.Color.Green
+            : System.Drawing.Color.Red;
     }
 
     private void BtnSalePrev_Click(object? sender, EventArgs e)
