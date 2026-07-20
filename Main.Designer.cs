@@ -68,6 +68,14 @@
     private System.Windows.Forms.CheckBox chkFilterDate;
     private System.Windows.Forms.DateTimePicker dtpFilterDate;
     private System.Windows.Forms.Button btnClearSaleFilter;
+    // Stats filter panel
+    private System.Windows.Forms.Panel panelStatsFilter;
+    private System.Windows.Forms.Label lblStatsFilterProduct;
+    private System.Windows.Forms.ComboBox cmbStatsProduct;
+    private System.Windows.Forms.Label lblStatsFilterPeriod;
+    private System.Windows.Forms.ComboBox cmbStatsPeriod;
+    private System.Windows.Forms.DateTimePicker dtpStatsDate;
+    private System.Windows.Forms.Button btnClearStatsFilter;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -149,6 +157,13 @@
             this.chkFilterDate = new System.Windows.Forms.CheckBox();
             this.dtpFilterDate = new System.Windows.Forms.DateTimePicker();
             this.btnClearSaleFilter = new System.Windows.Forms.Button();
+            this.lblStatsFilterProduct = new System.Windows.Forms.Label();
+            this.cmbStatsProduct = new System.Windows.Forms.ComboBox();
+            this.lblStatsFilterPeriod = new System.Windows.Forms.Label();
+            this.cmbStatsPeriod = new System.Windows.Forms.ComboBox();
+            this.dtpStatsDate = new System.Windows.Forms.DateTimePicker();
+            this.btnClearStatsFilter = new System.Windows.Forms.Button();
+            this.panelStatsFilter = new System.Windows.Forms.Panel();
             SuspendLayout();
             // 
             // tabControlMain
@@ -577,9 +592,50 @@
             panelStatsBottom.Padding = new System.Windows.Forms.Padding(10, 8, 0, 0);
             panelStatsBottom.Controls.Add(this.lblTotalProfitValue);
             panelStatsBottom.Controls.Add(this.lblTotalProfit);
+            // Stats filter controls
+            this.lblStatsFilterProduct.Text = "Product:";
+            this.lblStatsFilterProduct.AutoSize = true;
+            this.lblStatsFilterProduct.Location = new System.Drawing.Point(5, 10);
+
+            this.cmbStatsProduct.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbStatsProduct.Location = new System.Drawing.Point(60, 7);
+            this.cmbStatsProduct.Width = 150;
+            this.cmbStatsProduct.SelectedIndexChanged += new System.EventHandler(this.StatsFilter_Changed);
+
+            this.lblStatsFilterPeriod.Text = "Period:";
+            this.lblStatsFilterPeriod.AutoSize = true;
+            this.lblStatsFilterPeriod.Location = new System.Drawing.Point(220, 10);
+
+            this.cmbStatsPeriod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbStatsPeriod.Location = new System.Drawing.Point(268, 7);
+            this.cmbStatsPeriod.Width = 90;
+            this.cmbStatsPeriod.Items.AddRange(new object[] { "", "Day", "Week", "Month", "Year" });
+            this.cmbStatsPeriod.SelectedIndex = 0;
+            this.cmbStatsPeriod.SelectedIndexChanged += new System.EventHandler(this.StatsFilter_Changed);
+
+            this.dtpStatsDate.Location = new System.Drawing.Point(368, 6);
+            this.dtpStatsDate.Width = 130;
+            this.dtpStatsDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.dtpStatsDate.ValueChanged += new System.EventHandler(this.StatsFilter_Changed);
+
+            this.btnClearStatsFilter.Text = "Clear";
+            this.btnClearStatsFilter.Location = new System.Drawing.Point(508, 5);
+            this.btnClearStatsFilter.Width = 60;
+            this.btnClearStatsFilter.Click += new System.EventHandler(this.BtnClearStatsFilter_Click);
+
+            this.panelStatsFilter.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelStatsFilter.Height = 35;
+            this.panelStatsFilter.Controls.Add(this.lblStatsFilterProduct);
+            this.panelStatsFilter.Controls.Add(this.cmbStatsProduct);
+            this.panelStatsFilter.Controls.Add(this.lblStatsFilterPeriod);
+            this.panelStatsFilter.Controls.Add(this.cmbStatsPeriod);
+            this.panelStatsFilter.Controls.Add(this.dtpStatsDate);
+            this.panelStatsFilter.Controls.Add(this.btnClearStatsFilter);
+
             // tabStats
             this.tabStats.Controls.Add(this.dgvStats);
             this.tabStats.Controls.Add(panelStatsBottom);
+            this.tabStats.Controls.Add(this.panelStatsFilter);
             this.tabStats.Location = new System.Drawing.Point(4, 24);
             this.tabStats.Name = "tabStats";
             this.tabStats.Size = new System.Drawing.Size(792, 422);

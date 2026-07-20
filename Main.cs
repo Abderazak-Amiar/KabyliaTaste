@@ -314,7 +314,19 @@
         if (tabControlMain.SelectedTab == tabSales)
             LoadSalesTab();
         else if (tabControlMain.SelectedTab == tabStats)
-            LoadStats();
+            LoadStatsTab();
+    }
+
+    private void LoadStatsTab()
+    {
+        using var db = new AppDbContext();
+        var products = db.Products.OrderBy(p => p.Name).Select(p => p.Name).ToList();
+        products.Insert(0, "");
+        cmbStatsProduct.SelectedIndexChanged -= StatsFilter_Changed;
+        cmbStatsProduct.DataSource = products;
+        cmbStatsProduct.SelectedIndex = 0;
+        cmbStatsProduct.SelectedIndexChanged += StatsFilter_Changed;
+        LoadStats();
     }
 
     private void LoadSalesTab()
@@ -569,10 +581,39 @@
 
         private void LoadStats()
         {
+            var productFilter = cmbStatsProduct?.SelectedItem as string ?? "";
+            var period = cmbStatsPeriod?.SelectedItem as string ?? "";
+            var refDate = dtpStatsDate?.Value.Date ?? DateTime.Today;
+
             using var db = new AppDbContext();
-            var stats = db.Sales
-                .Include(s => s.Product)
-                .AsEnumerable()                          // switch to LINQ to Objects here
+            var query = db.Sales.Include(s => s.Product).AsQueryable();
+
+            if (!string.IsNullOrEmpty(productFilter))
+                query = query.Where(s => s.Product.Name == productFilter);
+
+            if (!string.IsNullOrEmpty(period))
+            {
+                var dayStart   = refDate;
+                var dayEnd     = refDate.AddDays(1);
+                var weekStart  = refDate.AddDays(-(int)refDate.DayOfWeek);
+                var weekEnd    = weekStart.AddDays(7);
+                var monthStart = new DateTime(refDate.Year, refDate.Month, 1);
+                var monthEnd   = monthStart.AddMonths(1);
+                var yearStart  = new DateTime(refDate.Year, 1, 1);
+                var yearEnd    = yearStart.AddYears(1);
+
+                query = period switch
+                {
+                    "Day"   => query.Where(s => s.SaleDate >= dayStart   && s.SaleDate < dayEnd),
+                    "Week"  => query.Where(s => s.SaleDate >= weekStart  && s.SaleDate < weekEnd),
+                    "Month" => query.Where(s => s.SaleDate >= monthStart && s.SaleDate < monthEnd),
+                    "Year"  => query.Where(s => s.SaleDate >= yearStart  && s.SaleDate < yearEnd),
+                    _ => query
+                };
+            }
+
+            var stats = query
+                .AsEnumerable()
                 .GroupBy(s => s.Product.Name)
                 .Select(g => new
                 {
@@ -615,6 +656,19 @@
     {
         _currentSalePage = 1;
         LoadSales();
+    }
+
+    private void StatsFilter_Changed(object? sender, EventArgs e)
+    {
+        LoadStats();
+    }
+
+    private void BtnClearStatsFilter_Click(object? sender, EventArgs e)
+    {
+        cmbStatsProduct.SelectedIndex = 0;
+        cmbStatsPeriod.SelectedIndex = 0;
+        dtpStatsDate.Value = DateTime.Today;
+        LoadStats();
     }
 
     private void ChkFilterDate_CheckedChanged(object? sender, EventArgs e)
