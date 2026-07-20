@@ -529,29 +529,32 @@
         LoadProducts();
     }
 
-    private void LoadStats()
-    {
-        using var db = new AppDbContext();
-        var stats = db.Sales
-            .Include(s => s.Product)
-            .GroupBy(s => s.Product.Name)
-            .Select(g => new
-            {
-                Product = g.Key,
-                UnitsSold = g.Sum(s => s.Quantity),
-                Revenue = g.Sum(s => s.TotalPrice),
-                Cost = g.Sum(s => s.Quantity * s.Product.BuyPrice),
-                Profit = g.Sum(s => s.TotalPrice - s.Quantity * s.Product.BuyPrice)
-            })
-            .OrderByDescending(x => x.Profit)
-            .ToList();
+        private void LoadStats()
+        {
+            using var db = new AppDbContext();
+            var stats = db.Sales
+                .Include(s => s.Product)
+                .AsEnumerable()                          // switch to LINQ to Objects here
+                .GroupBy(s => s.Product.Name)
+                .Select(g => new
+                {
+                    Product = g.Key,
+                    UnitsSold = g.Sum(s => s.Quantity),
+                    Revenue = g.Sum(s => s.TotalPrice),
+                    Cost = g.Sum(s => s.Quantity * s.Product.BuyPrice),
+                    Profit = g.Sum(s => s.TotalPrice - s.Quantity * s.Product.BuyPrice)
+                })
+                .OrderByDescending(x => x.Profit)
+                .ToList();
 
-        dgvStats.DataSource = stats;
+            dgvStats.DataSource = stats;
 
-        var totalProfit = stats.Sum(x => x.Profit);
-        lblTotalProfitValue.Text = totalProfit.ToString("F2");
-        lblTotalProfitValue.ForeColor = totalProfit >= 0 ? System.Drawing.Color.Green : System.Drawing.Color.Red;
-    }
+            var totalProfit = stats.Sum(x => x.Profit);
+            lblTotalProfitValue.Text = totalProfit.ToString("F2");
+            lblTotalProfitValue.ForeColor = totalProfit >= 0
+                ? System.Drawing.Color.Green
+                : System.Drawing.Color.Red;
+        }
 
     private void BtnSalePrev_Click(object? sender, EventArgs e)
     {
