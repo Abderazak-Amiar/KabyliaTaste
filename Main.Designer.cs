@@ -76,6 +76,7 @@
     private System.Windows.Forms.ComboBox cmbStatsPeriod;
     private System.Windows.Forms.DateTimePicker dtpStatsDate;
     private System.Windows.Forms.Button btnClearStatsFilter;
+    private System.Windows.Forms.Button btnPrintReport;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -163,6 +164,7 @@
             this.cmbStatsPeriod = new System.Windows.Forms.ComboBox();
             this.dtpStatsDate = new System.Windows.Forms.DateTimePicker();
             this.btnClearStatsFilter = new System.Windows.Forms.Button();
+            this.btnPrintReport = new System.Windows.Forms.Button();
             this.panelStatsFilter = new System.Windows.Forms.Panel();
             SuspendLayout();
             // 
@@ -623,6 +625,11 @@
             this.btnClearStatsFilter.Width = 60;
             this.btnClearStatsFilter.Click += new System.EventHandler(this.BtnClearStatsFilter_Click);
 
+            this.btnPrintReport.Text = "🖨 Print Report";
+            this.btnPrintReport.Location = new System.Drawing.Point(578, 4);
+            this.btnPrintReport.Size = new System.Drawing.Size(120, 25);
+            this.btnPrintReport.UseVisualStyleBackColor = true;
+
             this.panelStatsFilter.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelStatsFilter.Height = 35;
             this.panelStatsFilter.Controls.Add(this.lblStatsFilterProduct);
@@ -631,6 +638,7 @@
             this.panelStatsFilter.Controls.Add(this.cmbStatsPeriod);
             this.panelStatsFilter.Controls.Add(this.dtpStatsDate);
             this.panelStatsFilter.Controls.Add(this.btnClearStatsFilter);
+            this.panelStatsFilter.Controls.Add(this.btnPrintReport);
 
             // tabStats
             this.tabStats.Controls.Add(this.dgvStats);

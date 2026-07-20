@@ -52,6 +52,7 @@
             chkFilterDate.CheckedChanged += ChkFilterDate_CheckedChanged;
             dtpFilterDate.ValueChanged += SaleFilter_Changed;
             btnClearSaleFilter.Click += BtnClearSaleFilter_Click;
+            btnPrintReport.Click += BtnPrintReport_Click;
         }
 
         private void TxtSearch_TextChanged(object? sender, EventArgs e)
@@ -669,6 +670,56 @@
         cmbStatsPeriod.SelectedIndex = 0;
         dtpStatsDate.Value = DateTime.Today;
         LoadStats();
+    }
+
+    private void BtnPrintReport_Click(object? sender, EventArgs e)
+    {
+        var productFilter = cmbStatsProduct?.SelectedItem as string ?? "";
+        var period = cmbStatsPeriod?.SelectedItem as string ?? "";
+        var refDate = dtpStatsDate?.Value.Date ?? DateTime.Today;
+
+        using var db = new AppDbContext();
+        var query = db.Sales.Include(s => s.Product).AsQueryable();
+
+        if (!string.IsNullOrEmpty(productFilter))
+            query = query.Where(s => s.Product.Name == productFilter);
+
+        if (!string.IsNullOrEmpty(period))
+        {
+            var dayStart   = refDate;
+            var dayEnd     = refDate.AddDays(1);
+            var weekStart  = refDate.AddDays(-(int)refDate.DayOfWeek);
+            var weekEnd    = weekStart.AddDays(7);
+            var monthStart = new DateTime(refDate.Year, refDate.Month, 1);
+            var monthEnd   = monthStart.AddMonths(1);
+            var yearStart  = new DateTime(refDate.Year, 1, 1);
+            var yearEnd    = yearStart.AddYears(1);
+
+            query = period switch
+            {
+                "Day"   => query.Where(s => s.SaleDate >= dayStart   && s.SaleDate < dayEnd),
+                "Week"  => query.Where(s => s.SaleDate >= weekStart  && s.SaleDate < weekEnd),
+                "Month" => query.Where(s => s.SaleDate >= monthStart && s.SaleDate < monthEnd),
+                "Year"  => query.Where(s => s.SaleDate >= yearStart  && s.SaleDate < yearEnd),
+                _ => query
+            };
+        }
+
+        var rows = query
+            .AsEnumerable()
+            .GroupBy(s => s.Product.Name)
+            .Select(g => new KabyliaTaste.Services.StatsReportRow
+            {
+                Product   = g.Key,
+                UnitsSold = g.Sum(s => s.Quantity),
+                Revenue   = g.Sum(s => s.TotalPrice),
+                Cost      = g.Sum(s => s.Quantity * s.Product.BuyPrice),
+                Profit    = g.Sum(s => s.TotalPrice - s.Quantity * s.Product.BuyPrice)
+            })
+            .OrderByDescending(x => x.Profit)
+            .ToList();
+
+        new KabyliaTaste.Services.StatsReportPrinter(rows, productFilter, period, refDate).PrintPreview();
     }
 
     private void ChkFilterDate_CheckedChanged(object? sender, EventArgs e)
