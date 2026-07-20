@@ -31,6 +31,7 @@
             dgvProducts.SelectionChanged += DgvProducts_SelectionChanged;
             dgvProducts.CellClick += DgvProducts_CellClick;
             dgvProducts.CellFormatting += DgvProducts_CellFormatting;
+            chkShowBuyPrice.CheckedChanged += ChkShowBuyPrice_CheckedChanged;
             txtSearch.TextChanged += TxtSearch_TextChanged;
             tabControlMain.SelectedIndexChanged += TabControlMain_SelectedIndexChanged;
             btnProductPrev.Click += BtnProductPrev_Click;
@@ -81,6 +82,8 @@
             btnProductPrev.Enabled = _currentProductPage > 1;
             btnProductNext.Enabled = _currentProductPage < totalPages;
 
+        if (dgvProducts.Columns.Contains("BuyPrice"))
+            dgvProducts.Columns["BuyPrice"].Visible = chkShowBuyPrice.Checked;
         ClearForm(false);
         // auto-select first row if available
         if (dgvProducts.Rows.Count > 0)
@@ -167,6 +170,15 @@
             ResequenceProducts(db, deletedProductId);
             _currentProductPage = 1;
             LoadProducts();
+        }
+
+        private void ChkShowBuyPrice_CheckedChanged(object? sender, EventArgs e)
+        {
+            bool show = chkShowBuyPrice.Checked;
+            lblBuyPrice.Visible = show;
+            numBuyPrice.Visible = show;
+            if (dgvProducts.Columns.Contains("BuyPrice"))
+                dgvProducts.Columns["BuyPrice"].Visible = show;
         }
 
         private void BtnClear_Click(object? sender, EventArgs e)

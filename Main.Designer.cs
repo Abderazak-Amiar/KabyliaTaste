@@ -14,6 +14,7 @@
     private System.Windows.Forms.Panel panelLeft;
     private System.Windows.Forms.Label lblName;
     private System.Windows.Forms.TextBox txtName;
+    private System.Windows.Forms.CheckBox chkShowBuyPrice;
     private System.Windows.Forms.Label lblBuyPrice;
     private System.Windows.Forms.NumericUpDown numBuyPrice;
     private System.Windows.Forms.Label lblSellPrice;
@@ -85,6 +86,7 @@
             this.panelLeft = new System.Windows.Forms.Panel();
             this.lblName = new System.Windows.Forms.Label();
             this.txtName = new System.Windows.Forms.TextBox();
+            this.chkShowBuyPrice = new System.Windows.Forms.CheckBox();
             this.lblBuyPrice = new System.Windows.Forms.Label();
             this.numBuyPrice = new System.Windows.Forms.NumericUpDown();
             this.lblSellPrice = new System.Windows.Forms.Label();
@@ -164,6 +166,7 @@
             // add controls to panel
             this.panelLeft.Controls.Add(this.lblName);
             this.panelLeft.Controls.Add(this.txtName);
+            this.panelLeft.Controls.Add(this.chkShowBuyPrice);
             this.panelLeft.Controls.Add(this.lblBuyPrice);
             this.panelLeft.Controls.Add(this.numBuyPrice);
             this.panelLeft.Controls.Add(this.lblSellPrice);
@@ -191,32 +194,42 @@
             this.txtName.Name = "txtName";
             this.txtName.Width = 260;
             // 
+            // chkShowBuyPrice
+            // 
+            this.chkShowBuyPrice.AutoSize = true;
+            this.chkShowBuyPrice.Location = new System.Drawing.Point(13, 70);
+            this.chkShowBuyPrice.Name = "chkShowBuyPrice";
+            this.chkShowBuyPrice.Text = "Show Buy Price";
+            this.chkShowBuyPrice.Checked = false;
+            // 
             // lblBuyPrice
             // 
             this.lblBuyPrice.AutoSize = true;
-            this.lblBuyPrice.Location = new System.Drawing.Point(13, 75);
+            this.lblBuyPrice.Location = new System.Drawing.Point(145, 100);
+            this.lblBuyPrice.Visible = false;
             this.lblBuyPrice.Name = "lblBuyPrice";
             this.lblBuyPrice.Text = "Buy Price";
             // 
             // numBuyPrice
             // 
             this.numBuyPrice.DecimalPlaces = 2;
-            this.numBuyPrice.Location = new System.Drawing.Point(13, 95);
+            this.numBuyPrice.Location = new System.Drawing.Point(145, 118);
             this.numBuyPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             this.numBuyPrice.Name = "numBuyPrice";
             this.numBuyPrice.Width = 120;
+            this.numBuyPrice.Visible = false;
             // 
             // lblSellPrice
             // 
             this.lblSellPrice.AutoSize = true;
-            this.lblSellPrice.Location = new System.Drawing.Point(145, 75);
+            this.lblSellPrice.Location = new System.Drawing.Point(13, 100);
             this.lblSellPrice.Name = "lblSellPrice";
             this.lblSellPrice.Text = "Sell Price";
             // 
             // numSellPrice
             // 
             this.numSellPrice.DecimalPlaces = 2;
-            this.numSellPrice.Location = new System.Drawing.Point(145, 95);
+            this.numSellPrice.Location = new System.Drawing.Point(13, 118);
             this.numSellPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             this.numSellPrice.Name = "numSellPrice";
             this.numSellPrice.Width = 120;
@@ -224,14 +237,14 @@
             // lblQuantity
             // 
             this.lblQuantity.AutoSize = true;
-            this.lblQuantity.Location = new System.Drawing.Point(13, 135);
+            this.lblQuantity.Location = new System.Drawing.Point(13, 158);
             this.lblQuantity.Name = "lblQuantity";
             this.lblQuantity.Size = new System.Drawing.Size(54, 15);
             this.lblQuantity.Text = "Quantity";
             // 
             // numQuantity
             // 
-            this.numQuantity.Location = new System.Drawing.Point(13, 155);
+            this.numQuantity.Location = new System.Drawing.Point(13, 176);
             this.numQuantity.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             this.numQuantity.Name = "numQuantity";
             this.numQuantity.Width = 120;
@@ -239,7 +252,7 @@
             // lblUnit
             // 
             this.lblUnit.AutoSize = true;
-            this.lblUnit.Location = new System.Drawing.Point(13, 195);
+            this.lblUnit.Location = new System.Drawing.Point(13, 216);
             this.lblUnit.Name = "lblUnit";
             this.lblUnit.Size = new System.Drawing.Size(27, 15);
             this.lblUnit.Text = "Unit";
@@ -247,7 +260,7 @@
             // cmbUnit
             // 
             this.cmbUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbUnit.Location = new System.Drawing.Point(13, 213);
+            this.cmbUnit.Location = new System.Drawing.Point(13, 234);
             this.cmbUnit.Name = "cmbUnit";
             this.cmbUnit.Width = 120;
             this.cmbUnit.Items.AddRange(new object[] { "Bottle", "Kg", "Piece" });
@@ -255,7 +268,7 @@
             // 
             // btnAdd
             // 
-            this.btnAdd.Location = new System.Drawing.Point(13, 255);
+            this.btnAdd.Location = new System.Drawing.Point(13, 275);
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(75, 25);
             this.btnAdd.Text = "Add";
@@ -263,7 +276,7 @@
             // 
             // btnUpdate
             // 
-            this.btnUpdate.Location = new System.Drawing.Point(98, 255);
+            this.btnUpdate.Location = new System.Drawing.Point(98, 275);
             this.btnUpdate.Name = "btnUpdate";
             this.btnUpdate.Size = new System.Drawing.Size(75, 25);
             this.btnUpdate.Text = "Update";
@@ -271,7 +284,7 @@
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(183, 255);
+            this.btnDelete.Location = new System.Drawing.Point(183, 275);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(75, 25);
             this.btnDelete.Text = "Delete";
@@ -279,7 +292,7 @@
             // 
             // btnClear
             // 
-            this.btnClear.Location = new System.Drawing.Point(13, 290);
+            this.btnClear.Location = new System.Drawing.Point(13, 310);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(75, 25);
             this.btnClear.Text = "Clear";
