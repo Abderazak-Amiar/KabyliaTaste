@@ -4,7 +4,8 @@ namespace KabyliaTaste.Models
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public decimal Price { get; set; }
+        public decimal BuyPrice { get; set; }
+        public decimal SellPrice { get; set; }
         public int Quantity { get; set; }
         public ProductUnit Unit { get; set; } = ProductUnit.Piece;
     }

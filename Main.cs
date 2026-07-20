@@ -109,7 +109,8 @@
             var product = new Product
             {
                 Name = name,
-                Price = numPrice.Value,
+                BuyPrice = numBuyPrice.Value,
+                SellPrice = numSellPrice.Value,
                 Quantity = (int)numQuantity.Value,
                 Unit = (ProductUnit)cmbUnit.SelectedIndex
             };
@@ -137,7 +138,8 @@
                 return;
             }
             product.Name = updatedName;
-            product.Price = numPrice.Value;
+            product.BuyPrice = numBuyPrice.Value;
+            product.SellPrice = numSellPrice.Value;
             product.Quantity = (int)numQuantity.Value;
             product.Unit = (ProductUnit)cmbUnit.SelectedIndex;
             db.SaveChanges();
@@ -173,7 +175,8 @@
         private void ClearForm(bool clearSelection)
         {
             txtName.Text = string.Empty;
-            numPrice.Value = 0;
+            numBuyPrice.Value = 0;
+            numSellPrice.Value = 0;
             numQuantity.Value = 0;
             cmbUnit.SelectedIndex = 2; // default: Piece
             selectedProductId = null;
@@ -215,7 +218,8 @@
 
             selectedProductId = product.Id;
             txtName.Text = product.Name;
-            numPrice.Value = product.Price;
+            numBuyPrice.Value = product.BuyPrice;
+            numSellPrice.Value = product.SellPrice;
             numQuantity.Value = product.Quantity;
             cmbUnit.SelectedIndex = (int)product.Unit;
         }
@@ -245,12 +249,14 @@
 
         object? idVal = null;
         object? nameVal = null;
-        object? priceVal = null;
+        object? buyPriceVal = null;
+        object? sellPriceVal = null;
         object? qtyVal = null;
 
         if (dgvProducts.Columns.Contains("Id")) idVal = row.Cells["Id"].Value;
         if (dgvProducts.Columns.Contains("Name")) nameVal = row.Cells["Name"].Value;
-        if (dgvProducts.Columns.Contains("Price")) priceVal = row.Cells["Price"].Value;
+        if (dgvProducts.Columns.Contains("BuyPrice")) buyPriceVal = row.Cells["BuyPrice"].Value;
+        if (dgvProducts.Columns.Contains("SellPrice")) sellPriceVal = row.Cells["SellPrice"].Value;
         if (dgvProducts.Columns.Contains("Quantity")) qtyVal = row.Cells["Quantity"].Value;
 
         object? unitVal = null;
@@ -259,16 +265,20 @@
         // fallback by index
         if (idVal == null && row.Cells.Count > 0) idVal = row.Cells[0].Value;
         if (nameVal == null && row.Cells.Count > 1) nameVal = row.Cells[1].Value;
-        if (priceVal == null && row.Cells.Count > 2) priceVal = row.Cells[2].Value;
-        if (qtyVal == null && row.Cells.Count > 3) qtyVal = row.Cells[3].Value;
+        if (buyPriceVal == null && row.Cells.Count > 2) buyPriceVal = row.Cells[2].Value;
+        if (sellPriceVal == null && row.Cells.Count > 3) sellPriceVal = row.Cells[3].Value;
+        if (qtyVal == null && row.Cells.Count > 4) qtyVal = row.Cells[4].Value;
 
         if (idVal != null && int.TryParse(idVal.ToString(), out var id)) selectedProductId = id;
         else selectedProductId = null;
 
         txtName.Text = nameVal?.ToString() ?? string.Empty;
 
-        if (decimal.TryParse(priceVal?.ToString(), out var price)) numPrice.Value = price;
-        else numPrice.Value = 0;
+        if (decimal.TryParse(buyPriceVal?.ToString(), out var buyPrice)) numBuyPrice.Value = buyPrice;
+        else numBuyPrice.Value = 0;
+
+        if (decimal.TryParse(sellPriceVal?.ToString(), out var sellPrice)) numSellPrice.Value = sellPrice;
+        else numSellPrice.Value = 0;
 
         if (int.TryParse(qtyVal?.ToString(), out var qty)) numQuantity.Value = qty;
         else numQuantity.Value = 0;
@@ -284,6 +294,8 @@
     {
         if (tabControlMain.SelectedTab == tabSales)
             LoadSalesTab();
+        else if (tabControlMain.SelectedTab == tabStats)
+            LoadStats();
     }
 
     private void LoadSalesTab()
@@ -413,7 +425,7 @@
             using var db = new AppDbContext();
             var product = db.Products.Find(productId);
             if (product != null)
-                numSaleUnitPrice.Value = product.Price;
+                numSaleUnitPrice.Value = product.SellPrice;
         }
         UpdateSaleTotal();
     }
@@ -499,6 +511,30 @@
         _currentSalePage = 1;
         LoadSales();
         LoadProducts();
+    }
+
+    private void LoadStats()
+    {
+        using var db = new AppDbContext();
+        var stats = db.Sales
+            .Include(s => s.Product)
+            .GroupBy(s => s.Product.Name)
+            .Select(g => new
+            {
+                Product = g.Key,
+                UnitsSold = g.Sum(s => s.Quantity),
+                Revenue = g.Sum(s => s.TotalPrice),
+                Cost = g.Sum(s => s.Quantity * s.Product.BuyPrice),
+                Profit = g.Sum(s => s.TotalPrice - s.Quantity * s.Product.BuyPrice)
+            })
+            .OrderByDescending(x => x.Profit)
+            .ToList();
+
+        dgvStats.DataSource = stats;
+
+        var totalProfit = stats.Sum(x => x.Profit);
+        lblTotalProfitValue.Text = totalProfit.ToString("F2");
+        lblTotalProfitValue.ForeColor = totalProfit >= 0 ? System.Drawing.Color.Green : System.Drawing.Color.Red;
     }
 
     private void BtnSalePrev_Click(object? sender, EventArgs e)
