@@ -161,8 +161,10 @@
             using var db = new AppDbContext();
             var product = db.Products.Find(selectedProductId.Value);
             if (product == null) return;
+            var deletedProductId = product.Id;
             db.Products.Remove(product);
             db.SaveChanges();
+            ResequenceProducts(db, deletedProductId);
             _currentProductPage = 1;
             LoadProducts();
         }
@@ -319,7 +321,7 @@
 
         var sales = db.Sales
             .Include(s => s.Product)
-            .OrderByDescending(s => s.SaleDate)
+            .OrderBy(s => s.Id)
             .Skip((_currentSalePage - 1) * SalePageSize)
             .Take(SalePageSize)
             .Select(s => new
@@ -504,8 +506,10 @@
         if (sale == null) return;
 
         sale.Product.Quantity += sale.Quantity;
+        var deletedSaleId = sale.Id;
         db.Sales.Remove(sale);
         db.SaveChanges();
+        ResequenceSales(db, deletedSaleId);
 
         selectedSaleId = null;
         _currentSalePage = 1;
@@ -559,6 +563,22 @@
     {
         _currentProductPage++;
         LoadProducts(_productFilter);
+    }
+
+    private static void ResequenceProducts(AppDbContext db, int deletedId)
+    {
+        db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF");
+        db.Database.ExecuteSqlRaw("UPDATE Sales SET ProductId = ProductId - 1 WHERE ProductId > {0}", deletedId);
+        db.Database.ExecuteSqlRaw("UPDATE Products SET Id = Id - 1 WHERE Id > {0}", deletedId);
+        db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON");
+        db.Database.ExecuteSqlRaw("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(Id), 0) FROM Products) WHERE name = 'Products'");
+        db.Database.ExecuteSqlRaw("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(Id), 0) FROM Sales) WHERE name = 'Sales'");
+    }
+
+    private static void ResequenceSales(AppDbContext db, int deletedId)
+    {
+        db.Database.ExecuteSqlRaw("UPDATE Sales SET Id = Id - 1 WHERE Id > {0}", deletedId);
+        db.Database.ExecuteSqlRaw("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(Id), 0) FROM Sales) WHERE name = 'Sales'");
     }
     }
 }
