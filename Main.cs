@@ -47,6 +47,11 @@
             dgvSales.SelectionChanged += DgvSales_SelectionChanged;
             btnSalePrev.Click += BtnSalePrev_Click;
             btnSaleNext.Click += BtnSaleNext_Click;
+            cmbFilterBuyer.TextChanged += SaleFilter_Changed;
+            cmbFilterProduct.SelectedIndexChanged += SaleFilter_Changed;
+            chkFilterDate.CheckedChanged += ChkFilterDate_CheckedChanged;
+            dtpFilterDate.ValueChanged += SaleFilter_Changed;
+            btnClearSaleFilter.Click += BtnClearSaleFilter_Click;
         }
 
         private void TxtSearch_TextChanged(object? sender, EventArgs e)
@@ -314,25 +319,55 @@
 
     private void LoadSalesTab()
     {
-        // populate product combo
         using var db = new AppDbContext();
         var products = db.Products.OrderBy(p => p.Name).ToList();
         cmbSaleProduct.DataSource = products;
         cmbSaleProduct.DisplayMember = "Name";
         cmbSaleProduct.ValueMember = "Id";
 
+        // populate filter buyer dropdown
+        var buyers = db.Sales
+            .Where(s => s.BuyerName != null && s.BuyerName != "")
+            .Select(s => s.BuyerName!)
+            .Distinct()
+            .OrderBy(b => b)
+            .ToList();
+        buyers.Insert(0, "");
+        cmbFilterBuyer.DataSource = buyers;
+        cmbFilterBuyer.SelectedIndex = 0;
+
+        // populate filter product dropdown
+        var filterProducts = db.Products.OrderBy(p => p.Name).Select(p => p.Name).ToList();
+        filterProducts.Insert(0, "");
+        cmbFilterProduct.DataSource = filterProducts;
+        cmbFilterProduct.SelectedIndex = 0;
+
         LoadSales();
     }
 
     private void LoadSales()
     {
+        var buyerFilter = cmbFilterBuyer?.Text?.Trim() ?? "";
+        var productFilter = cmbFilterProduct?.SelectedItem as string ?? "";
+        var filterDate = chkFilterDate?.Checked == true ? dtpFilterDate?.Value.Date : (DateTime?)null;
+
         using var db = new AppDbContext();
-        var totalCount = db.Sales.Count();
+        var query = db.Sales.Include(s => s.Product).AsQueryable();
+
+        if (!string.IsNullOrEmpty(buyerFilter))
+            query = query.Where(s => s.BuyerName != null && s.BuyerName.ToLower().Contains(buyerFilter.ToLower()));
+
+        if (!string.IsNullOrEmpty(productFilter))
+            query = query.Where(s => s.Product.Name == productFilter);
+
+        if (filterDate.HasValue)
+            query = query.Where(s => s.SaleDate.Date == filterDate.Value);
+
+        var totalCount = query.Count();
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)SalePageSize));
         _currentSalePage = Math.Clamp(_currentSalePage, 1, totalPages);
 
-        var sales = db.Sales
-            .Include(s => s.Product)
+        var sales = query
             .OrderBy(s => s.Id)
             .Skip((_currentSalePage - 1) * SalePageSize)
             .Take(SalePageSize)
@@ -343,7 +378,8 @@
                 s.Quantity,
                 UnitPrice = s.UnitPrice,
                 Total = s.TotalPrice,
-                Date = s.SaleDate
+                Date = s.SaleDate,
+                Buyer = s.BuyerName
             })
             .ToList();
         dgvSales.DataSource = sales;
@@ -481,12 +517,14 @@
             Quantity = qty,
             UnitPrice = unitPrice,
             TotalPrice = qty * unitPrice,
-            SaleDate = DateTime.Now
+            SaleDate = DateTime.Now,
+            BuyerName = string.IsNullOrWhiteSpace(txtBuyerName.Text) ? null : txtBuyerName.Text.Trim()
         };
         db.Sales.Add(sale);
         db.SaveChanges();
 
         _currentSalePage = 1;
+        RefreshBuyerFilterDropdown();
         LoadSales();
         LoadProducts();
         MessageBox.Show("Sale recorded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -555,6 +593,46 @@
                 ? System.Drawing.Color.Green
                 : System.Drawing.Color.Red;
         }
+
+    private void RefreshBuyerFilterDropdown()
+    {
+        var currentText = cmbFilterBuyer.Text;
+        using var db = new AppDbContext();
+        var buyers = db.Sales
+            .Where(s => s.BuyerName != null && s.BuyerName != "")
+            .Select(s => s.BuyerName!)
+            .Distinct()
+            .OrderBy(b => b)
+            .ToList();
+        buyers.Insert(0, "");
+        cmbFilterBuyer.TextChanged -= SaleFilter_Changed;
+        cmbFilterBuyer.DataSource = buyers;
+        cmbFilterBuyer.Text = currentText;
+        cmbFilterBuyer.TextChanged += SaleFilter_Changed;
+    }
+
+    private void SaleFilter_Changed(object? sender, EventArgs e)
+    {
+        _currentSalePage = 1;
+        LoadSales();
+    }
+
+    private void ChkFilterDate_CheckedChanged(object? sender, EventArgs e)
+    {
+        dtpFilterDate.Enabled = chkFilterDate.Checked;
+        _currentSalePage = 1;
+        LoadSales();
+    }
+
+    private void BtnClearSaleFilter_Click(object? sender, EventArgs e)
+    {
+        cmbFilterBuyer.Text = "";
+        cmbFilterProduct.SelectedIndex = 0;
+        chkFilterDate.Checked = false;
+        dtpFilterDate.Enabled = false;
+        _currentSalePage = 1;
+        LoadSales();
+    }
 
     private void BtnSalePrev_Click(object? sender, EventArgs e)
     {
