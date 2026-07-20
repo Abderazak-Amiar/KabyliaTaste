@@ -14,8 +14,14 @@
     private System.Windows.Forms.Panel panelLeft;
     private System.Windows.Forms.Label lblName;
     private System.Windows.Forms.TextBox txtName;
-    private System.Windows.Forms.Label lblPrice;
-    private System.Windows.Forms.NumericUpDown numPrice;
+    private System.Windows.Forms.Label lblBuyPrice;
+    private System.Windows.Forms.NumericUpDown numBuyPrice;
+    private System.Windows.Forms.Label lblSellPrice;
+    private System.Windows.Forms.NumericUpDown numSellPrice;
+    // Stats tab
+    private System.Windows.Forms.DataGridView dgvStats;
+    private System.Windows.Forms.Label lblTotalProfit;
+    private System.Windows.Forms.Label lblTotalProfitValue;
     private System.Windows.Forms.Label lblQuantity;
     private System.Windows.Forms.NumericUpDown numQuantity;
     private System.Windows.Forms.Label lblUnit;
@@ -79,8 +85,13 @@
             this.panelLeft = new System.Windows.Forms.Panel();
             this.lblName = new System.Windows.Forms.Label();
             this.txtName = new System.Windows.Forms.TextBox();
-            this.lblPrice = new System.Windows.Forms.Label();
-            this.numPrice = new System.Windows.Forms.NumericUpDown();
+            this.lblBuyPrice = new System.Windows.Forms.Label();
+            this.numBuyPrice = new System.Windows.Forms.NumericUpDown();
+            this.lblSellPrice = new System.Windows.Forms.Label();
+            this.numSellPrice = new System.Windows.Forms.NumericUpDown();
+            this.dgvStats = new System.Windows.Forms.DataGridView();
+            this.lblTotalProfit = new System.Windows.Forms.Label();
+            this.lblTotalProfitValue = new System.Windows.Forms.Label();
             this.lblQuantity = new System.Windows.Forms.Label();
             this.numQuantity = new System.Windows.Forms.NumericUpDown();
             this.lblUnit = new System.Windows.Forms.Label();
@@ -153,8 +164,10 @@
             // add controls to panel
             this.panelLeft.Controls.Add(this.lblName);
             this.panelLeft.Controls.Add(this.txtName);
-            this.panelLeft.Controls.Add(this.lblPrice);
-            this.panelLeft.Controls.Add(this.numPrice);
+            this.panelLeft.Controls.Add(this.lblBuyPrice);
+            this.panelLeft.Controls.Add(this.numBuyPrice);
+            this.panelLeft.Controls.Add(this.lblSellPrice);
+            this.panelLeft.Controls.Add(this.numSellPrice);
             this.panelLeft.Controls.Add(this.lblQuantity);
             this.panelLeft.Controls.Add(this.numQuantity);
             this.panelLeft.Controls.Add(this.lblUnit);
@@ -178,21 +191,35 @@
             this.txtName.Name = "txtName";
             this.txtName.Width = 260;
             // 
-            // lblPrice
+            // lblBuyPrice
             // 
-            this.lblPrice.AutoSize = true;
-            this.lblPrice.Location = new System.Drawing.Point(13, 75);
-            this.lblPrice.Name = "lblPrice";
-            this.lblPrice.Size = new System.Drawing.Size(34, 15);
-            this.lblPrice.Text = "Price";
+            this.lblBuyPrice.AutoSize = true;
+            this.lblBuyPrice.Location = new System.Drawing.Point(13, 75);
+            this.lblBuyPrice.Name = "lblBuyPrice";
+            this.lblBuyPrice.Text = "Buy Price";
             // 
-            // numPrice
+            // numBuyPrice
             // 
-            this.numPrice.DecimalPlaces = 2;
-            this.numPrice.Location = new System.Drawing.Point(13, 95);
-            this.numPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
-            this.numPrice.Name = "numPrice";
-            this.numPrice.Width = 120;
+            this.numBuyPrice.DecimalPlaces = 2;
+            this.numBuyPrice.Location = new System.Drawing.Point(13, 95);
+            this.numBuyPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+            this.numBuyPrice.Name = "numBuyPrice";
+            this.numBuyPrice.Width = 120;
+            // 
+            // lblSellPrice
+            // 
+            this.lblSellPrice.AutoSize = true;
+            this.lblSellPrice.Location = new System.Drawing.Point(145, 75);
+            this.lblSellPrice.Name = "lblSellPrice";
+            this.lblSellPrice.Text = "Sell Price";
+            // 
+            // numSellPrice
+            // 
+            this.numSellPrice.DecimalPlaces = 2;
+            this.numSellPrice.Location = new System.Drawing.Point(145, 95);
+            this.numSellPrice.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+            this.numSellPrice.Name = "numSellPrice";
+            this.numSellPrice.Width = 120;
             // 
             // lblQuantity
             // 
@@ -438,7 +465,37 @@
             this.tabSales.TabIndex = 1;
             this.tabSales.Text = "Sales";
             this.tabSales.UseVisualStyleBackColor = true;
+            // dgvStats
+            this.dgvStats.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvStats.Name = "dgvStats";
+            this.dgvStats.ReadOnly = true;
+            this.dgvStats.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvStats.MultiSelect = false;
+            this.dgvStats.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvStats.AllowUserToAddRows = false;
+            this.dgvStats.AllowUserToDeleteRows = false;
+            this.dgvStats.RowHeadersVisible = false;
+            // lblTotalProfit
+            this.lblTotalProfit.AutoSize = true;
+            this.lblTotalProfit.Name = "lblTotalProfit";
+            this.lblTotalProfit.Text = "Total Profit:";
+            this.lblTotalProfit.Font = new System.Drawing.Font(this.lblTotalProfit.Font, System.Drawing.FontStyle.Bold);
+            this.lblTotalProfit.Dock = System.Windows.Forms.DockStyle.Left;
+            // lblTotalProfitValue
+            this.lblTotalProfitValue.AutoSize = true;
+            this.lblTotalProfitValue.Name = "lblTotalProfitValue";
+            this.lblTotalProfitValue.Text = "0.00";
+            this.lblTotalProfitValue.Font = new System.Drawing.Font(this.lblTotalProfitValue.Font, System.Drawing.FontStyle.Bold);
+            this.lblTotalProfitValue.Dock = System.Windows.Forms.DockStyle.Fill;
+            var panelStatsBottom = new System.Windows.Forms.Panel();
+            panelStatsBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
+            panelStatsBottom.Height = 35;
+            panelStatsBottom.Padding = new System.Windows.Forms.Padding(10, 8, 0, 0);
+            panelStatsBottom.Controls.Add(this.lblTotalProfitValue);
+            panelStatsBottom.Controls.Add(this.lblTotalProfit);
             // tabStats
+            this.tabStats.Controls.Add(this.dgvStats);
+            this.tabStats.Controls.Add(panelStatsBottom);
             this.tabStats.Location = new System.Drawing.Point(4, 24);
             this.tabStats.Name = "tabStats";
             this.tabStats.Size = new System.Drawing.Size(792, 422);
