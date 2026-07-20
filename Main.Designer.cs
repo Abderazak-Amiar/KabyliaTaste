@@ -59,6 +59,15 @@
     private System.Windows.Forms.Button btnSalePrev;
     private System.Windows.Forms.Button btnSaleNext;
     private System.Windows.Forms.Label lblSalePage;
+    // Sales filter panel
+    private System.Windows.Forms.Panel panelSaleFilter;
+    private System.Windows.Forms.Label lblFilterBuyer;
+    private System.Windows.Forms.ComboBox cmbFilterBuyer;
+    private System.Windows.Forms.Label lblFilterProduct;
+    private System.Windows.Forms.ComboBox cmbFilterProduct;
+    private System.Windows.Forms.CheckBox chkFilterDate;
+    private System.Windows.Forms.DateTimePicker dtpFilterDate;
+    private System.Windows.Forms.Button btnClearSaleFilter;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -132,6 +141,14 @@
             this.btnSalePrev = new System.Windows.Forms.Button();
             this.btnSaleNext = new System.Windows.Forms.Button();
             this.lblSalePage = new System.Windows.Forms.Label();
+            this.panelSaleFilter = new System.Windows.Forms.Panel();
+            this.lblFilterBuyer = new System.Windows.Forms.Label();
+            this.cmbFilterBuyer = new System.Windows.Forms.ComboBox();
+            this.lblFilterProduct = new System.Windows.Forms.Label();
+            this.cmbFilterProduct = new System.Windows.Forms.ComboBox();
+            this.chkFilterDate = new System.Windows.Forms.CheckBox();
+            this.dtpFilterDate = new System.Windows.Forms.DateTimePicker();
+            this.btnClearSaleFilter = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
             // tabControlMain
@@ -467,10 +484,64 @@
             this.panelSalePagination.Controls.Add(this.btnSalePrev);
             this.panelSalePagination.Controls.Add(this.lblSalePage);
             this.panelSalePagination.Controls.Add(this.btnSaleNext);
+            // 
+            // panelSaleFilter
+            // 
+            this.panelSaleFilter.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelSaleFilter.Height = 45;
+            this.panelSaleFilter.Name = "panelSaleFilter";
+            this.panelSaleFilter.Padding = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            // lblFilterBuyer
+            this.lblFilterBuyer.AutoSize = true;
+            this.lblFilterBuyer.Location = new System.Drawing.Point(8, 14);
+            this.lblFilterBuyer.Name = "lblFilterBuyer";
+            this.lblFilterBuyer.Text = "Buyer:";
+            // cmbFilterBuyer
+            this.cmbFilterBuyer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
+            this.cmbFilterBuyer.Location = new System.Drawing.Point(58, 10);
+            this.cmbFilterBuyer.Name = "cmbFilterBuyer";
+            this.cmbFilterBuyer.Width = 150;
+            this.cmbFilterBuyer.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbFilterBuyer.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            // lblFilterProduct
+            this.lblFilterProduct.AutoSize = true;
+            this.lblFilterProduct.Location = new System.Drawing.Point(218, 14);
+            this.lblFilterProduct.Name = "lblFilterProduct";
+            this.lblFilterProduct.Text = "Product:";
+            // cmbFilterProduct
+            this.cmbFilterProduct.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbFilterProduct.Location = new System.Drawing.Point(278, 10);
+            this.cmbFilterProduct.Name = "cmbFilterProduct";
+            this.cmbFilterProduct.Width = 160;
+            // chkFilterDate
+            this.chkFilterDate.AutoSize = true;
+            this.chkFilterDate.Location = new System.Drawing.Point(448, 12);
+            this.chkFilterDate.Name = "chkFilterDate";
+            this.chkFilterDate.Text = "Date:";
+            // dtpFilterDate
+            this.dtpFilterDate.Location = new System.Drawing.Point(503, 10);
+            this.dtpFilterDate.Name = "dtpFilterDate";
+            this.dtpFilterDate.Width = 130;
+            this.dtpFilterDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            this.dtpFilterDate.Enabled = false;
+            // btnClearSaleFilter
+            this.btnClearSaleFilter.Location = new System.Drawing.Point(643, 10);
+            this.btnClearSaleFilter.Name = "btnClearSaleFilter";
+            this.btnClearSaleFilter.Size = new System.Drawing.Size(100, 25);
+            this.btnClearSaleFilter.Text = "Clear Filters";
+            this.btnClearSaleFilter.UseVisualStyleBackColor = true;
+            this.panelSaleFilter.Controls.Add(this.lblFilterBuyer);
+            this.panelSaleFilter.Controls.Add(this.cmbFilterBuyer);
+            this.panelSaleFilter.Controls.Add(this.lblFilterProduct);
+            this.panelSaleFilter.Controls.Add(this.cmbFilterProduct);
+            this.panelSaleFilter.Controls.Add(this.chkFilterDate);
+            this.panelSaleFilter.Controls.Add(this.dtpFilterDate);
+            this.panelSaleFilter.Controls.Add(this.btnClearSaleFilter);
             // add controls to tabSales
             this.tabSales.Controls.Add(this.dgvSales);
             this.tabSales.Controls.Add(this.panelSalePagination);
             this.tabSales.Controls.Add(this.panelSaleLeft);
+            this.tabSales.Controls.Add(this.panelSaleFilter);
             this.tabSales.Location = new System.Drawing.Point(4, 24);
             this.tabSales.Name = "tabSales";
             this.tabSales.Padding = new System.Windows.Forms.Padding(3);
