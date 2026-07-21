@@ -18,6 +18,8 @@
         private const int ProductPageSize = 20;
         private string _productFilter = "";
 
+        public bool LogoutRequested { get; private set; } = false;
+
         public Main()
         {
             InitializeComponent();
@@ -53,6 +55,13 @@
             dtpFilterDate.ValueChanged += SaleFilter_Changed;
             btnClearSaleFilter.Click += BtnClearSaleFilter_Click;
             btnPrintReport.Click += BtnPrintReport_Click;
+            btnLogout.Click += BtnLogout_Click;
+            btnChangePassword.Click += BtnChangePassword_Click;
+            btnSaveStoreName.Click += BtnSaveStoreName_Click;
+            btnChangeLogo.Click += BtnChangeLogo_Click;
+            btnChangeUsername.Click += BtnChangeUsername_Click;
+            timerClock.Tick += TimerClock_Tick;
+            Resize += (s, e) => UpdateDateTime();
         }
 
         private void TxtSearch_TextChanged(object? sender, EventArgs e)
@@ -63,7 +72,47 @@
 
         private void Main_Load(object? sender, EventArgs e)
         {
+            using var db = new AppDbContext();
+            var store = db.StoreSettings.FirstOrDefault();
+            if (store != null)
+                this.Text = store.StoreName;
+
+            UpdateGreeting();
+            UpdateDateTime();
             LoadProducts();
+        }
+
+        private void UpdateGreeting()
+        {
+            var hour = DateTime.Now.Hour;
+            var timeOfDay = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+            var role     = Session.CurrentUser?.IsAdmin == true ? "admin" : "user";
+            var username = Session.CurrentUser?.Username ?? "";
+
+            lblGreeting.SetSegments(new[]
+            {
+                new KabyliaTaste.Controls.MixedFontLabel.Segment($"{timeOfDay}, ",          Bold: false),
+                new KabyliaTaste.Controls.MixedFontLabel.Segment(username,                  Bold: true),
+                new KabyliaTaste.Controls.MixedFontLabel.Segment("  |  You're logged in as: ", Bold: false),
+                new KabyliaTaste.Controls.MixedFontLabel.Segment(role,                      Bold: true),
+            });
+
+            UpdateDateTime();
+        }
+
+        private void UpdateDateTime()
+        {
+            lblDateTime.Text = DateTime.Now.ToString("dddd, dd MMMM yyyy   HH:mm:ss");
+            // Centre in the gap between the greeting and the logout button
+            int areaLeft  = lblGreeting.Right + 5;
+            int areaRight = btnLogout.Left - 5;
+            int center    = areaLeft + (areaRight - areaLeft - lblDateTime.Width) / 2;
+            lblDateTime.Left = Math.Max(areaLeft, center);
+        }
+
+        private void TimerClock_Tick(object? sender, EventArgs e)
+        {
+            UpdateDateTime();
         }
 
         private void LoadProducts(string filter = "")
@@ -316,6 +365,8 @@
             LoadSalesTab();
         else if (tabControlMain.SelectedTab == tabStats)
             LoadStatsTab();
+        else if (tabControlMain.SelectedTab == tabSettings)
+            LoadSettingsTab();
     }
 
     private void LoadStatsTab()
@@ -777,6 +828,164 @@
     {
         db.Database.ExecuteSqlRaw("UPDATE Sales SET Id = Id - 1 WHERE Id > {0}", deletedId);
         db.Database.ExecuteSqlRaw("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(Id), 0) FROM Sales) WHERE name = 'Sales'");
+    }
+
+    // ── Settings Tab ─────────────────────────────────────────────────────────
+
+    private void LoadSettingsTab()
+    {
+        using var db = new Data.AppDbContext();
+        var store = db.StoreSettings.FirstOrDefault();
+        if (store != null)
+        {
+            txtStoreName.Text = store.StoreName;
+            if (store.LogoData != null && store.LogoData.Length > 0)
+            {
+                using var ms = new System.IO.MemoryStream(store.LogoData);
+                picStoreLogo.Image = System.Drawing.Image.FromStream(ms);
+            }
+            else
+            {
+                picStoreLogo.Image = null;
+            }
+        }
+
+        // Clear password fields
+        txtCurrentPassword.Clear();
+        txtNewPassword.Clear();
+        txtConfirmPassword.Clear();
+
+        // Populate username field
+        txtUsernameProfile.Text = Session.CurrentUser?.Username ?? "";
+    }
+
+    private void BtnChangeUsername_Click(object? sender, EventArgs e)
+    {
+        if (Session.CurrentUser == null) return;
+
+        var newUsername = txtUsernameProfile.Text.Trim();
+        if (string.IsNullOrEmpty(newUsername))
+        {
+            MessageBox.Show("Username cannot be empty.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        using var db = new Data.AppDbContext();
+        if (db.Users.Any(u => u.Username == newUsername && u.Id != Session.CurrentUser.Id))
+        {
+            MessageBox.Show("That username is already taken.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var user = db.Users.Find(Session.CurrentUser.Id);
+        if (user == null) return;
+
+        user.Username = newUsername;
+        db.SaveChanges();
+        Session.CurrentUser.Username = newUsername;
+
+        UpdateGreeting();
+        MessageBox.Show("Username updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private void BtnLogout_Click(object? sender, EventArgs e)
+    {
+        LogoutRequested = true;
+        Close();
+    }
+
+    private void BtnChangePassword_Click(object? sender, EventArgs e)
+    {
+        if (Session.CurrentUser == null) return;
+
+        var current = txtCurrentPassword.Text;
+        var newPass = txtNewPassword.Text;
+        var confirm = txtConfirmPassword.Text;
+
+        if (string.IsNullOrWhiteSpace(current) || string.IsNullOrWhiteSpace(newPass))
+        {
+            MessageBox.Show("Please fill in all password fields.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (newPass != confirm)
+        {
+            MessageBox.Show("New password and confirmation do not match.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        using var db = new Data.AppDbContext();
+        var user = db.Users.Find(Session.CurrentUser.Id);
+        if (user == null) return;
+
+        if (user.Password != current)
+        {
+            MessageBox.Show("Current password is incorrect.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        user.Password = newPass;
+        db.SaveChanges();
+        Session.CurrentUser.Password = newPass;
+
+        txtCurrentPassword.Clear();
+        txtNewPassword.Clear();
+        txtConfirmPassword.Clear();
+        MessageBox.Show("Password changed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private void BtnSaveStoreName_Click(object? sender, EventArgs e)
+    {
+        var name = txtStoreName.Text.Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            MessageBox.Show("Store name cannot be empty.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        using var db = new Data.AppDbContext();
+        var store = db.StoreSettings.FirstOrDefault();
+        if (store == null)
+        {
+            store = new Models.StoreSettings { StoreName = name };
+            db.StoreSettings.Add(store);
+        }
+        else
+        {
+            store.StoreName = name;
+        }
+        db.SaveChanges();
+        this.Text = name;
+        MessageBox.Show("Store name saved.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private void BtnChangeLogo_Click(object? sender, EventArgs e)
+    {
+        using var dlg = new OpenFileDialog
+        {
+            Title = "Select Logo Image",
+            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif"
+        };
+        if (dlg.ShowDialog() != DialogResult.OK) return;
+
+        var imageData = System.IO.File.ReadAllBytes(dlg.FileName);
+
+        using var db = new Data.AppDbContext();
+        var store = db.StoreSettings.FirstOrDefault();
+        if (store == null)
+        {
+            store = new Models.StoreSettings { StoreName = txtStoreName.Text.Trim(), LogoData = imageData };
+            db.StoreSettings.Add(store);
+        }
+        else
+        {
+            store.LogoData = imageData;
+        }
+        db.SaveChanges();
+
+        using var ms = new System.IO.MemoryStream(imageData);
+        picStoreLogo.Image = System.Drawing.Image.FromStream(ms);
+        MessageBox.Show("Logo updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
     }
 }

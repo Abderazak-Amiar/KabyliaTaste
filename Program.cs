@@ -35,10 +35,39 @@ namespace KabyliaTaste
                 }
 
                 // Now only truly pending migrations (e.g. AddSale) will be applied
-                db.Database.Migrate();
-            }
+                    db.Database.Migrate();
 
-            Application.Run(new Main());
+                    // Seed default users if none exist
+                    if (!db.Users.Any())
+                    {
+                        db.Users.Add(new KabyliaTaste.Models.User { Username = "admin", Password = "admin", IsAdmin = true });
+                        db.Users.Add(new KabyliaTaste.Models.User { Username = "user", Password = "user", IsAdmin = false });
+                        db.SaveChanges();
+                    }
+
+                    // Seed default store settings if none exist
+                    if (!db.StoreSettings.Any())
+                    {
+                        db.StoreSettings.Add(new KabyliaTaste.Models.StoreSettings { StoreName = "KabyliaTaste" });
+                        db.SaveChanges();
+                    }
+                }
+
+                // Show login; loop so logout brings back the login screen
+                while (true)
+                {
+                    Session.CurrentUser = null;
+                    using var loginForm = new LoginForm();
+                    if (loginForm.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                        break;
+
+                    using var main = new Main();
+                    Application.Run(main);
+
+                    // If the user didn't request logout, exit the app
+                    if (!main.LogoutRequested)
+                        break;
+                }
         }
     }
 }
