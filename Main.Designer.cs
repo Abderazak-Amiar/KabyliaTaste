@@ -77,6 +77,31 @@
     private System.Windows.Forms.DateTimePicker dtpStatsDate;
     private System.Windows.Forms.Button btnClearStatsFilter;
     private System.Windows.Forms.Button btnPrintReport;
+    // Settings tab inner controls
+    private System.Windows.Forms.TabControl tabControlSettings;
+    private System.Windows.Forms.TabPage tabProfile;
+    private System.Windows.Forms.TabPage tabStore;
+    private System.Windows.Forms.Label lblCurrentPassword;
+    private System.Windows.Forms.TextBox txtCurrentPassword;
+    private System.Windows.Forms.Label lblNewPassword;
+    private System.Windows.Forms.TextBox txtNewPassword;
+    private System.Windows.Forms.Label lblConfirmPassword;
+    private System.Windows.Forms.TextBox txtConfirmPassword;
+    private System.Windows.Forms.Button btnChangePassword;
+    private System.Windows.Forms.Label lblStoreName;
+    private System.Windows.Forms.TextBox txtStoreName;
+    private System.Windows.Forms.Button btnSaveStoreName;
+    private System.Windows.Forms.PictureBox picStoreLogo;
+    private System.Windows.Forms.Button btnChangeLogo;
+    private System.Windows.Forms.Button btnLogout;
+    // Profile extra controls
+    private System.Windows.Forms.Label lblUsernameProfile;
+    private System.Windows.Forms.TextBox txtUsernameProfile;
+    private System.Windows.Forms.Button btnChangeUsername;
+    // Top-bar info controls
+    private KabyliaTaste.Controls.MixedFontLabel lblGreeting;
+    private System.Windows.Forms.Label lblDateTime;
+    private System.Windows.Forms.Timer timerClock;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -166,15 +191,38 @@
             this.btnClearStatsFilter = new System.Windows.Forms.Button();
             this.btnPrintReport = new System.Windows.Forms.Button();
             this.panelStatsFilter = new System.Windows.Forms.Panel();
+            this.tabControlSettings = new System.Windows.Forms.TabControl();
+            this.tabProfile = new System.Windows.Forms.TabPage();
+            this.tabStore = new System.Windows.Forms.TabPage();
+            this.lblCurrentPassword = new System.Windows.Forms.Label();
+            this.txtCurrentPassword = new System.Windows.Forms.TextBox();
+            this.lblNewPassword = new System.Windows.Forms.Label();
+            this.txtNewPassword = new System.Windows.Forms.TextBox();
+            this.lblConfirmPassword = new System.Windows.Forms.Label();
+            this.txtConfirmPassword = new System.Windows.Forms.TextBox();
+            this.btnChangePassword = new System.Windows.Forms.Button();
+            this.lblStoreName = new System.Windows.Forms.Label();
+            this.txtStoreName = new System.Windows.Forms.TextBox();
+            this.btnSaveStoreName = new System.Windows.Forms.Button();
+            this.picStoreLogo = new System.Windows.Forms.PictureBox();
+            this.btnChangeLogo = new System.Windows.Forms.Button();
+            this.btnLogout = new System.Windows.Forms.Button();
+            this.lblUsernameProfile = new System.Windows.Forms.Label();
+            this.txtUsernameProfile = new System.Windows.Forms.TextBox();
+            this.btnChangeUsername = new System.Windows.Forms.Button();
+            this.lblGreeting = new KabyliaTaste.Controls.MixedFontLabel();
+            this.lblDateTime = new System.Windows.Forms.Label();
+            this.timerClock = new System.Windows.Forms.Timer();
             SuspendLayout();
             // 
             // tabControlMain
             // 
-            this.tabControlMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControlMain.Location = new System.Drawing.Point(0, 0);
+            this.tabControlMain.Dock = System.Windows.Forms.DockStyle.None;
+            this.tabControlMain.Location = new System.Drawing.Point(0, 40);
             this.tabControlMain.Name = "tabControlMain";
             this.tabControlMain.SelectedIndex = 0;
-            this.tabControlMain.Size = new System.Drawing.Size(800, 450);
+            this.tabControlMain.Size = new System.Drawing.Size(1000, 560);
+            this.tabControlMain.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             this.tabControlMain.TabIndex = 0;
             this.tabControlMain.TabPages.AddRange(new System.Windows.Forms.TabPage[] {
             this.tabProducts,
@@ -657,6 +705,119 @@
             this.tabSettings.TabIndex = 3;
             this.tabSettings.Text = "Settings";
             this.tabSettings.UseVisualStyleBackColor = true;
+
+            // tabControlSettings (inner)
+            this.tabControlSettings.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControlSettings.Name = "tabControlSettings";
+            this.tabControlSettings.TabPages.AddRange(new System.Windows.Forms.TabPage[] {
+                this.tabProfile,
+                this.tabStore });
+
+            // ── tabProfile ───────────────────────────────────────────────
+            this.tabProfile.Name = "tabProfile";
+            this.tabProfile.Text = "Profile";
+            this.tabProfile.UseVisualStyleBackColor = true;
+            this.tabProfile.Padding = new System.Windows.Forms.Padding(20);
+
+            this.lblCurrentPassword.Text = "Current Password";
+            this.lblCurrentPassword.AutoSize = true;
+            this.lblCurrentPassword.Location = new System.Drawing.Point(30, 30);
+
+            this.txtCurrentPassword.Location = new System.Drawing.Point(30, 50);
+            this.txtCurrentPassword.Size = new System.Drawing.Size(260, 23);
+            this.txtCurrentPassword.UseSystemPasswordChar = true;
+            this.txtCurrentPassword.Name = "txtCurrentPassword";
+
+            this.lblNewPassword.Text = "New Password";
+            this.lblNewPassword.AutoSize = true;
+            this.lblNewPassword.Location = new System.Drawing.Point(30, 85);
+
+            this.txtNewPassword.Location = new System.Drawing.Point(30, 105);
+            this.txtNewPassword.Size = new System.Drawing.Size(260, 23);
+            this.txtNewPassword.UseSystemPasswordChar = true;
+            this.txtNewPassword.Name = "txtNewPassword";
+
+            this.lblConfirmPassword.Text = "Confirm New Password";
+            this.lblConfirmPassword.AutoSize = true;
+            this.lblConfirmPassword.Location = new System.Drawing.Point(30, 140);
+
+            this.txtConfirmPassword.Location = new System.Drawing.Point(30, 160);
+            this.txtConfirmPassword.Size = new System.Drawing.Size(260, 23);
+            this.txtConfirmPassword.UseSystemPasswordChar = true;
+            this.txtConfirmPassword.Name = "txtConfirmPassword";
+
+            this.btnChangePassword.Text = "Change Password";
+            this.btnChangePassword.Name = "btnChangePassword";
+            this.btnChangePassword.Location = new System.Drawing.Point(30, 200);
+            this.btnChangePassword.Size = new System.Drawing.Size(140, 30);
+            this.btnChangePassword.UseVisualStyleBackColor = true;
+
+            this.tabProfile.Controls.Add(this.lblCurrentPassword);
+            this.tabProfile.Controls.Add(this.txtCurrentPassword);
+            this.tabProfile.Controls.Add(this.lblNewPassword);
+            this.tabProfile.Controls.Add(this.txtNewPassword);
+            this.tabProfile.Controls.Add(this.lblConfirmPassword);
+            this.tabProfile.Controls.Add(this.txtConfirmPassword);
+            this.tabProfile.Controls.Add(this.btnChangePassword);
+
+            // Username section in Profile tab
+            this.lblUsernameProfile.Text = "Username";
+            this.lblUsernameProfile.AutoSize = true;
+            this.lblUsernameProfile.Location = new System.Drawing.Point(30, 250);
+
+            this.txtUsernameProfile.Location = new System.Drawing.Point(30, 270);
+            this.txtUsernameProfile.Size = new System.Drawing.Size(260, 23);
+            this.txtUsernameProfile.Name = "txtUsernameProfile";
+
+            this.btnChangeUsername.Text = "Change Username";
+            this.btnChangeUsername.Name = "btnChangeUsername";
+            this.btnChangeUsername.Location = new System.Drawing.Point(30, 305);
+            this.btnChangeUsername.Size = new System.Drawing.Size(150, 30);
+            this.btnChangeUsername.UseVisualStyleBackColor = true;
+
+            this.tabProfile.Controls.Add(this.lblUsernameProfile);
+            this.tabProfile.Controls.Add(this.txtUsernameProfile);
+            this.tabProfile.Controls.Add(this.btnChangeUsername);
+
+            // ── tabStore ─────────────────────────────────────────────────
+            this.tabStore.Name = "tabStore";
+            this.tabStore.Text = "Store";
+            this.tabStore.UseVisualStyleBackColor = true;
+            this.tabStore.Padding = new System.Windows.Forms.Padding(20);
+
+            this.lblStoreName.Text = "Store Name";
+            this.lblStoreName.AutoSize = true;
+            this.lblStoreName.Location = new System.Drawing.Point(30, 30);
+
+            this.txtStoreName.Location = new System.Drawing.Point(30, 50);
+            this.txtStoreName.Size = new System.Drawing.Size(300, 23);
+            this.txtStoreName.Name = "txtStoreName";
+
+            this.btnSaveStoreName.Text = "Save Name";
+            this.btnSaveStoreName.Name = "btnSaveStoreName";
+            this.btnSaveStoreName.Location = new System.Drawing.Point(340, 48);
+            this.btnSaveStoreName.Size = new System.Drawing.Size(90, 27);
+            this.btnSaveStoreName.UseVisualStyleBackColor = true;
+
+            this.picStoreLogo.Location = new System.Drawing.Point(30, 95);
+            this.picStoreLogo.Size = new System.Drawing.Size(128, 128);
+            this.picStoreLogo.Name = "picStoreLogo";
+            this.picStoreLogo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.picStoreLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+
+            this.btnChangeLogo.Text = "Change Logo";
+            this.btnChangeLogo.Name = "btnChangeLogo";
+            this.btnChangeLogo.Location = new System.Drawing.Point(30, 235);
+            this.btnChangeLogo.Size = new System.Drawing.Size(120, 30);
+            this.btnChangeLogo.UseVisualStyleBackColor = true;
+
+            this.tabStore.Controls.Add(this.lblStoreName);
+            this.tabStore.Controls.Add(this.txtStoreName);
+            this.tabStore.Controls.Add(this.btnSaveStoreName);
+            this.tabStore.Controls.Add(this.picStoreLogo);
+            this.tabStore.Controls.Add(this.btnChangeLogo);
+
+            this.tabSettings.Controls.Add(this.tabControlSettings);
             // lblSaleProduct
             this.lblSaleProduct.AutoSize = true;
             this.lblSaleProduct.Location = new System.Drawing.Point(13, 15);
@@ -699,10 +860,39 @@
             this.lblSaleTotalValue.Location = new System.Drawing.Point(60, 195);
             this.lblSaleTotalValue.Name = "lblSaleTotalValue";
             this.lblSaleTotalValue.Text = "0.00";
+            // btnLogout – always visible at the top-right of the main window
+            // ── Top bar: greeting | date-time | logout ────────────────────
+            this.lblGreeting.Name = "lblGreeting";
+            this.lblGreeting.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.lblGreeting.BackColor = System.Drawing.SystemColors.Control;
+            this.lblGreeting.Location = new System.Drawing.Point(10, 11);
+            this.lblGreeting.Size = new System.Drawing.Size(10, 22);
+            this.lblGreeting.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
+
+            this.lblDateTime.Name = "lblDateTime";
+            this.lblDateTime.Text = "";
+            this.lblDateTime.AutoSize = true;
+            this.lblDateTime.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.lblDateTime.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lblDateTime.Location = new System.Drawing.Point(400, 11);
+
+            this.btnLogout.Text = "🔓 Logout";
+            this.btnLogout.Name = "btnLogout";
+            this.btnLogout.Size = new System.Drawing.Size(100, 30);
+            this.btnLogout.Location = new System.Drawing.Point(888, 5);
+            this.btnLogout.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            this.btnLogout.UseVisualStyleBackColor = true;
+
+            this.timerClock.Interval = 1000;
+            this.timerClock.Enabled = true;
+
             // 
             // Main
             // 
             this.ClientSize = new System.Drawing.Size(1000, 600);
+            this.Controls.Add(this.lblGreeting);
+            this.Controls.Add(this.lblDateTime);
+            this.Controls.Add(this.btnLogout);
             this.Controls.Add(this.tabControlMain);
             this.Name = "Main";
             this.Text = "KabyliaTaste";
