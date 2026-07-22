@@ -92,6 +92,7 @@
             ApplyRoleRestrictions();
             UpdateGreeting();
             UpdateDateTime();
+            CompactProductIds(db);
             LoadProducts();
         }
 
@@ -198,6 +199,7 @@
             }
             var product = new Product
             {
+                Id = (db.Products.Any() ? db.Products.Max(p => p.Id) : 0) + 1,
                 Name = name,
                 BuyPrice = numBuyPrice.Value,
                 SellPrice = numSellPrice.Value,
@@ -251,10 +253,9 @@
             using var db = new AppDbContext();
             var product = db.Products.Find(selectedProductId.Value);
             if (product == null) return;
-            var deletedProductId = product.Id;
             db.Products.Remove(product);
             db.SaveChanges();
-            ResequenceProducts(db, deletedProductId);
+            CompactProductIds(db);
             _currentProductPage = 1;
             LoadProducts();
         }
@@ -338,6 +339,12 @@
                 : qty <= 10
                     ? Color.Orange
                     : Color.LightGreen;
+
+            if (qty == 0)
+            {
+                e.Value = "0  ⚠ Out of stock";
+                e.FormattingApplied = true;
+            }
         }
     }
 
@@ -631,6 +638,7 @@
 
         var sale = new Sale
         {
+            Id = (db.Sales.Any() ? db.Sales.Max(s => s.Id) : 0) + 1,
             ProductId = productId,
             Quantity = qty,
             UnitPrice = unitPrice,
@@ -973,14 +981,40 @@
         LoadProducts(_productFilter);
     }
 
+    private static void CompactProductIds(AppDbContext db)
+    {
+        // Reassign all product IDs to be sequential (1, 2, 3, ...) fixing any gaps
+        db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF");
+        // Use negative IDs as a staging step to avoid unique constraint conflicts
+        var products = db.Products.OrderBy(p => p.Id).ToList();
+        int seq = 1;
+        foreach (var p in products)
+        {
+            if (p.Id != seq)
+            {
+                db.Database.ExecuteSqlRaw("UPDATE Sales SET ProductId = {0} WHERE ProductId = {1}", -seq, p.Id);
+                db.Database.ExecuteSqlRaw("UPDATE Products SET Id = {0} WHERE Id = {1}", -seq, p.Id);
+            }
+            seq++;
+        }
+        // Flip negatives to positives
+        db.Database.ExecuteSqlRaw("UPDATE Sales SET ProductId = -ProductId WHERE ProductId < 0");
+        db.Database.ExecuteSqlRaw("UPDATE Products SET Id = -Id WHERE Id < 0");
+        db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON");
+        db.Database.ExecuteSqlRaw(
+            "INSERT OR REPLACE INTO sqlite_sequence(name, seq) VALUES ('Products', (SELECT IFNULL(MAX(Id), 0) FROM Products))");
+    }
+
     private static void ResequenceProducts(AppDbContext db, int deletedId)
     {
         db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF");
         db.Database.ExecuteSqlRaw("UPDATE Sales SET ProductId = ProductId - 1 WHERE ProductId > {0}", deletedId);
         db.Database.ExecuteSqlRaw("UPDATE Products SET Id = Id - 1 WHERE Id > {0}", deletedId);
         db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON");
-        db.Database.ExecuteSqlRaw("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(Id), 0) FROM Products) WHERE name = 'Products'");
-        db.Database.ExecuteSqlRaw("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(Id), 0) FROM Sales) WHERE name = 'Sales'");
+        db.Database.ExecuteSqlRaw(
+            "INSERT OR REPLACE INTO sqlite_sequence(name, seq) VALUES ('Products', (SELECT IFNULL(MAX(Id), 0) FROM Products))");
+        db.Database.ExecuteSqlRaw(
+            "INSERT OR REPLACE INTO sqlite_sequence(name, seq) VALUES ('Sales', (SELECT IFNULL(MAX(Id), 0) FROM Sales))");
     }
 
     private static void ResequenceSales(AppDbContext db, int deletedId)
