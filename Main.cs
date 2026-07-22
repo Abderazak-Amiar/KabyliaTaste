@@ -44,6 +44,8 @@
             numSaleUnitPrice.ValueChanged += SaleInputChanged;
             btnSell.Click += BtnSell_Click;
             btnDeleteSale.Click += BtnDeleteSale_Click;
+            btnUpdateSale.Click += BtnUpdateSale_Click;
+            btnClearSale.Click += BtnClearSale_Click;
             btnPrintInvoice.Click += BtnPrintInvoice_Click;
             txtBuyerName.TextChanged += TxtBuyerName_TextChanged;
             dgvSales.SelectionChanged += DgvSales_SelectionChanged;
@@ -75,11 +77,41 @@
             using var db = new AppDbContext();
             var store = db.StoreSettings.FirstOrDefault();
             if (store != null)
+            {
                 this.Text = store.StoreName;
+                if (store.LogoData != null && store.LogoData.Length > 0)
+                {
+                    using var ms = new System.IO.MemoryStream(store.LogoData);
+                    var img = System.Drawing.Image.FromStream(ms);
+                    // Convert image to icon for the title bar / taskbar
+                    var bmp = new System.Drawing.Bitmap(img, 32, 32);
+                    this.Icon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
+                }
+            }
 
+            ApplyRoleRestrictions();
             UpdateGreeting();
             UpdateDateTime();
             LoadProducts();
+        }
+
+        private void ApplyRoleRestrictions()
+        {
+            bool isAdmin = Session.IsAdmin;
+
+            // Products tab: hide the entire form panel for non-admins
+            panelLeft.Visible = isAdmin;
+
+            // Sales tab: hide delete sale and restrict unit price editing for non-admins
+            btnDeleteSale.Visible = isAdmin;
+            numSaleUnitPrice.Enabled = isAdmin;
+
+            // Hide Stats and Settings tabs for non-admins
+            if (!isAdmin)
+            {
+                tabControlMain.TabPages.Remove(tabStats);
+                tabControlMain.TabPages.Remove(tabSettings);
+            }
         }
 
         private void UpdateGreeting()
@@ -138,7 +170,7 @@
             btnProductNext.Enabled = _currentProductPage < totalPages;
 
         if (dgvProducts.Columns.Contains("BuyPrice"))
-            dgvProducts.Columns["BuyPrice"].Visible = chkShowBuyPrice.Checked;
+            dgvProducts.Columns["BuyPrice"].Visible = Session.IsAdmin && chkShowBuyPrice.Checked;
         ClearForm(false);
         // auto-select first row if available
         if (dgvProducts.Rows.Count > 0)
@@ -229,7 +261,7 @@
 
         private void ChkShowBuyPrice_CheckedChanged(object? sender, EventArgs e)
         {
-            bool show = chkShowBuyPrice.Checked;
+            bool show = Session.IsAdmin && chkShowBuyPrice.Checked;
             lblBuyPrice.Visible = show;
             numBuyPrice.Visible = show;
             if (dgvProducts.Columns.Contains("BuyPrice"))
@@ -378,6 +410,19 @@
         cmbStatsProduct.DataSource = products;
         cmbStatsProduct.SelectedIndex = 0;
         cmbStatsProduct.SelectedIndexChanged += StatsFilter_Changed;
+
+        var buyers = db.Sales
+            .Where(s => s.BuyerName != null && s.BuyerName != "")
+            .Select(s => s.BuyerName!)
+            .Distinct()
+            .OrderBy(b => b)
+            .ToList();
+        buyers.Insert(0, "");
+        cmbStatsBuyer.SelectedIndexChanged -= StatsFilter_Changed;
+        cmbStatsBuyer.DataSource = buyers;
+        cmbStatsBuyer.SelectedIndex = 0;
+        cmbStatsBuyer.SelectedIndexChanged += StatsFilter_Changed;
+
         LoadStats();
     }
 
@@ -399,6 +444,13 @@
         buyers.Insert(0, "");
         cmbFilterBuyer.DataSource = buyers;
         cmbFilterBuyer.SelectedIndex = 0;
+
+        // autocomplete on the buyer name input
+        var buyerAc = new AutoCompleteStringCollection();
+        buyerAc.AddRange(buyers.Where(b => b != "").ToArray());
+        txtBuyerName.AutoCompleteCustomSource = buyerAc;
+        txtBuyerName.AutoCompleteMode   = AutoCompleteMode.SuggestAppend;
+        txtBuyerName.AutoCompleteSource = AutoCompleteSource.CustomSource;
 
         // populate filter product dropdown
         var filterProducts = db.Products.OrderBy(p => p.Name).Select(p => p.Name).ToList();
@@ -529,7 +581,9 @@
         foreach (var s in sales)
             s.BuyerName = buyerName;
 
-        new KabyliaTaste.Services.InvoicePrinter(sales, buyerName).PrintPreview();
+        using var dbStore1 = new AppDbContext();
+        var storeForInvoice = dbStore1.StoreSettings.FirstOrDefault();
+        new KabyliaTaste.Services.InvoicePrinter(sales, buyerName, storeForInvoice?.StoreName ?? "KabyliaTaste", storeForInvoice?.LogoData).PrintPreview();
     }
 
     private void CmbSaleProduct_SelectedIndexChanged(object? sender, EventArgs e)
@@ -589,7 +643,7 @@
 
         _currentSalePage = 1;
         RefreshBuyerFilterDropdown();
-        LoadSales();
+        LoadSalesTab();
         LoadProducts();
         MessageBox.Show("Sale recorded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
@@ -599,9 +653,103 @@
         if (dgvSales.CurrentRow == null) { selectedSaleId = null; return; }
         var idCell = dgvSales.CurrentRow.Cells["Id"];
         if (idCell?.Value != null && int.TryParse(idCell.Value.ToString(), out var id))
+        {
             selectedSaleId = id;
+            PopulateSaleForm(id);
+        }
         else
+        {
             selectedSaleId = null;
+        }
+    }
+
+    private void PopulateSaleForm(int saleId)
+    {
+        using var db = new AppDbContext();
+        var sale = db.Sales.Include(s => s.Product).FirstOrDefault(s => s.Id == saleId);
+        if (sale == null) return;
+
+        cmbSaleProduct.SelectedValue = sale.ProductId;
+        numSaleQuantity.Value = sale.Quantity;
+        numSaleUnitPrice.Value = sale.UnitPrice;
+        txtBuyerName.Text = sale.BuyerName ?? string.Empty;
+        UpdateSaleTotal();
+    }
+
+    private void BtnClearSale_Click(object? sender, EventArgs e) => ClearSaleForm();
+
+    private void ClearSaleForm()
+    {
+        selectedSaleId = null;
+        dgvSales.ClearSelection();
+        if (cmbSaleProduct.Items.Count > 0)
+            cmbSaleProduct.SelectedIndex = 0;
+        numSaleQuantity.Value = 1;
+        txtBuyerName.Clear();
+        UpdateSaleTotal();
+    }
+
+    private void BtnUpdateSale_Click(object? sender, EventArgs e)
+    {
+        if (!selectedSaleId.HasValue)
+        {
+            MessageBox.Show("Select a sale to update.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        if (cmbSaleProduct.SelectedValue is not int productId)
+        {
+            MessageBox.Show("Select a product.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var newQty = (int)numSaleQuantity.Value;
+        var newUnitPrice = numSaleUnitPrice.Value;
+
+        using var db = new AppDbContext();
+        var sale = db.Sales.Include(s => s.Product).FirstOrDefault(s => s.Id == selectedSaleId.Value);
+        if (sale == null) return;
+
+        // Restore old stock
+        sale.Product.Quantity += sale.Quantity;
+
+        // Apply new product if changed
+        if (sale.ProductId != productId)
+        {
+            var newProduct = db.Products.Find(productId);
+            if (newProduct == null) return;
+            if (newQty > newProduct.Quantity)
+            {
+                MessageBox.Show($"Not enough stock. Available: {newProduct.Quantity}.", "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // Re-deduct the restored stock
+                sale.Product.Quantity -= sale.Quantity;
+                return;
+            }
+            newProduct.Quantity -= newQty;
+            sale.ProductId = productId;
+        }
+        else
+        {
+            if (newQty > sale.Product.Quantity)
+            {
+                MessageBox.Show($"Not enough stock. Available: {sale.Product.Quantity}.", "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // Re-deduct the restored stock
+                sale.Product.Quantity -= sale.Quantity;
+                return;
+            }
+            sale.Product.Quantity -= newQty;
+        }
+
+        sale.Quantity = newQty;
+        sale.UnitPrice = newUnitPrice;
+        sale.TotalPrice = newQty * newUnitPrice;
+        sale.BuyerName = string.IsNullOrWhiteSpace(txtBuyerName.Text) ? null : txtBuyerName.Text.Trim();
+
+        db.SaveChanges();
+
+        LoadSalesTab();
+        LoadProducts();
+        MessageBox.Show("Sale updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void BtnDeleteSale_Click(object? sender, EventArgs e)
@@ -634,6 +782,7 @@
         private void LoadStats()
         {
             var productFilter = cmbStatsProduct?.SelectedItem as string ?? "";
+            var buyerFilter   = cmbStatsBuyer?.SelectedItem as string ?? "";
             var period = cmbStatsPeriod?.SelectedItem as string ?? "";
             var refDate = dtpStatsDate?.Value.Date ?? DateTime.Today;
 
@@ -642,6 +791,9 @@
 
             if (!string.IsNullOrEmpty(productFilter))
                 query = query.Where(s => s.Product.Name == productFilter);
+
+            if (!string.IsNullOrEmpty(buyerFilter))
+                query = query.Where(s => s.BuyerName == buyerFilter);
 
             if (!string.IsNullOrEmpty(period))
             {
@@ -718,6 +870,7 @@
     private void BtnClearStatsFilter_Click(object? sender, EventArgs e)
     {
         cmbStatsProduct.SelectedIndex = 0;
+        cmbStatsBuyer.SelectedIndex = 0;
         cmbStatsPeriod.SelectedIndex = 0;
         dtpStatsDate.Value = DateTime.Today;
         LoadStats();
@@ -726,6 +879,7 @@
     private void BtnPrintReport_Click(object? sender, EventArgs e)
     {
         var productFilter = cmbStatsProduct?.SelectedItem as string ?? "";
+        var buyerFilter   = cmbStatsBuyer?.SelectedItem as string ?? "";
         var period = cmbStatsPeriod?.SelectedItem as string ?? "";
         var refDate = dtpStatsDate?.Value.Date ?? DateTime.Today;
 
@@ -734,6 +888,9 @@
 
         if (!string.IsNullOrEmpty(productFilter))
             query = query.Where(s => s.Product.Name == productFilter);
+
+        if (!string.IsNullOrEmpty(buyerFilter))
+            query = query.Where(s => s.BuyerName == buyerFilter);
 
         if (!string.IsNullOrEmpty(period))
         {
@@ -770,7 +927,9 @@
             .OrderByDescending(x => x.Profit)
             .ToList();
 
-        new KabyliaTaste.Services.StatsReportPrinter(rows, productFilter, period, refDate).PrintPreview();
+        using var dbStore2 = new AppDbContext();
+        var storeForReport = dbStore2.StoreSettings.FirstOrDefault();
+        new KabyliaTaste.Services.StatsReportPrinter(rows, productFilter, buyerFilter, period, refDate, storeForReport?.StoreName ?? "KabyliaTaste", storeForReport?.LogoData).PrintPreview();
     }
 
     private void ChkFilterDate_CheckedChanged(object? sender, EventArgs e)

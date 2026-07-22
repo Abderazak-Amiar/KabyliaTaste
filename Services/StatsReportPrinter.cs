@@ -20,19 +20,28 @@ namespace KabyliaTaste.Services
     {
         private readonly IReadOnlyList<StatsReportRow> _rows;
         private readonly string _productFilter;
+        private readonly string _clientFilter;
         private readonly string _period;
         private readonly DateTime _refDate;
+        private readonly string _storeName;
+        private readonly byte[]? _logoData;
 
         public StatsReportPrinter(
             IReadOnlyList<StatsReportRow> rows,
             string productFilter,
+            string clientFilter,
             string period,
-            DateTime refDate)
+            DateTime refDate,
+            string storeName = "KabyliaTaste",
+            byte[]? logoData = null)
         {
             _rows          = rows;
             _productFilter = productFilter;
+            _clientFilter  = clientFilter;
             _period        = period;
             _refDate       = refDate;
+            _storeName     = storeName;
+            _logoData      = logoData;
         }
 
         public void PrintPreview()
@@ -87,8 +96,22 @@ namespace KabyliaTaste.Services
             using var smallFont  = new Font("Arial", 9,  FontStyle.Italic);
 
             // ?? Title ??????????????????????????????????????????????????????????
-            g.DrawString("KabyliaTaste", titleFont, Brushes.Black, x, y);
-            y += lineH * 2;
+            if (_logoData != null && _logoData.Length > 0)
+            {
+                using var ms = new System.IO.MemoryStream(_logoData);
+                using var logo = System.Drawing.Image.FromStream(ms);
+                float logoH = lineH * 3f;
+                float logoW = logo.Width * logoH / logo.Height;
+                g.DrawImage(logo, x, y, logoW, logoH);
+                y += logoH + 2;
+                g.DrawString(_storeName, titleFont, Brushes.Black, x, y);
+                y += lineH * 1.5f;
+            }
+            else
+            {
+                g.DrawString(_storeName, titleFont, Brushes.Black, x, y);
+                y += lineH * 2;
+            }
 
             g.DrawString("Sales Statistics Report", headerFont, Brushes.Black, x, y);
             y += lineH;
@@ -155,6 +178,8 @@ namespace KabyliaTaste.Services
             var parts = new System.Collections.Generic.List<string>();
             if (!string.IsNullOrEmpty(_productFilter))
                 parts.Add($"Product: {_productFilter}");
+            if (!string.IsNullOrEmpty(_clientFilter))
+                parts.Add($"Client: {_clientFilter}");
             if (!string.IsNullOrEmpty(_period))
                 parts.Add($"Period: {_period} ({_refDate:dd-MM-yyyy})");
             return parts.Count > 0 ? string.Join(", ", parts) : "None";
