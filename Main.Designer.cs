@@ -51,6 +51,8 @@
     private System.Windows.Forms.Label lblSaleTotalValue;
     private System.Windows.Forms.Button btnSell;
     private System.Windows.Forms.Button btnDeleteSale;
+    private System.Windows.Forms.Button btnUpdateSale;
+    private System.Windows.Forms.Button btnClearSale;
     private System.Windows.Forms.Label lblBuyerName;
     private System.Windows.Forms.TextBox txtBuyerName;
     private System.Windows.Forms.Button btnPrintInvoice;
@@ -71,6 +73,8 @@
     // Stats filter panel
     private System.Windows.Forms.Panel panelStatsFilter;
     private System.Windows.Forms.Label lblStatsFilterProduct;
+    private System.Windows.Forms.Label lblStatsFilterBuyer;
+    private System.Windows.Forms.ComboBox cmbStatsBuyer;
     private System.Windows.Forms.ComboBox cmbStatsProduct;
     private System.Windows.Forms.Label lblStatsFilterPeriod;
     private System.Windows.Forms.ComboBox cmbStatsPeriod;
@@ -169,6 +173,8 @@
             this.txtBuyerName = new System.Windows.Forms.TextBox();
             this.btnSell = new System.Windows.Forms.Button();
             this.btnDeleteSale = new System.Windows.Forms.Button();
+            this.btnUpdateSale = new System.Windows.Forms.Button();
+            this.btnClearSale = new System.Windows.Forms.Button();
             this.btnPrintInvoice = new System.Windows.Forms.Button();
             this.dgvSales = new System.Windows.Forms.DataGridView();
             this.panelSalePagination = new System.Windows.Forms.Panel();
@@ -186,6 +192,8 @@
             this.lblStatsFilterProduct = new System.Windows.Forms.Label();
             this.cmbStatsProduct = new System.Windows.Forms.ComboBox();
             this.lblStatsFilterPeriod = new System.Windows.Forms.Label();
+            this.lblStatsFilterBuyer = new System.Windows.Forms.Label();
+            this.cmbStatsBuyer = new System.Windows.Forms.ComboBox();
             this.cmbStatsPeriod = new System.Windows.Forms.ComboBox();
             this.dtpStatsDate = new System.Windows.Forms.DateTimePicker();
             this.btnClearStatsFilter = new System.Windows.Forms.Button();
@@ -468,6 +476,8 @@
             this.panelSaleLeft.Controls.Add(this.txtBuyerName);
             this.panelSaleLeft.Controls.Add(this.btnSell);
             this.panelSaleLeft.Controls.Add(this.btnDeleteSale);
+            this.panelSaleLeft.Controls.Add(this.btnUpdateSale);
+            this.panelSaleLeft.Controls.Add(this.btnClearSale);
             this.panelSaleLeft.Controls.Add(this.btnPrintInvoice);
             // 
             // lblBuyerName
@@ -499,13 +509,29 @@
             this.btnDeleteSale.Text = "Delete Sale";
             this.btnDeleteSale.UseVisualStyleBackColor = true;
             // 
+            // btnUpdateSale
+            // 
+            this.btnUpdateSale.Location = new System.Drawing.Point(98, 325);
+            this.btnUpdateSale.Name = "btnUpdateSale";
+            this.btnUpdateSale.Size = new System.Drawing.Size(100, 25);
+            this.btnUpdateSale.Text = "Update Sale";
+            this.btnUpdateSale.UseVisualStyleBackColor = true;
+            // 
             // btnPrintInvoice
             // 
             this.btnPrintInvoice.Location = new System.Drawing.Point(13, 325);
             this.btnPrintInvoice.Name = "btnPrintInvoice";
-            this.btnPrintInvoice.Size = new System.Drawing.Size(120, 25);
+            this.btnPrintInvoice.Size = new System.Drawing.Size(75, 25);
             this.btnPrintInvoice.Text = "🖨 Print Invoice";
             this.btnPrintInvoice.UseVisualStyleBackColor = true;
+            // 
+            // btnClearSale
+            // 
+            this.btnClearSale.Location = new System.Drawing.Point(13, 360);
+            this.btnClearSale.Name = "btnClearSale";
+            this.btnClearSale.Size = new System.Drawing.Size(75, 25);
+            this.btnClearSale.Text = "Clear";
+            this.btnClearSale.UseVisualStyleBackColor = true;
             // 
             // dgvSales
             // 
@@ -668,13 +694,22 @@
             this.dtpStatsDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpStatsDate.ValueChanged += new System.EventHandler(this.StatsFilter_Changed);
 
+            this.lblStatsFilterBuyer.Text = "Client:";
+            this.lblStatsFilterBuyer.AutoSize = true;
+            this.lblStatsFilterBuyer.Location = new System.Drawing.Point(508, 10);
+
+            this.cmbStatsBuyer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbStatsBuyer.Location = new System.Drawing.Point(553, 7);
+            this.cmbStatsBuyer.Width = 130;
+            this.cmbStatsBuyer.SelectedIndexChanged += new System.EventHandler(this.StatsFilter_Changed);
+
             this.btnClearStatsFilter.Text = "Clear";
-            this.btnClearStatsFilter.Location = new System.Drawing.Point(508, 5);
+            this.btnClearStatsFilter.Location = new System.Drawing.Point(693, 5);
             this.btnClearStatsFilter.Width = 60;
             this.btnClearStatsFilter.Click += new System.EventHandler(this.BtnClearStatsFilter_Click);
 
             this.btnPrintReport.Text = "🖨 Print Report";
-            this.btnPrintReport.Location = new System.Drawing.Point(578, 4);
+            this.btnPrintReport.Location = new System.Drawing.Point(763, 4);
             this.btnPrintReport.Size = new System.Drawing.Size(120, 25);
             this.btnPrintReport.UseVisualStyleBackColor = true;
 
@@ -685,6 +720,8 @@
             this.panelStatsFilter.Controls.Add(this.lblStatsFilterPeriod);
             this.panelStatsFilter.Controls.Add(this.cmbStatsPeriod);
             this.panelStatsFilter.Controls.Add(this.dtpStatsDate);
+            this.panelStatsFilter.Controls.Add(this.lblStatsFilterBuyer);
+            this.panelStatsFilter.Controls.Add(this.cmbStatsBuyer);
             this.panelStatsFilter.Controls.Add(this.btnClearStatsFilter);
             this.panelStatsFilter.Controls.Add(this.btnPrintReport);
 

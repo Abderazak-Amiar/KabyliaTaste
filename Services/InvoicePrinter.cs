@@ -11,15 +11,19 @@ namespace KabyliaTaste.Services
     {
         private readonly IReadOnlyList<Sale> _sales;
         private readonly string _buyerName;
+        private readonly string _storeName;
+        private readonly byte[]? _logoData;
 
         // A4 at 100 dpi: 827 x 1169 pts (printer units are 1/100 inch)
         private const float PageWidthPt  = 827f;
         private const float PageHeightPt = 1169f;
 
-        public InvoicePrinter(IReadOnlyList<Sale> sales, string buyerName)
+        public InvoicePrinter(IReadOnlyList<Sale> sales, string buyerName, string storeName = "KabyliaTaste", byte[]? logoData = null)
         {
             _sales = sales;
             _buyerName = buyerName;
+            _storeName = storeName;
+            _logoData = logoData;
         }
 
         public void PrintPreview()
@@ -89,14 +93,28 @@ namespace KabyliaTaste.Services
             using var bodyFont   = new Font("Arial", 10, FontStyle.Regular);
 
             // ?? Header ??????????????????????????????????????????????????????
-            g.DrawString("KabyliaTaste", titleFont, Brushes.Black, x, y);
-            y += lineH * 2;
+            if (_logoData != null && _logoData.Length > 0)
+            {
+                using var ms = new System.IO.MemoryStream(_logoData);
+                using var logo = System.Drawing.Image.FromStream(ms);
+                float logoH = lineH * 3f;
+                float logoW = logo.Width * logoH / logo.Height;
+                g.DrawImage(logo, x, y, logoW, logoH);
+                y += logoH + 2;
+                g.DrawString(_storeName, titleFont, Brushes.Black, x, y);
+                y += lineH * 1.5f;
+            }
+            else
+            {
+                g.DrawString(_storeName, titleFont, Brushes.Black, x, y);
+                y += lineH * 2;
+            }
 
             g.DrawString($"Invoice #INV-{_sales[0].Id:D5}", headerFont, Brushes.Black, x, y);
             y += lineH;
             g.DrawString($"Date: {DateTime.Now:dd-MM-yyyy HH:mm}", bodyFont, Brushes.DarkRed, x, y);
             y += lineH;
-            g.DrawString($"Buyer: {_buyerName}", bodyFont, Brushes.DarkRed, x, y);
+            g.DrawString($"Client: {_buyerName}", bodyFont, Brushes.DarkRed, x, y);
             y += lineH * 1.5f;
 
             // ?? Table header ????????????????????????????????????????????????
