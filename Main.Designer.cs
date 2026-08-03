@@ -123,6 +123,8 @@
     private System.Windows.Forms.TabControl tabControlSettings;
     private System.Windows.Forms.TabPage tabProfile;
     private System.Windows.Forms.TabPage tabStore;
+    private System.Windows.Forms.TabPage tabGoogleDrive;
+    private System.Windows.Forms.TabPage tabBackup;
     private System.Windows.Forms.Label lblCurrentPassword;
     private System.Windows.Forms.TextBox txtCurrentPassword;
     private System.Windows.Forms.Label lblNewPassword;
@@ -135,6 +137,23 @@
     private System.Windows.Forms.Button btnSaveStoreName;
     private System.Windows.Forms.PictureBox picStoreLogo;
     private System.Windows.Forms.Button btnChangeLogo;
+    private System.Windows.Forms.Label lblGoogleDriveClientId;
+    private System.Windows.Forms.TextBox txtGoogleDriveClientId;
+    private System.Windows.Forms.Label lblGoogleDriveClientSecret;
+    private System.Windows.Forms.TextBox txtGoogleDriveClientSecret;
+    private System.Windows.Forms.Label lblGoogleDriveFolderId;
+    private System.Windows.Forms.TextBox txtGoogleDriveFolderId;
+    private System.Windows.Forms.Label lblGoogleDriveRefreshToken;
+    private System.Windows.Forms.TextBox txtGoogleDriveRefreshToken;
+    private System.Windows.Forms.Button btnSaveGoogleDriveConfig;
+     private System.Windows.Forms.Button btnGenerateGoogleDriveRefreshToken;
+     private System.Windows.Forms.Button btnGoogleDriveHelp;
+     private System.Windows.Forms.Button btnOpenGoogleCloudConsole;
+    private System.Windows.Forms.Label lblBackupInfo;
+    private System.Windows.Forms.Button btnDownloadDatabaseBackup;
+    private System.Windows.Forms.Button btnRestoreDatabaseBackup;
+     private System.Windows.Forms.Button btnUploadGoogleDriveBackup;
+     private System.Windows.Forms.Button btnDownloadGoogleDriveBackup;
     private System.Windows.Forms.Button btnLogout;
     // Profile extra controls
     private System.Windows.Forms.Label lblUsernameProfile;
@@ -199,6 +218,8 @@
             this.tabStats = new System.Windows.Forms.TabPage();
             this.tabExpenses = new System.Windows.Forms.TabPage();
             this.tabSettings = new System.Windows.Forms.TabPage();
+            this.tabGoogleDrive = new System.Windows.Forms.TabPage();
+            this.tabBackup = new System.Windows.Forms.TabPage();
             this.panelSaleLeft = new System.Windows.Forms.Panel();
             this.lblSaleProduct = new System.Windows.Forms.Label();
             this.cmbSaleProduct = new System.Windows.Forms.ComboBox();
@@ -253,6 +274,23 @@
             this.btnSaveStoreName = new System.Windows.Forms.Button();
             this.picStoreLogo = new System.Windows.Forms.PictureBox();
             this.btnChangeLogo = new System.Windows.Forms.Button();
+            this.lblGoogleDriveClientId = new System.Windows.Forms.Label();
+            this.txtGoogleDriveClientId = new System.Windows.Forms.TextBox();
+            this.lblGoogleDriveClientSecret = new System.Windows.Forms.Label();
+            this.txtGoogleDriveClientSecret = new System.Windows.Forms.TextBox();
+            this.lblGoogleDriveFolderId = new System.Windows.Forms.Label();
+            this.txtGoogleDriveFolderId = new System.Windows.Forms.TextBox();
+            this.lblGoogleDriveRefreshToken = new System.Windows.Forms.Label();
+            this.txtGoogleDriveRefreshToken = new System.Windows.Forms.TextBox();
+            this.btnSaveGoogleDriveConfig = new System.Windows.Forms.Button();
+            this.btnGenerateGoogleDriveRefreshToken = new System.Windows.Forms.Button();
+            this.btnGoogleDriveHelp = new System.Windows.Forms.Button();
+            this.btnOpenGoogleCloudConsole = new System.Windows.Forms.Button();
+            this.lblBackupInfo = new System.Windows.Forms.Label();
+            this.btnDownloadDatabaseBackup = new System.Windows.Forms.Button();
+            this.btnRestoreDatabaseBackup = new System.Windows.Forms.Button();
+            this.btnUploadGoogleDriveBackup = new System.Windows.Forms.Button();
+            this.btnDownloadGoogleDriveBackup = new System.Windows.Forms.Button();
             this.btnLogout = new System.Windows.Forms.Button();
             this.lblUsernameProfile = new System.Windows.Forms.Label();
             this.txtUsernameProfile = new System.Windows.Forms.TextBox();
@@ -1052,7 +1090,9 @@
             this.tabControlSettings.Name = "tabControlSettings";
             this.tabControlSettings.TabPages.AddRange(new System.Windows.Forms.TabPage[] {
                 this.tabProfile,
-                this.tabStore });
+                this.tabStore,
+                this.tabGoogleDrive,
+                this.tabBackup });
 
             // ── tabProfile ───────────────────────────────────────────────
             this.tabProfile.Name = "tabProfile";
@@ -1157,6 +1197,124 @@
             this.tabStore.Controls.Add(this.btnSaveStoreName);
             this.tabStore.Controls.Add(this.picStoreLogo);
             this.tabStore.Controls.Add(this.btnChangeLogo);
+
+            // ── tabGoogleDrive ─────────────────────────────────────────
+            this.tabGoogleDrive.Name = "tabGoogleDrive";
+            this.tabGoogleDrive.Text = "Google Drive";
+            this.tabGoogleDrive.UseVisualStyleBackColor = true;
+            this.tabGoogleDrive.Padding = new System.Windows.Forms.Padding(20);
+
+            this.lblGoogleDriveClientId.Text = "Client ID";
+            this.lblGoogleDriveClientId.AutoSize = true;
+            this.lblGoogleDriveClientId.Location = new System.Drawing.Point(30, 30);
+
+            this.txtGoogleDriveClientId.Location = new System.Drawing.Point(30, 50);
+            this.txtGoogleDriveClientId.Size = new System.Drawing.Size(360, 23);
+            this.txtGoogleDriveClientId.Name = "txtGoogleDriveClientId";
+
+            this.lblGoogleDriveClientSecret.Text = "Client Secret";
+            this.lblGoogleDriveClientSecret.AutoSize = true;
+            this.lblGoogleDriveClientSecret.Location = new System.Drawing.Point(30, 85);
+
+            this.txtGoogleDriveClientSecret.Location = new System.Drawing.Point(30, 105);
+            this.txtGoogleDriveClientSecret.Size = new System.Drawing.Size(360, 23);
+            this.txtGoogleDriveClientSecret.Name = "txtGoogleDriveClientSecret";
+            this.txtGoogleDriveClientSecret.UseSystemPasswordChar = true;
+
+            this.lblGoogleDriveFolderId.Text = "Folder ID or Name";
+            this.lblGoogleDriveFolderId.AutoSize = true;
+            this.lblGoogleDriveFolderId.Location = new System.Drawing.Point(30, 140);
+
+            this.txtGoogleDriveFolderId.Location = new System.Drawing.Point(30, 160);
+            this.txtGoogleDriveFolderId.Size = new System.Drawing.Size(360, 23);
+            this.txtGoogleDriveFolderId.Name = "txtGoogleDriveFolderId";
+
+            this.lblGoogleDriveRefreshToken.Text = "Refresh Token";
+            this.lblGoogleDriveRefreshToken.AutoSize = true;
+            this.lblGoogleDriveRefreshToken.Location = new System.Drawing.Point(30, 195);
+
+            this.txtGoogleDriveRefreshToken.Location = new System.Drawing.Point(30, 215);
+            this.txtGoogleDriveRefreshToken.Size = new System.Drawing.Size(360, 23);
+            this.txtGoogleDriveRefreshToken.Name = "txtGoogleDriveRefreshToken";
+            this.txtGoogleDriveRefreshToken.UseSystemPasswordChar = true;
+
+            this.btnSaveGoogleDriveConfig.Text = "Save Google Drive Config";
+            this.btnSaveGoogleDriveConfig.Name = "btnSaveGoogleDriveConfig";
+            this.btnSaveGoogleDriveConfig.Location = new System.Drawing.Point(30, 255);
+            this.btnSaveGoogleDriveConfig.Size = new System.Drawing.Size(190, 30);
+            this.btnSaveGoogleDriveConfig.UseVisualStyleBackColor = true;
+
+            this.btnGenerateGoogleDriveRefreshToken.Text = "Generate Refresh Token";
+            this.btnGenerateGoogleDriveRefreshToken.Name = "btnGenerateGoogleDriveRefreshToken";
+            this.btnGenerateGoogleDriveRefreshToken.Location = new System.Drawing.Point(230, 255);
+            this.btnGenerateGoogleDriveRefreshToken.Size = new System.Drawing.Size(160, 30);
+            this.btnGenerateGoogleDriveRefreshToken.UseVisualStyleBackColor = true;
+
+            this.btnGoogleDriveHelp.Text = "Setup Help";
+            this.btnGoogleDriveHelp.Name = "btnGoogleDriveHelp";
+            this.btnGoogleDriveHelp.Location = new System.Drawing.Point(400, 255);
+            this.btnGoogleDriveHelp.Size = new System.Drawing.Size(90, 30);
+            this.btnGoogleDriveHelp.UseVisualStyleBackColor = true;
+
+            this.btnOpenGoogleCloudConsole.Text = "Open Console";
+            this.btnOpenGoogleCloudConsole.Name = "btnOpenGoogleCloudConsole";
+            this.btnOpenGoogleCloudConsole.Location = new System.Drawing.Point(500, 255);
+            this.btnOpenGoogleCloudConsole.Size = new System.Drawing.Size(110, 30);
+            this.btnOpenGoogleCloudConsole.UseVisualStyleBackColor = true;
+
+            this.tabGoogleDrive.Controls.Add(this.lblGoogleDriveClientId);
+            this.tabGoogleDrive.Controls.Add(this.txtGoogleDriveClientId);
+            this.tabGoogleDrive.Controls.Add(this.lblGoogleDriveClientSecret);
+            this.tabGoogleDrive.Controls.Add(this.txtGoogleDriveClientSecret);
+            this.tabGoogleDrive.Controls.Add(this.lblGoogleDriveFolderId);
+            this.tabGoogleDrive.Controls.Add(this.txtGoogleDriveFolderId);
+            this.tabGoogleDrive.Controls.Add(this.lblGoogleDriveRefreshToken);
+            this.tabGoogleDrive.Controls.Add(this.txtGoogleDriveRefreshToken);
+            this.tabGoogleDrive.Controls.Add(this.btnSaveGoogleDriveConfig);
+            this.tabGoogleDrive.Controls.Add(this.btnGenerateGoogleDriveRefreshToken);
+            this.tabGoogleDrive.Controls.Add(this.btnGoogleDriveHelp);
+            this.tabGoogleDrive.Controls.Add(this.btnOpenGoogleCloudConsole);
+
+            // ── tabBackup ───────────────────────────────────────────────
+            this.tabBackup.Name = "tabBackup";
+            this.tabBackup.Text = "Backup";
+            this.tabBackup.UseVisualStyleBackColor = true;
+            this.tabBackup.Padding = new System.Windows.Forms.Padding(20);
+
+            this.lblBackupInfo.Text = "Download creates a local copy of the SQLite database. Restore replaces the current local database file.";
+            this.lblBackupInfo.AutoSize = true;
+            this.lblBackupInfo.Location = new System.Drawing.Point(30, 30);
+            this.lblBackupInfo.MaximumSize = new System.Drawing.Size(650, 0);
+
+            this.btnDownloadDatabaseBackup.Text = "Download DB Backup";
+            this.btnDownloadDatabaseBackup.Name = "btnDownloadDatabaseBackup";
+            this.btnDownloadDatabaseBackup.Location = new System.Drawing.Point(30, 80);
+            this.btnDownloadDatabaseBackup.Size = new System.Drawing.Size(180, 32);
+            this.btnDownloadDatabaseBackup.UseVisualStyleBackColor = true;
+
+            this.btnRestoreDatabaseBackup.Text = "Upload / Restore DB Backup";
+            this.btnRestoreDatabaseBackup.Name = "btnRestoreDatabaseBackup";
+            this.btnRestoreDatabaseBackup.Location = new System.Drawing.Point(220, 80);
+            this.btnRestoreDatabaseBackup.Size = new System.Drawing.Size(210, 32);
+            this.btnRestoreDatabaseBackup.UseVisualStyleBackColor = true;
+
+            this.btnUploadGoogleDriveBackup.Text = "Upload to Google Drive";
+            this.btnUploadGoogleDriveBackup.Name = "btnUploadGoogleDriveBackup";
+            this.btnUploadGoogleDriveBackup.Location = new System.Drawing.Point(30, 130);
+            this.btnUploadGoogleDriveBackup.Size = new System.Drawing.Size(180, 32);
+            this.btnUploadGoogleDriveBackup.UseVisualStyleBackColor = true;
+
+            this.btnDownloadGoogleDriveBackup.Text = "Download from Google Drive";
+            this.btnDownloadGoogleDriveBackup.Name = "btnDownloadGoogleDriveBackup";
+            this.btnDownloadGoogleDriveBackup.Location = new System.Drawing.Point(220, 130);
+            this.btnDownloadGoogleDriveBackup.Size = new System.Drawing.Size(210, 32);
+            this.btnDownloadGoogleDriveBackup.UseVisualStyleBackColor = true;
+
+            this.tabBackup.Controls.Add(this.lblBackupInfo);
+            this.tabBackup.Controls.Add(this.btnDownloadDatabaseBackup);
+            this.tabBackup.Controls.Add(this.btnRestoreDatabaseBackup);
+            this.tabBackup.Controls.Add(this.btnUploadGoogleDriveBackup);
+            this.tabBackup.Controls.Add(this.btnDownloadGoogleDriveBackup);
 
             this.tabSettings.Controls.Add(this.tabControlSettings);
             // lblSaleProduct
