@@ -10,6 +10,8 @@ namespace KabyliaTaste.Services
     public class StatsReportRow
     {
         public string Product   { get; set; } = "";
+        public DateTime Date    { get; set; }
+        public string Hour      { get; set; } = "";
         public int    UnitsSold { get; set; }
         public decimal Revenue  { get; set; }
         public decimal Cost     { get; set; }
@@ -25,6 +27,9 @@ namespace KabyliaTaste.Services
         private readonly DateTime _refDate;
         private readonly string _storeName;
         private readonly byte[]? _logoData;
+        private readonly decimal _collectedAmount;
+        private readonly decimal _debtAmount;
+        private readonly decimal _expensesAmount;
 
         public StatsReportPrinter(
             IReadOnlyList<StatsReportRow> rows,
@@ -33,7 +38,10 @@ namespace KabyliaTaste.Services
             string period,
             DateTime refDate,
             string storeName = "KabyliaTaste",
-            byte[]? logoData = null)
+            byte[]? logoData = null,
+            decimal collectedAmount = 0m,
+            decimal debtAmount = 0m,
+            decimal expensesAmount = 0m)
         {
             _rows          = rows;
             _productFilter = productFilter;
@@ -42,6 +50,9 @@ namespace KabyliaTaste.Services
             _refDate       = refDate;
             _storeName     = storeName;
             _logoData      = logoData;
+            _collectedAmount = collectedAmount;
+            _debtAmount      = debtAmount;
+            _expensesAmount  = expensesAmount;
         }
 
         public void PrintPreview()
@@ -83,12 +94,14 @@ namespace KabyliaTaste.Services
             float lineH = 22f;
 
             // column X positions
-            float colProduct   = x;
-            float colUnits     = x + 230;
-            float colRevenue   = x + 310;
-            float colCost      = x + 400;
-            float colProfit    = x + 490;
-            float tableRight   = x + 580;
+            float colDate      = x;
+            float colHour      = x + 90;
+            float colProduct   = x + 155;
+            float colUnits     = x + 340;
+            float colRevenue   = x + 420;
+            float colCost      = x + 510;
+            float colProfit    = x + 600;
+            float tableRight   = x + 690;
 
             using var titleFont  = new Font("Arial", 16, FontStyle.Bold);
             using var headerFont = new Font("Arial", 10, FontStyle.Bold);
@@ -125,6 +138,8 @@ namespace KabyliaTaste.Services
 
             // ?? Table header ???????????????????????????????????????????????????
             g.FillRectangle(Brushes.DarkSlateGray, x, y, tableRight - x, lineH);
+            g.DrawString("Date",      headerFont, Brushes.White, colDate,      y + 3);
+            g.DrawString("Hour",      headerFont, Brushes.White, colHour,      y + 3);
             g.DrawString("Product",   headerFont, Brushes.White, colProduct,   y + 3);
             g.DrawString("Units",     headerFont, Brushes.White, colUnits,     y + 3);
             g.DrawString("Revenue",   headerFont, Brushes.White, colRevenue,   y + 3);
@@ -141,6 +156,8 @@ namespace KabyliaTaste.Services
 
                 var profitBrush = row.Profit >= 0 ? Brushes.DarkGreen : Brushes.Red;
 
+                g.DrawString(row.Date.ToString("yyyy-MM-dd"), bodyFont, Brushes.Black, colDate, y + 2);
+                g.DrawString(row.Hour,                       bodyFont, Brushes.Black, colHour, y + 2);
                 g.DrawString(row.Product,                       bodyFont, Brushes.Black,   colProduct,  y + 2);
                 g.DrawString(row.UnitsSold.ToString(),          bodyFont, Brushes.Black,   colUnits,    y + 2);
                 g.DrawString(row.Revenue.ToString("F2"),        bodyFont, Brushes.Black,   colRevenue,  y + 2);
@@ -169,6 +186,17 @@ namespace KabyliaTaste.Services
             g.DrawString(totalRevenue.ToString("F2"),   headerFont, Brushes.Black,       colRevenue,  y);
             g.DrawString(totalCost.ToString("F2"),      headerFont, Brushes.Black,       colCost,     y);
             g.DrawString(totalProfit.ToString("F2"),    headerFont, totalProfitBrush,    colProfit,   y);
+
+            y += lineH + 8;
+            var netProfit = _collectedAmount - _expensesAmount;
+            var netProfitBrush = netProfit >= 0 ? Brushes.DarkGreen : Brushes.Red;
+            g.DrawString($"Collected: {_collectedAmount:F2}", headerFont, Brushes.Black, x, y);
+            y += lineH;
+            g.DrawString($"Debt: {_debtAmount:F2}", headerFont, Brushes.Black, x, y);
+            y += lineH;
+            g.DrawString($"Expenses: {_expensesAmount:F2}", headerFont, Brushes.Black, x, y);
+            y += lineH;
+            g.DrawString($"Net Profit: {netProfit:F2}", headerFont, netProfitBrush, x, y);
 
             e.HasMorePages = false;
         }
