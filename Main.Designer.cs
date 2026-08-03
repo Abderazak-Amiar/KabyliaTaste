@@ -10,6 +10,7 @@
     private System.Windows.Forms.TabPage tabProducts;
     private System.Windows.Forms.TabPage tabSales;
     private System.Windows.Forms.TabPage tabStats;
+    private System.Windows.Forms.TabPage tabExpenses;
     private System.Windows.Forms.TabPage tabSettings;
     private System.Windows.Forms.Panel panelLeft;
     private System.Windows.Forms.Label lblName;
@@ -81,6 +82,29 @@
     private System.Windows.Forms.DateTimePicker dtpStatsDate;
     private System.Windows.Forms.Button btnClearStatsFilter;
     private System.Windows.Forms.Button btnPrintReport;
+    // Expenses tab
+    private System.Windows.Forms.Panel panelExpenseLeft;
+    private System.Windows.Forms.Label lblExpenseDescription;
+    private System.Windows.Forms.TextBox txtExpenseDescription;
+    private System.Windows.Forms.Label lblExpenseAmount;
+    private System.Windows.Forms.NumericUpDown numExpenseAmount;
+    private System.Windows.Forms.Label lblExpenseCategory;
+    private System.Windows.Forms.TextBox txtExpenseCategory;
+    private System.Windows.Forms.Label lblExpenseDate;
+    private System.Windows.Forms.DateTimePicker dtpExpenseDate;
+    private System.Windows.Forms.Button btnAddExpense;
+    private System.Windows.Forms.Button btnUpdateExpense;
+    private System.Windows.Forms.Button btnDeleteExpense;
+    private System.Windows.Forms.Button btnClearExpense;
+    private System.Windows.Forms.DataGridView dgvExpenses;
+    private System.Windows.Forms.Panel panelExpensePagination;
+    private System.Windows.Forms.Button btnExpensePrev;
+    private System.Windows.Forms.Button btnExpenseNext;
+    private System.Windows.Forms.Label lblExpensePage;
+    private System.Windows.Forms.Panel panelExpenseFilter;
+    private System.Windows.Forms.Label lblExpenseFilterCategory;
+    private System.Windows.Forms.ComboBox cmbExpenseFilterCategory;
+    private System.Windows.Forms.Button btnClearExpenseFilter;
     // Settings tab inner controls
     private System.Windows.Forms.TabControl tabControlSettings;
     private System.Windows.Forms.TabPage tabProfile;
@@ -159,6 +183,7 @@
             this.lblProductPage = new System.Windows.Forms.Label();
             this.tabSales = new System.Windows.Forms.TabPage();
             this.tabStats = new System.Windows.Forms.TabPage();
+            this.tabExpenses = new System.Windows.Forms.TabPage();
             this.tabSettings = new System.Windows.Forms.TabPage();
             this.panelSaleLeft = new System.Windows.Forms.Panel();
             this.lblSaleProduct = new System.Windows.Forms.Label();
@@ -221,6 +246,28 @@
             this.lblGreeting = new KabyliaTaste.Controls.MixedFontLabel();
             this.lblDateTime = new System.Windows.Forms.Label();
             this.timerClock = new System.Windows.Forms.Timer();
+            this.panelExpenseLeft = new System.Windows.Forms.Panel();
+            this.lblExpenseDescription = new System.Windows.Forms.Label();
+            this.txtExpenseDescription = new System.Windows.Forms.TextBox();
+            this.lblExpenseAmount = new System.Windows.Forms.Label();
+            this.numExpenseAmount = new System.Windows.Forms.NumericUpDown();
+            this.lblExpenseCategory = new System.Windows.Forms.Label();
+            this.txtExpenseCategory = new System.Windows.Forms.TextBox();
+            this.lblExpenseDate = new System.Windows.Forms.Label();
+            this.dtpExpenseDate = new System.Windows.Forms.DateTimePicker();
+            this.btnAddExpense = new System.Windows.Forms.Button();
+            this.btnUpdateExpense = new System.Windows.Forms.Button();
+            this.btnDeleteExpense = new System.Windows.Forms.Button();
+            this.btnClearExpense = new System.Windows.Forms.Button();
+            this.dgvExpenses = new System.Windows.Forms.DataGridView();
+            this.panelExpensePagination = new System.Windows.Forms.Panel();
+            this.btnExpensePrev = new System.Windows.Forms.Button();
+            this.btnExpenseNext = new System.Windows.Forms.Button();
+            this.lblExpensePage = new System.Windows.Forms.Label();
+            this.panelExpenseFilter = new System.Windows.Forms.Panel();
+            this.lblExpenseFilterCategory = new System.Windows.Forms.Label();
+            this.cmbExpenseFilterCategory = new System.Windows.Forms.ComboBox();
+            this.btnClearExpenseFilter = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
             // tabControlMain
@@ -236,6 +283,7 @@
             this.tabProducts,
             this.tabSales,
             this.tabStats,
+            this.tabExpenses,
             this.tabSettings});
             // 
             // tabProducts
@@ -735,6 +783,150 @@
             this.tabStats.TabIndex = 2;
             this.tabStats.Text = "Stats";
             this.tabStats.UseVisualStyleBackColor = true;
+            // ── tabExpenses ───────────────────────────────────────────────
+            // panelExpenseLeft
+            this.panelExpenseLeft.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panelExpenseLeft.Width = 300;
+            this.panelExpenseLeft.Padding = new System.Windows.Forms.Padding(10);
+            // lblExpenseDescription
+            this.lblExpenseDescription.AutoSize = true;
+            this.lblExpenseDescription.Location = new System.Drawing.Point(13, 15);
+            this.lblExpenseDescription.Name = "lblExpenseDescription";
+            this.lblExpenseDescription.Text = "Description";
+            // txtExpenseDescription
+            this.txtExpenseDescription.Location = new System.Drawing.Point(13, 35);
+            this.txtExpenseDescription.Name = "txtExpenseDescription";
+            this.txtExpenseDescription.Width = 260;
+            // lblExpenseAmount
+            this.lblExpenseAmount.AutoSize = true;
+            this.lblExpenseAmount.Location = new System.Drawing.Point(13, 75);
+            this.lblExpenseAmount.Name = "lblExpenseAmount";
+            this.lblExpenseAmount.Text = "Amount";
+            // numExpenseAmount
+            this.numExpenseAmount.DecimalPlaces = 2;
+            this.numExpenseAmount.Location = new System.Drawing.Point(13, 95);
+            this.numExpenseAmount.Maximum = new decimal(new int[] { 10000000, 0, 0, 0 });
+            this.numExpenseAmount.Name = "numExpenseAmount";
+            this.numExpenseAmount.Width = 120;
+            // lblExpenseCategory
+            this.lblExpenseCategory.AutoSize = true;
+            this.lblExpenseCategory.Location = new System.Drawing.Point(13, 135);
+            this.lblExpenseCategory.Name = "lblExpenseCategory";
+            this.lblExpenseCategory.Text = "Category";
+            // txtExpenseCategory
+            this.txtExpenseCategory.Location = new System.Drawing.Point(13, 155);
+            this.txtExpenseCategory.Name = "txtExpenseCategory";
+            this.txtExpenseCategory.Width = 260;
+            // lblExpenseDate
+            this.lblExpenseDate.AutoSize = true;
+            this.lblExpenseDate.Location = new System.Drawing.Point(13, 195);
+            this.lblExpenseDate.Name = "lblExpenseDate";
+            this.lblExpenseDate.Text = "Date";
+            // dtpExpenseDate
+            this.dtpExpenseDate.Location = new System.Drawing.Point(13, 215);
+            this.dtpExpenseDate.Name = "dtpExpenseDate";
+            this.dtpExpenseDate.Width = 200;
+            this.dtpExpenseDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
+            // btnAddExpense
+            this.btnAddExpense.Location = new System.Drawing.Point(13, 255);
+            this.btnAddExpense.Name = "btnAddExpense";
+            this.btnAddExpense.Size = new System.Drawing.Size(75, 25);
+            this.btnAddExpense.Text = "Add";
+            this.btnAddExpense.UseVisualStyleBackColor = true;
+            // btnUpdateExpense
+            this.btnUpdateExpense.Location = new System.Drawing.Point(98, 255);
+            this.btnUpdateExpense.Name = "btnUpdateExpense";
+            this.btnUpdateExpense.Size = new System.Drawing.Size(75, 25);
+            this.btnUpdateExpense.Text = "Update";
+            this.btnUpdateExpense.UseVisualStyleBackColor = true;
+            // btnDeleteExpense
+            this.btnDeleteExpense.Location = new System.Drawing.Point(183, 255);
+            this.btnDeleteExpense.Name = "btnDeleteExpense";
+            this.btnDeleteExpense.Size = new System.Drawing.Size(75, 25);
+            this.btnDeleteExpense.Text = "Delete";
+            this.btnDeleteExpense.UseVisualStyleBackColor = true;
+            // btnClearExpense
+            this.btnClearExpense.Location = new System.Drawing.Point(13, 290);
+            this.btnClearExpense.Name = "btnClearExpense";
+            this.btnClearExpense.Size = new System.Drawing.Size(75, 25);
+            this.btnClearExpense.Text = "Clear";
+            this.btnClearExpense.UseVisualStyleBackColor = true;
+            this.panelExpenseLeft.Controls.Add(this.lblExpenseDescription);
+            this.panelExpenseLeft.Controls.Add(this.txtExpenseDescription);
+            this.panelExpenseLeft.Controls.Add(this.lblExpenseAmount);
+            this.panelExpenseLeft.Controls.Add(this.numExpenseAmount);
+            this.panelExpenseLeft.Controls.Add(this.lblExpenseCategory);
+            this.panelExpenseLeft.Controls.Add(this.txtExpenseCategory);
+            this.panelExpenseLeft.Controls.Add(this.lblExpenseDate);
+            this.panelExpenseLeft.Controls.Add(this.dtpExpenseDate);
+            this.panelExpenseLeft.Controls.Add(this.btnAddExpense);
+            this.panelExpenseLeft.Controls.Add(this.btnUpdateExpense);
+            this.panelExpenseLeft.Controls.Add(this.btnDeleteExpense);
+            this.panelExpenseLeft.Controls.Add(this.btnClearExpense);
+            // dgvExpenses
+            this.dgvExpenses.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvExpenses.Name = "dgvExpenses";
+            this.dgvExpenses.ReadOnly = true;
+            this.dgvExpenses.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvExpenses.MultiSelect = false;
+            this.dgvExpenses.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvExpenses.AllowUserToAddRows = false;
+            this.dgvExpenses.AllowUserToDeleteRows = false;
+            this.dgvExpenses.RowHeadersVisible = false;
+            // btnExpensePrev
+            this.btnExpensePrev.Text = "< Prev";
+            this.btnExpensePrev.Name = "btnExpensePrev";
+            this.btnExpensePrev.Size = new System.Drawing.Size(70, 25);
+            this.btnExpensePrev.Location = new System.Drawing.Point(5, 5);
+            // lblExpensePage
+            this.lblExpensePage.Name = "lblExpensePage";
+            this.lblExpensePage.Text = "Page 1";
+            this.lblExpensePage.AutoSize = true;
+            this.lblExpensePage.Location = new System.Drawing.Point(85, 9);
+            this.lblExpensePage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // btnExpenseNext
+            this.btnExpenseNext.Text = "Next >";
+            this.btnExpenseNext.Name = "btnExpenseNext";
+            this.btnExpenseNext.Size = new System.Drawing.Size(70, 25);
+            this.btnExpenseNext.Location = new System.Drawing.Point(155, 5);
+            // panelExpensePagination
+            this.panelExpensePagination.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelExpensePagination.Height = 35;
+            this.panelExpensePagination.Name = "panelExpensePagination";
+            this.panelExpensePagination.Controls.Add(this.btnExpensePrev);
+            this.panelExpensePagination.Controls.Add(this.lblExpensePage);
+            this.panelExpensePagination.Controls.Add(this.btnExpenseNext);
+            // panelExpenseFilter
+            this.lblExpenseFilterCategory.AutoSize = true;
+            this.lblExpenseFilterCategory.Location = new System.Drawing.Point(8, 13);
+            this.lblExpenseFilterCategory.Name = "lblExpenseFilterCategory";
+            this.lblExpenseFilterCategory.Text = "Category:";
+            this.cmbExpenseFilterCategory.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbExpenseFilterCategory.Location = new System.Drawing.Point(70, 10);
+            this.cmbExpenseFilterCategory.Name = "cmbExpenseFilterCategory";
+            this.cmbExpenseFilterCategory.Width = 160;
+            this.btnClearExpenseFilter.Text = "Clear";
+            this.btnClearExpenseFilter.Name = "btnClearExpenseFilter";
+            this.btnClearExpenseFilter.Location = new System.Drawing.Point(240, 9);
+            this.btnClearExpenseFilter.Size = new System.Drawing.Size(70, 25);
+            this.btnClearExpenseFilter.UseVisualStyleBackColor = true;
+            this.panelExpenseFilter.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelExpenseFilter.Height = 35;
+            this.panelExpenseFilter.Name = "panelExpenseFilter";
+            this.panelExpenseFilter.Controls.Add(this.lblExpenseFilterCategory);
+            this.panelExpenseFilter.Controls.Add(this.cmbExpenseFilterCategory);
+            this.panelExpenseFilter.Controls.Add(this.btnClearExpenseFilter);
+            // tabExpenses
+            this.tabExpenses.Controls.Add(this.dgvExpenses);
+            this.tabExpenses.Controls.Add(this.panelExpensePagination);
+            this.tabExpenses.Controls.Add(this.panelExpenseFilter);
+            this.tabExpenses.Controls.Add(this.panelExpenseLeft);
+            this.tabExpenses.Location = new System.Drawing.Point(4, 24);
+            this.tabExpenses.Name = "tabExpenses";
+            this.tabExpenses.Size = new System.Drawing.Size(792, 422);
+            this.tabExpenses.TabIndex = 4;
+            this.tabExpenses.Text = "Expenses";
+            this.tabExpenses.UseVisualStyleBackColor = true;
             // tabSettings
             this.tabSettings.Location = new System.Drawing.Point(4, 24);
             this.tabSettings.Name = "tabSettings";

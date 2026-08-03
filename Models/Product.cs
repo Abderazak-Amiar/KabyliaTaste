@@ -8,5 +8,6 @@ namespace KabyliaTaste.Models
         public decimal SellPrice { get; set; }
         public int Quantity { get; set; }
         public ProductUnit Unit { get; set; } = ProductUnit.Piece;
+        public DateTime Date { get; set; } = DateTime.Now;
     }
 }
