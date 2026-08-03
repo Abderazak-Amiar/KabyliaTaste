@@ -2,10 +2,12 @@
 {
     using System;
     using System.Drawing;
+    using System.IO;
     using System.Linq;
     using System.Windows.Forms;
     using KabyliaTaste.Data;
     using KabyliaTaste.Models;
+    using KabyliaTaste.Services;
     using Microsoft.EntityFrameworkCore;
 
     public partial class Main : Form
@@ -46,6 +48,7 @@
         private const int InvoicePageSize = 20;
         private string _productFilter = "";
         private string _expenseCategoryFilter = "";
+        private bool _closingAfterBackup = false;
 
         public bool LogoutRequested { get; private set; } = false;
 
@@ -55,6 +58,7 @@
 
             // wire events
             Load += Main_Load;
+            FormClosing += Main_FormClosing;
             btnAdd.Click += BtnAdd_Click;
             btnUpdate.Click += BtnUpdate_Click;
             btnDelete.Click += BtnDelete_Click;
@@ -99,6 +103,14 @@
             btnChangePassword.Click += BtnChangePassword_Click;
             btnSaveStoreName.Click += BtnSaveStoreName_Click;
             btnChangeLogo.Click += BtnChangeLogo_Click;
+            btnSaveGoogleDriveConfig.Click += BtnSaveGoogleDriveConfig_Click;
+            btnGenerateGoogleDriveRefreshToken.Click += BtnGenerateGoogleDriveRefreshToken_Click;
+            btnGoogleDriveHelp.Click += BtnGoogleDriveHelp_Click;
+            btnOpenGoogleCloudConsole.Click += BtnOpenGoogleCloudConsole_Click;
+            btnDownloadDatabaseBackup.Click += BtnDownloadDatabaseBackup_Click;
+            btnRestoreDatabaseBackup.Click += BtnRestoreDatabaseBackup_Click;
+            btnUploadGoogleDriveBackup.Click += BtnUploadGoogleDriveBackup_Click;
+            btnDownloadGoogleDriveBackup.Click += BtnDownloadGoogleDriveBackup_Click;
             btnChangeUsername.Click += BtnChangeUsername_Click;
             timerClock.Tick += TimerClock_Tick;
             Resize += (s, e) => UpdateDateTime();
@@ -113,6 +125,59 @@
             dgvInvoices.CellParsing += DgvInvoices_CellParsing;
             dgvInvoices.CellValidating += DgvInvoices_CellValidating;
             dgvInvoices.DataError += DgvInvoices_DataError;
+        }
+
+        private async void Main_FormClosing(object? sender, FormClosingEventArgs e)
+        {
+            if (_closingAfterBackup || e.CloseReason != CloseReason.UserClosing)
+                return;
+
+            e.Cancel = true;
+
+            try
+            {
+                var store = GetGoogleDriveConfiguredStore();
+                if (string.IsNullOrWhiteSpace(store.GoogleDriveClientId) ||
+                    string.IsNullOrWhiteSpace(store.GoogleDriveClientSecret) ||
+                    string.IsNullOrWhiteSpace(store.GoogleDriveRefreshToken))
+                {
+                    _closingAfterBackup = true;
+                    Close();
+                    return;
+                }
+
+                using var progressForm = new BackupProgressForm();
+                progressForm.Show(this);
+                progressForm.SetProgress(0, "Preparing database backup...");
+
+                var progress = new Progress<int>(percent =>
+                {
+                    progressForm.SetProgress(percent, $"Uploading database backup... {percent}%");
+                });
+
+                await Task.Run(() =>
+                {
+                    var service = new GoogleDriveBackupService();
+                    service.UploadDatabaseBackup(store, GetDatabaseFilePath(), progress);
+                });
+
+                progressForm.SetProgress(100, "Upload complete.");
+                _closingAfterBackup = true;
+                Close();
+            }
+            catch (InvalidOperationException)
+            {
+                _closingAfterBackup = true;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to upload database to Google Drive before closing: {ex.Message}",
+                    "Google Drive",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void TxtSearch_TextChanged(object? sender, EventArgs e)
@@ -386,8 +451,10 @@
     {
         if (dgvProducts?.Columns == null || dgvProducts.Columns.Count == 0 || e.RowIndex < 0) return;
         if (!dgvProducts.Columns.Contains("Quantity")) return;
+
         var quantityColumn = dgvProducts.Columns["Quantity"];
         if (quantityColumn == null || quantityColumn.Index != e.ColumnIndex) return;
+
         if (e.Value is int qty && e.CellStyle != null)
         {
             e.CellStyle.BackColor = qty < 5
@@ -1667,9 +1734,11 @@
     {
         using var db = new Data.AppDbContext();
         var store = db.StoreSettings.FirstOrDefault();
+
         if (store != null)
         {
             txtStoreName.Text = store.StoreName;
+
             if (store.LogoData != null && store.LogoData.Length > 0)
             {
                 using var ms = new System.IO.MemoryStream(store.LogoData);
@@ -1679,6 +1748,20 @@
             {
                 picStoreLogo.Image = null;
             }
+
+            txtGoogleDriveClientId.Text = store.GoogleDriveClientId ?? string.Empty;
+            txtGoogleDriveClientSecret.Text = store.GoogleDriveClientSecret ?? string.Empty;
+            txtGoogleDriveFolderId.Text = store.GoogleDriveFolderId ?? string.Empty;
+            txtGoogleDriveRefreshToken.Text = store.GoogleDriveRefreshToken ?? string.Empty;
+        }
+        else
+        {
+            txtStoreName.Clear();
+            picStoreLogo.Image = null;
+            txtGoogleDriveClientId.Clear();
+            txtGoogleDriveClientSecret.Clear();
+            txtGoogleDriveFolderId.Clear();
+            txtGoogleDriveRefreshToken.Clear();
         }
 
         // Clear password fields
@@ -1818,5 +1901,250 @@
         picStoreLogo.Image = System.Drawing.Image.FromStream(ms);
         MessageBox.Show("Logo updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
+
+        private void BtnSaveGoogleDriveConfig_Click(object? sender, EventArgs e)
+        {
+            using var db = new Data.AppDbContext();
+            var store = db.StoreSettings.FirstOrDefault();
+            if (store == null)
+            {
+                store = new Models.StoreSettings();
+                db.StoreSettings.Add(store);
+            }
+
+            store.GoogleDriveClientId = txtGoogleDriveClientId.Text.Trim();
+            store.GoogleDriveClientSecret = txtGoogleDriveClientSecret.Text.Trim();
+            store.GoogleDriveFolderId = txtGoogleDriveFolderId.Text.Trim();
+            store.GoogleDriveRefreshToken = txtGoogleDriveRefreshToken.Text.Trim();
+
+            db.SaveChanges();
+            MessageBox.Show("Google Drive settings saved.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void BtnGenerateGoogleDriveRefreshToken_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                var store = new StoreSettings
+                {
+                    GoogleDriveClientId = txtGoogleDriveClientId.Text.Trim(),
+                    GoogleDriveClientSecret = txtGoogleDriveClientSecret.Text.Trim()
+                };
+
+                var service = new GoogleDriveBackupService();
+                var refreshToken = await service.GenerateRefreshTokenAsync(store);
+
+                txtGoogleDriveRefreshToken.Text = refreshToken;
+
+                using var db = new Data.AppDbContext();
+                var settings = db.StoreSettings.FirstOrDefault();
+                if (settings == null)
+                {
+                    settings = new StoreSettings
+                    {
+                        StoreName = txtStoreName.Text.Trim()
+                    };
+                    db.StoreSettings.Add(settings);
+                }
+
+                settings.GoogleDriveClientId = store.GoogleDriveClientId;
+                settings.GoogleDriveClientSecret = store.GoogleDriveClientSecret;
+                settings.GoogleDriveRefreshToken = refreshToken;
+                db.SaveChanges();
+
+                MessageBox.Show("Refresh token generated and saved.", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to generate refresh token: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnGoogleDriveHelp_Click(object? sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "Google Drive setup:\n\n" +
+                "1. Open Google Cloud Console and create a project.\n" +
+                "2. Enable the Google Drive API.\n" +
+                "3. Create OAuth Client ID for a Desktop app.\n" +
+                "4. Copy Client ID and Client Secret into this tab.\n" +
+                "5. Click 'Generate Refresh Token' and sign in.\n" +
+                "6. Paste the Google Drive folder ID or folder name if you want backups in a specific folder.\n" +
+                "7. Save the refresh token, then use Upload / Download from Google Drive.",
+                "Google Drive Help",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        private void BtnOpenGoogleCloudConsole_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://console.cloud.google.com/",
+                    UseShellExecute = true
+                };
+
+                System.Diagnostics.Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open Google Cloud Console: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnDownloadDatabaseBackup_Click(object? sender, EventArgs e)
+        {
+            var databasePath = GetDatabaseFilePath();
+            if (!File.Exists(databasePath))
+            {
+                MessageBox.Show("The database file was not found.", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var dlg = new SaveFileDialog
+            {
+                Title = "Save Database Backup",
+                Filter = "SQLite Database|*.db",
+                FileName = $"KabyliaTaste-{DateTime.Now:yyyyMMdd-HHmmss}.db"
+            };
+
+            if (dlg.ShowDialog() != DialogResult.OK)
+                return;
+
+            try
+            {
+                File.Copy(databasePath, dlg.FileName, true);
+                CopyRelatedSqliteFiles(databasePath, dlg.FileName);
+                MessageBox.Show("Database backup created successfully.", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to create backup: {ex.Message}", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnRestoreDatabaseBackup_Click(object? sender, EventArgs e)
+        {
+            using var dlg = new OpenFileDialog
+            {
+                Title = "Select Database Backup",
+                Filter = "SQLite Database|*.db"
+            };
+
+            if (dlg.ShowDialog() != DialogResult.OK)
+                return;
+
+            var confirm = MessageBox.Show(
+                "This will replace the current local database file. Continue?",
+                "Restore Backup",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes)
+                return;
+
+            var databasePath = GetDatabaseFilePath();
+
+            try
+            {
+                if (File.Exists(databasePath))
+                {
+                    var safetyCopy = $"{databasePath}.before-restore-{DateTime.Now:yyyyMMdd-HHmmss}";
+                    File.Copy(databasePath, safetyCopy, true);
+                }
+
+                File.Copy(dlg.FileName, databasePath, true);
+                CopyRelatedSqliteFiles(dlg.FileName, databasePath);
+
+                MessageBox.Show("Database restored. The application will restart.", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Application.Restart();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to restore backup: {ex.Message}", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void BtnUploadGoogleDriveBackup_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    var store = GetGoogleDriveConfiguredStore();
+                    var service = new GoogleDriveBackupService();
+                    service.UploadDatabaseBackup(store, GetDatabaseFilePath());
+                });
+
+                MessageBox.Show("Database uploaded to Google Drive successfully.", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to upload database to Google Drive: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void BtnDownloadGoogleDriveBackup_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                using var progressForm = new BackupProgressForm();
+                progressForm.Show(this);
+                progressForm.SetProgress(0, "Downloading database backup from Google Drive...");
+
+                var progress = new Progress<int>(percent =>
+                {
+                    progressForm.SetProgress(percent, $"Downloading database backup from Google Drive... {percent}%");
+                });
+
+                await Task.Run(() =>
+                {
+                    var store = GetGoogleDriveConfiguredStore();
+                    var service = new GoogleDriveBackupService();
+                    service.DownloadDatabaseBackup(store, GetDatabaseFilePath(), progress);
+                });
+
+                progressForm.SetProgress(100, "Database downloaded successfully.");
+                MessageBox.Show("Database downloaded from Google Drive successfully. The application will restart.", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Application.Restart();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to download database from Google Drive: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private StoreSettings GetGoogleDriveConfiguredStore()
+        {
+            using var db = new Data.AppDbContext();
+            var store = db.StoreSettings.FirstOrDefault();
+            if (store == null)
+                throw new InvalidOperationException("Google Drive settings are not configured.");
+
+            return store;
+        }
+
+        private static string GetDatabaseFilePath() => Path.GetFullPath("app.db");
+
+        private static void CopyRelatedSqliteFiles(string sourceDatabasePath, string targetDatabasePath)
+        {
+            CopyOrDelete($"{sourceDatabasePath}-wal", $"{targetDatabasePath}-wal");
+            CopyOrDelete($"{sourceDatabasePath}-shm", $"{targetDatabasePath}-shm");
+        }
+
+        private static void CopyOrDelete(string sourcePath, string targetPath)
+        {
+            if (File.Exists(targetPath))
+            {
+                File.Delete(targetPath);
+            }
+
+            if (File.Exists(sourcePath))
+            {
+                File.Copy(sourcePath, targetPath, true);
+            }
+        }
     }
 }
