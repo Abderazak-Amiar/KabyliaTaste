@@ -13,17 +13,27 @@ namespace KabyliaTaste.Services
         private readonly string _buyerName;
         private readonly string _storeName;
         private readonly byte[]? _logoData;
+        private readonly int? _invoiceId;
+        private readonly DateTime? _invoiceDate;
+        private readonly decimal _invoiceTotal;
+        private readonly decimal _amountPaid;
+        private readonly InvoicePaymentStatus _paymentStatus;
 
         // A4 at 100 dpi: 827 x 1169 pts (printer units are 1/100 inch)
         private const float PageWidthPt  = 827f;
         private const float PageHeightPt = 1169f;
 
-        public InvoicePrinter(IReadOnlyList<Sale> sales, string buyerName, string storeName = "KabyliaTaste", byte[]? logoData = null)
+        public InvoicePrinter(IReadOnlyList<Sale> sales, string buyerName, string storeName = "KabyliaTaste", byte[]? logoData = null, int? invoiceId = null, DateTime? invoiceDate = null, decimal invoiceTotal = 0m, decimal amountPaid = 0m, InvoicePaymentStatus paymentStatus = InvoicePaymentStatus.No)
         {
             _sales = sales;
             _buyerName = buyerName;
             _storeName = storeName;
             _logoData = logoData;
+            _invoiceId = invoiceId;
+            _invoiceDate = invoiceDate;
+            _invoiceTotal = invoiceTotal;
+            _amountPaid = amountPaid;
+            _paymentStatus = paymentStatus;
         }
 
         public void PrintPreview()
@@ -110,11 +120,24 @@ namespace KabyliaTaste.Services
                 y += lineH * 2;
             }
 
-            g.DrawString($"Invoice #INV-{_sales[0].Id:D5}", headerFont, Brushes.Black, x, y);
+            var invoiceNumber = _invoiceId ?? _sales[0].Id;
+            g.DrawString($"Invoice #INV-{invoiceNumber:D5}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Date: {DateTime.Now:dd-MM-yyyy HH:mm}", bodyFont, Brushes.DarkRed, x, y);
+            g.DrawString($"Date: {(_invoiceDate ?? DateTime.Now):dd-MM-yyyy HH:mm}", bodyFont, Brushes.DarkRed, x, y);
             y += lineH;
             g.DrawString($"Client: {_buyerName}", bodyFont, Brushes.DarkRed, x, y);
+            y += lineH * 1.5f;
+
+            var grandTotal = _invoiceTotal > 0 ? _invoiceTotal : _sales.Sum(s => s.TotalPrice);
+            var dueAmount = grandTotal - _amountPaid;
+
+            g.DrawString("Invoice Details", headerFont, Brushes.Black, x, y);
+            y += lineH;
+            g.DrawString($"Total: {grandTotal:F2} DA", bodyFont, Brushes.Black, x, y);
+            g.DrawString($"Paid: {_amountPaid:F2} DA", bodyFont, Brushes.Black, x + 220, y);
+            y += lineH;
+            g.DrawString($"Due: {dueAmount:F2} DA", bodyFont, Brushes.Black, x, y);
+            g.DrawString($"Status: {_paymentStatus}", bodyFont, Brushes.Black, x + 220, y);
             y += lineH * 1.5f;
 
             // ?? Table header ????????????????????????????????????????????????
@@ -127,7 +150,7 @@ namespace KabyliaTaste.Services
             y += 6;
 
             // ?? Rows ????????????????????????????????????????????????????????
-            decimal grandTotal = 0m;
+            decimal rowTotal = 0m;
             foreach (var sale in _sales)
             {
                 var rowBrush = sale.Quantity == 1 ? Brushes.Teal : Brushes.Black;
@@ -137,7 +160,7 @@ namespace KabyliaTaste.Services
                 g.DrawString(sale.UnitPrice.ToString("F2") + " DA",   bodyFont, rowBrush, colUnitPrice, y);
                 g.DrawString(sale.TotalPrice.ToString("F2") + " DA",  bodyFont, rowBrush, colTotal,     y);
                 y += lineH;
-                grandTotal += sale.TotalPrice;
+                rowTotal += sale.TotalPrice;
             }
 
             g.DrawLine(Pens.Black, x, y, tableRight, y);

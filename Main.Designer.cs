@@ -11,6 +11,7 @@
     private System.Windows.Forms.TabPage tabSales;
     private System.Windows.Forms.TabPage tabStats;
     private System.Windows.Forms.TabPage tabExpenses;
+    private System.Windows.Forms.TabPage tabInvoices;
     private System.Windows.Forms.TabPage tabSettings;
     private System.Windows.Forms.Panel panelLeft;
     private System.Windows.Forms.Label lblName;
@@ -105,6 +106,19 @@
     private System.Windows.Forms.Label lblExpenseFilterCategory;
     private System.Windows.Forms.ComboBox cmbExpenseFilterCategory;
     private System.Windows.Forms.Button btnClearExpenseFilter;
+    // Invoices tab
+    private System.Windows.Forms.DataGridView dgvInvoices;
+    private System.Windows.Forms.Panel panelInvoiceFilter;
+    private System.Windows.Forms.Label lblInvoiceFilterBuyer;
+    private System.Windows.Forms.ComboBox cmbInvoiceFilterBuyer;
+    private System.Windows.Forms.Label lblInvoiceFilterStatus;
+    private System.Windows.Forms.ComboBox cmbInvoiceFilterStatus;
+    private System.Windows.Forms.Button btnClearInvoiceFilter;
+    private System.Windows.Forms.Panel panelInvoicePagination;
+    private System.Windows.Forms.Button btnInvoicePrev;
+    private System.Windows.Forms.Button btnInvoiceNext;
+     private System.Windows.Forms.Button btnInvoicePreview;
+    private System.Windows.Forms.Label lblInvoicePage;
     // Settings tab inner controls
     private System.Windows.Forms.TabControl tabControlSettings;
     private System.Windows.Forms.TabPage tabProfile;
@@ -268,6 +282,19 @@
             this.lblExpenseFilterCategory = new System.Windows.Forms.Label();
             this.cmbExpenseFilterCategory = new System.Windows.Forms.ComboBox();
             this.btnClearExpenseFilter = new System.Windows.Forms.Button();
+            this.tabInvoices = new System.Windows.Forms.TabPage();
+            this.dgvInvoices = new System.Windows.Forms.DataGridView();
+            this.panelInvoiceFilter = new System.Windows.Forms.Panel();
+            this.lblInvoiceFilterBuyer = new System.Windows.Forms.Label();
+            this.cmbInvoiceFilterBuyer = new System.Windows.Forms.ComboBox();
+            this.lblInvoiceFilterStatus = new System.Windows.Forms.Label();
+            this.cmbInvoiceFilterStatus = new System.Windows.Forms.ComboBox();
+            this.btnClearInvoiceFilter = new System.Windows.Forms.Button();
+            this.panelInvoicePagination = new System.Windows.Forms.Panel();
+            this.btnInvoicePrev = new System.Windows.Forms.Button();
+            this.btnInvoiceNext = new System.Windows.Forms.Button();
+            this.btnInvoicePreview = new System.Windows.Forms.Button();
+            this.lblInvoicePage = new System.Windows.Forms.Label();
             SuspendLayout();
             // 
             // tabControlMain
@@ -284,6 +311,7 @@
             this.tabSales,
             this.tabStats,
             this.tabExpenses,
+            this.tabInvoices,
             this.tabSettings});
             // 
             // tabProducts
@@ -927,6 +955,90 @@
             this.tabExpenses.TabIndex = 4;
             this.tabExpenses.Text = "Expenses";
             this.tabExpenses.UseVisualStyleBackColor = true;
+            // ── tabInvoices ───────────────────────────────────────────────
+            // dgvInvoices
+            this.dgvInvoices.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvInvoices.Name = "dgvInvoices";
+            this.dgvInvoices.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvInvoices.MultiSelect = false;
+            this.dgvInvoices.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvInvoices.AllowUserToAddRows = false;
+            this.dgvInvoices.AllowUserToDeleteRows = false;
+            this.dgvInvoices.RowHeadersVisible = false;
+            // lblInvoiceFilterBuyer
+            this.lblInvoiceFilterBuyer.AutoSize = true;
+            this.lblInvoiceFilterBuyer.Location = new System.Drawing.Point(8, 13);
+            this.lblInvoiceFilterBuyer.Name = "lblInvoiceFilterBuyer";
+            this.lblInvoiceFilterBuyer.Text = "Buyer:";
+            // cmbInvoiceFilterBuyer
+            this.cmbInvoiceFilterBuyer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbInvoiceFilterBuyer.Location = new System.Drawing.Point(58, 10);
+            this.cmbInvoiceFilterBuyer.Name = "cmbInvoiceFilterBuyer";
+            this.cmbInvoiceFilterBuyer.Width = 160;
+            // lblInvoiceFilterStatus
+            this.lblInvoiceFilterStatus.AutoSize = true;
+            this.lblInvoiceFilterStatus.Location = new System.Drawing.Point(228, 13);
+            this.lblInvoiceFilterStatus.Name = "lblInvoiceFilterStatus";
+            this.lblInvoiceFilterStatus.Text = "Status:";
+            // cmbInvoiceFilterStatus
+            this.cmbInvoiceFilterStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbInvoiceFilterStatus.Location = new System.Drawing.Point(280, 10);
+            this.cmbInvoiceFilterStatus.Name = "cmbInvoiceFilterStatus";
+            this.cmbInvoiceFilterStatus.Width = 130;
+            // btnClearInvoiceFilter
+            this.btnClearInvoiceFilter.Text = "Clear";
+            this.btnClearInvoiceFilter.Name = "btnClearInvoiceFilter";
+            this.btnClearInvoiceFilter.Location = new System.Drawing.Point(420, 9);
+            this.btnClearInvoiceFilter.Size = new System.Drawing.Size(70, 25);
+            this.btnClearInvoiceFilter.UseVisualStyleBackColor = true;
+            // panelInvoiceFilter
+            this.panelInvoiceFilter.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelInvoiceFilter.Height = 35;
+            this.panelInvoiceFilter.Name = "panelInvoiceFilter";
+            this.panelInvoiceFilter.Controls.Add(this.lblInvoiceFilterBuyer);
+            this.panelInvoiceFilter.Controls.Add(this.cmbInvoiceFilterBuyer);
+            this.panelInvoiceFilter.Controls.Add(this.lblInvoiceFilterStatus);
+            this.panelInvoiceFilter.Controls.Add(this.cmbInvoiceFilterStatus);
+            this.panelInvoiceFilter.Controls.Add(this.btnClearInvoiceFilter);
+            // btnInvoicePrev
+            this.btnInvoicePrev.Text = "< Prev";
+            this.btnInvoicePrev.Name = "btnInvoicePrev";
+            this.btnInvoicePrev.Size = new System.Drawing.Size(70, 25);
+            this.btnInvoicePrev.Location = new System.Drawing.Point(5, 5);
+            // lblInvoicePage
+            this.lblInvoicePage.Name = "lblInvoicePage";
+            this.lblInvoicePage.Text = "Page 1";
+            this.lblInvoicePage.AutoSize = true;
+            this.lblInvoicePage.Location = new System.Drawing.Point(85, 9);
+            this.lblInvoicePage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // btnInvoiceNext
+            this.btnInvoiceNext.Text = "Next >";
+            this.btnInvoiceNext.Name = "btnInvoiceNext";
+            this.btnInvoiceNext.Size = new System.Drawing.Size(70, 25);
+            this.btnInvoiceNext.Location = new System.Drawing.Point(155, 5);
+            // btnInvoicePreview
+            this.btnInvoicePreview.Text = "🖨 Preview Invoice";
+            this.btnInvoicePreview.Name = "btnInvoicePreview";
+            this.btnInvoicePreview.Size = new System.Drawing.Size(130, 25);
+            this.btnInvoicePreview.Location = new System.Drawing.Point(230, 5);
+            // panelInvoicePagination
+            this.panelInvoicePagination.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelInvoicePagination.Height = 35;
+            this.panelInvoicePagination.Name = "panelInvoicePagination";
+            this.panelInvoicePagination.Controls.Add(this.btnInvoicePrev);
+            this.panelInvoicePagination.Controls.Add(this.lblInvoicePage);
+            this.panelInvoicePagination.Controls.Add(this.btnInvoiceNext);
+            this.panelInvoicePagination.Controls.Add(this.btnInvoicePreview);
+            // tabInvoices
+            this.tabInvoices.Controls.Add(this.dgvInvoices);
+            this.tabInvoices.Controls.Add(this.panelInvoicePagination);
+            this.tabInvoices.Controls.Add(this.panelInvoiceFilter);
+            this.tabInvoices.Location = new System.Drawing.Point(4, 24);
+            this.tabInvoices.Name = "tabInvoices";
+            this.tabInvoices.Size = new System.Drawing.Size(792, 422);
+            this.tabInvoices.TabIndex = 5;
+            this.tabInvoices.Text = "Invoices";
+            this.tabInvoices.UseVisualStyleBackColor = true;
             // tabSettings
             this.tabSettings.Location = new System.Drawing.Point(4, 24);
             this.tabSettings.Name = "tabSettings";

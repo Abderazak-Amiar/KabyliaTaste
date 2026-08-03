@@ -10,6 +10,29 @@
 
     public partial class Main : Form
     {
+        private sealed class InvoiceGridRow
+        {
+            public int Id { get; set; }
+            public string Buyer { get; set; } = string.Empty;
+            public DateTime Date { get; set; }
+            public string Hour { get; set; } = string.Empty;
+            public decimal Total { get; set; }
+            public decimal? Paid { get; set; }
+            public decimal DueAmount { get; set; }
+            public string Status { get; set; } = "No";
+        }
+
+        private sealed class StatsGridRow
+        {
+            public string Product { get; set; } = string.Empty;
+            public DateTime Date { get; set; }
+            public string Hour { get; set; } = string.Empty;
+            public int UnitsSold { get; set; }
+            public decimal Revenue { get; set; }
+            public decimal Cost { get; set; }
+            public decimal Profit { get; set; }
+        }
+
         private int? selectedProductId = null;
         private int? selectedSaleId = null;
         private int? selectedExpenseId = null;
@@ -19,6 +42,8 @@
         private const int ProductPageSize = 20;
         private int _currentExpensePage = 1;
         private const int ExpensePageSize = 20;
+        private int _currentInvoicePage = 1;
+        private const int InvoicePageSize = 20;
         private string _productFilter = "";
         private string _expenseCategoryFilter = "";
 
@@ -77,6 +102,17 @@
             btnChangeUsername.Click += BtnChangeUsername_Click;
             timerClock.Tick += TimerClock_Tick;
             Resize += (s, e) => UpdateDateTime();
+            cmbInvoiceFilterBuyer.SelectedIndexChanged += InvoiceFilter_Changed;
+            cmbInvoiceFilterStatus.SelectedIndexChanged += InvoiceFilter_Changed;
+            btnClearInvoiceFilter.Click += BtnClearInvoiceFilter_Click;
+            btnInvoicePrev.Click += BtnInvoicePrev_Click;
+            btnInvoiceNext.Click += BtnInvoiceNext_Click;
+            btnInvoicePreview.Click += BtnInvoicePreview_Click;
+            dgvInvoices.CellValueChanged += DgvInvoices_CellValueChanged;
+            dgvInvoices.CurrentCellDirtyStateChanged += DgvInvoices_CurrentCellDirtyStateChanged;
+            dgvInvoices.CellParsing += DgvInvoices_CellParsing;
+            dgvInvoices.CellValidating += DgvInvoices_CellValidating;
+            dgvInvoices.DataError += DgvInvoices_DataError;
         }
 
         private void TxtSearch_TextChanged(object? sender, EventArgs e)
@@ -426,6 +462,8 @@
             LoadStatsTab();
         else if (tabControlMain.SelectedTab == tabExpenses)
             LoadExpensesTab();
+        else if (tabControlMain.SelectedTab == tabInvoices)
+            LoadInvoicesTab();
         else if (tabControlMain.SelectedTab == tabSettings)
             LoadSettingsTab();
     }
@@ -610,9 +648,36 @@
         foreach (var s in sales)
             s.BuyerName = buyerName;
 
+        var invoice = new KabyliaTaste.Models.Invoice
+        {
+            BuyerName = buyerName,
+            Date = DateTime.Now,
+            TotalAmount = sales.Sum(s => s.TotalPrice),
+            PaymentStatus = KabyliaTaste.Models.InvoicePaymentStatus.No,
+            AmountPaid = 0
+        };
+        db.Invoices.Add(invoice);
+        db.SaveChanges();
+
+        foreach (var s in sales)
+            s.InvoiceId = invoice.Id;
+        db.SaveChanges();
+
         using var dbStore1 = new AppDbContext();
         var storeForInvoice = dbStore1.StoreSettings.FirstOrDefault();
-        new KabyliaTaste.Services.InvoicePrinter(sales, buyerName, storeForInvoice?.StoreName ?? "KabyliaTaste", storeForInvoice?.LogoData).PrintPreview();
+        new KabyliaTaste.Services.InvoicePrinter(
+            sales,
+            buyerName,
+            storeForInvoice?.StoreName ?? "KabyliaTaste",
+            storeForInvoice?.LogoData,
+            invoice.Id,
+            invoice.Date,
+            invoice.TotalAmount,
+            invoice.AmountPaid,
+            invoice.PaymentStatus).PrintPreview();
+
+        if (tabControlMain.SelectedTab == tabInvoices)
+            LoadInvoices();
     }
 
     private void CmbSaleProduct_SelectedIndexChanged(object? sender, EventArgs e)
@@ -846,29 +911,62 @@
                 };
             }
 
-            var stats = query
-                .AsEnumerable()
-                .GroupBy(s => s.Product.Name)
-                .Select(g => new
+            var filteredSales = query.ToList();
+
+            var stats = filteredSales
+                .Select(s => new StatsGridRow
                 {
-                    Product = g.Key,
-                    UnitsSold = g.Sum(s => s.Quantity),
-                    Revenue = g.Sum(s => s.TotalPrice),
-                    Cost = g.Sum(s => s.Quantity * s.Product.BuyPrice),
-                    Profit = g.Sum(s => s.TotalPrice - s.Quantity * s.Product.BuyPrice)
+                    Product = s.Product.Name,
+                    Date = s.SaleDate.Date,
+                    Hour = s.SaleDate.ToString("HH:mm"),
+                    UnitsSold = s.Quantity,
+                    Revenue = s.TotalPrice,
+                    Cost = s.Quantity * s.Product.BuyPrice,
+                    Profit = s.TotalPrice - s.Quantity * s.Product.BuyPrice
                 })
-                .OrderByDescending(x => x.Profit)
+                .OrderByDescending(x => x.Date)
+                .ThenByDescending(x => x.Hour)
                 .ToList();
 
             dgvStats.DataSource = stats;
 
             var grossProfit = stats.Sum(x => x.Profit);
+            var invoiceTotals = GetInvoiceTotals(db, filteredSales);
             var totalExpenses = db.Expenses.AsEnumerable().Sum(e => e.Amount);
             var netProfit = grossProfit - totalExpenses;
-            lblTotalProfitValue.Text = $"{netProfit:F2}  (Gross: {grossProfit:F2}  Expenses: {totalExpenses:F2})";
+            lblTotalProfitValue.Text = $"{netProfit:F2}  (Gross: {grossProfit:F2}  Debt: {invoiceTotals.Debt:F2}  Expenses: {totalExpenses:F2})";
             lblTotalProfitValue.ForeColor = netProfit >= 0
                 ? System.Drawing.Color.Green
                 : System.Drawing.Color.Red;
+        }
+
+        private static (decimal Collected, decimal Debt) GetInvoiceTotals(AppDbContext db, IEnumerable<Sale> sales)
+        {
+            var invoiceIds = sales
+                .Where(s => s.InvoiceId.HasValue)
+                .Select(s => s.InvoiceId!.Value)
+                .Distinct()
+                .ToList();
+
+            var invoices = db.Invoices
+                .Where(i => invoiceIds.Contains(i.Id))
+                .AsEnumerable();
+
+            var collected = invoices.Sum(i => i.PaymentStatus switch
+            {
+                InvoicePaymentStatus.Yes => i.TotalAmount,
+                InvoicePaymentStatus.PartiallyPaid => i.AmountPaid,
+                _ => 0m
+            });
+
+            var debt = invoices.Sum(i => i.PaymentStatus switch
+            {
+                InvoicePaymentStatus.Yes => 0m,
+                InvoicePaymentStatus.PartiallyPaid => i.TotalAmount - i.AmountPaid,
+                _ => i.TotalAmount
+            });
+
+            return (collected, debt);
         }
 
     private void RefreshBuyerFilterDropdown()
@@ -945,23 +1043,38 @@
             };
         }
 
-        var rows = query
-            .AsEnumerable()
-            .GroupBy(s => s.Product.Name)
-            .Select(g => new KabyliaTaste.Services.StatsReportRow
+        var filteredSales = query.ToList();
+
+        var rows = filteredSales
+            .Select(s => new KabyliaTaste.Services.StatsReportRow
             {
-                Product   = g.Key,
-                UnitsSold = g.Sum(s => s.Quantity),
-                Revenue   = g.Sum(s => s.TotalPrice),
-                Cost      = g.Sum(s => s.Quantity * s.Product.BuyPrice),
-                Profit    = g.Sum(s => s.TotalPrice - s.Quantity * s.Product.BuyPrice)
+                Product   = s.Product.Name,
+                Date      = s.SaleDate.Date,
+                Hour      = s.SaleDate.ToString("HH:mm"),
+                UnitsSold = s.Quantity,
+                Revenue   = s.TotalPrice,
+                Cost      = s.Quantity * s.Product.BuyPrice,
+                Profit    = s.TotalPrice - s.Quantity * s.Product.BuyPrice
             })
-            .OrderByDescending(x => x.Profit)
+            .OrderByDescending(x => x.Date)
+            .ThenByDescending(x => x.Hour)
             .ToList();
 
         using var dbStore2 = new AppDbContext();
         var storeForReport = dbStore2.StoreSettings.FirstOrDefault();
-        new KabyliaTaste.Services.StatsReportPrinter(rows, productFilter, buyerFilter, period, refDate, storeForReport?.StoreName ?? "KabyliaTaste", storeForReport?.LogoData).PrintPreview();
+        var invoiceTotals = GetInvoiceTotals(db, filteredSales);
+        var totalExpenses = db.Expenses.AsEnumerable().Sum(e => e.Amount);
+        new KabyliaTaste.Services.StatsReportPrinter(
+            rows,
+            productFilter,
+            buyerFilter,
+            period,
+            refDate,
+            storeForReport?.StoreName ?? "KabyliaTaste",
+            storeForReport?.LogoData,
+            invoiceTotals.Collected,
+            invoiceTotals.Debt,
+            totalExpenses).PrintPreview();
     }
 
     private void ChkFilterDate_CheckedChanged(object? sender, EventArgs e)
@@ -1212,6 +1325,340 @@
     {
         _currentExpensePage++;
         LoadExpenses();
+    }
+
+    // ── Invoices Tab ─────────────────────────────────────────────────────────
+
+    private bool _loadingInvoices = false;
+
+    private void LoadInvoicesTab()
+    {
+        using var db = new AppDbContext();
+        var buyers = db.Invoices
+            .Select(i => i.BuyerName)
+            .Distinct()
+            .OrderBy(b => b)
+            .ToList();
+        buyers.Insert(0, "");
+        cmbInvoiceFilterBuyer.SelectedIndexChanged -= InvoiceFilter_Changed;
+        cmbInvoiceFilterBuyer.DataSource = buyers;
+        cmbInvoiceFilterBuyer.SelectedIndex = 0;
+        cmbInvoiceFilterBuyer.SelectedIndexChanged += InvoiceFilter_Changed;
+
+        cmbInvoiceFilterStatus.SelectedIndexChanged -= InvoiceFilter_Changed;
+        cmbInvoiceFilterStatus.Items.Clear();
+        cmbInvoiceFilterStatus.Items.AddRange(new object[] { "", "No", "Yes", "PP" });
+        cmbInvoiceFilterStatus.SelectedIndex = 0;
+        cmbInvoiceFilterStatus.SelectedIndexChanged += InvoiceFilter_Changed;
+
+        _currentInvoicePage = 1;
+        LoadInvoices();
+    }
+
+    private void LoadInvoices()
+    {
+        using var db = new AppDbContext();
+        var buyerFilter = cmbInvoiceFilterBuyer?.SelectedItem as string ?? "";
+        var statusFilter = cmbInvoiceFilterStatus?.SelectedItem as string ?? "";
+
+        var query = db.Invoices.AsQueryable();
+
+        if (!string.IsNullOrEmpty(buyerFilter))
+            query = query.Where(i => i.BuyerName == buyerFilter);
+
+        if (!string.IsNullOrEmpty(statusFilter))
+        {
+            var status = statusFilter switch
+            {
+                "Yes" => InvoicePaymentStatus.Yes,
+                "PP" => InvoicePaymentStatus.PartiallyPaid,
+                _ => InvoicePaymentStatus.No
+            };
+            query = query.Where(i => i.PaymentStatus == status);
+        }
+
+        var totalCount = query.Count();
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)InvoicePageSize));
+        _currentInvoicePage = Math.Clamp(_currentInvoicePage, 1, totalPages);
+
+        var invoices = query
+            .OrderByDescending(i => i.Id)
+            .Skip((_currentInvoicePage - 1) * InvoicePageSize)
+            .Take(InvoicePageSize)
+            .Select(i => new InvoiceGridRow
+            {
+                Id = i.Id,
+                Buyer = i.BuyerName,
+                Date = i.Date.Date,
+                Hour = i.Date.ToString("HH:mm"),
+                Total = i.TotalAmount,
+                Paid = i.AmountPaid,
+                DueAmount = i.TotalAmount - i.AmountPaid,
+                Status = i.PaymentStatus == InvoicePaymentStatus.Yes ? "Yes" :
+                         i.PaymentStatus == InvoicePaymentStatus.PartiallyPaid ? "PP" : "No"
+            })
+            .ToList();
+
+            if (dgvInvoices.IsCurrentCellDirty || dgvInvoices.CurrentCell?.IsInEditMode == true)
+                dgvInvoices.EndEdit();
+
+            _loadingInvoices = true;
+            try
+            {
+                dgvInvoices.DataSource = invoices;
+
+                if (dgvInvoices.Columns.Contains("Date"))
+                    dgvInvoices.Columns["Date"].DefaultCellStyle.Format = "yyyy-MM-dd";
+                if (dgvInvoices.Columns.Contains("Hour"))
+                    dgvInvoices.Columns["Hour"].DefaultCellStyle.Format = "HH:mm";
+                if (dgvInvoices.Columns.Contains("Id"))
+                    dgvInvoices.Columns["Id"].ReadOnly = true;
+                if (dgvInvoices.Columns.Contains("Buyer"))
+                    dgvInvoices.Columns["Buyer"].ReadOnly = true;
+                if (dgvInvoices.Columns.Contains("Date"))
+                    dgvInvoices.Columns["Date"].ReadOnly = true;
+                if (dgvInvoices.Columns.Contains("Hour"))
+                    dgvInvoices.Columns["Hour"].ReadOnly = true;
+                if (dgvInvoices.Columns.Contains("Total"))
+                    dgvInvoices.Columns["Total"].ReadOnly = true;
+                if (dgvInvoices.Columns.Contains("DueAmount"))
+                    dgvInvoices.Columns["DueAmount"].ReadOnly = true;
+
+                // Replace Status column with a combo box column
+                if (dgvInvoices.Columns.Contains("Status") && dgvInvoices.Columns["Status"] is not DataGridViewComboBoxColumn)
+                {
+                    var idx = dgvInvoices.Columns["Status"].Index;
+                    dgvInvoices.Columns.Remove("Status");
+                    var statusCol = new DataGridViewComboBoxColumn
+                    {
+                        Name = "Status",
+                        HeaderText = "Status",
+                        DataPropertyName = "Status",
+                        Items = { "No", "Yes", "PP" }
+                    };
+                    dgvInvoices.Columns.Insert(idx, statusCol);
+                }
+
+                if (dgvInvoices.Columns.Contains("Paid"))
+                {
+                    dgvInvoices.Columns["Paid"].ReadOnly = false;
+                    dgvInvoices.Columns["Paid"].DefaultCellStyle.NullValue = 0m;
+                }
+            }
+            finally
+            {
+                _loadingInvoices = false;
+            }
+
+        lblInvoicePage.Text = $"Page {_currentInvoicePage} / {totalPages}";
+        btnInvoicePrev.Enabled = _currentInvoicePage > 1;
+        btnInvoiceNext.Enabled = _currentInvoicePage < totalPages;
+    }
+
+    private void ReloadInvoices()
+    {
+        if (IsDisposed)
+            return;
+
+        if (IsHandleCreated)
+            BeginInvoke(new Action(LoadInvoices));
+        else
+            LoadInvoices();
+    }
+
+    private void InvoiceFilter_Changed(object? sender, EventArgs e)
+    {
+        _currentInvoicePage = 1;
+        LoadInvoices();
+    }
+
+    private void BtnClearInvoiceFilter_Click(object? sender, EventArgs e)
+    {
+        cmbInvoiceFilterBuyer.SelectedIndex = 0;
+        cmbInvoiceFilterStatus.SelectedIndex = 0;
+        _currentInvoicePage = 1;
+        LoadInvoices();
+    }
+
+    private void BtnInvoicePrev_Click(object? sender, EventArgs e)
+    {
+        _currentInvoicePage--;
+        LoadInvoices();
+    }
+
+    private void BtnInvoiceNext_Click(object? sender, EventArgs e)
+    {
+        _currentInvoicePage++;
+        LoadInvoices();
+    }
+
+    private void BtnInvoicePreview_Click(object? sender, EventArgs e)
+    {
+        if (dgvInvoices.CurrentRow == null)
+        {
+            MessageBox.Show("Select an invoice to preview.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var idCell = dgvInvoices.CurrentRow.Cells["Id"];
+        if (idCell?.Value == null || !int.TryParse(idCell.Value.ToString(), out var invoiceId))
+        {
+            MessageBox.Show("Select a valid invoice to preview.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        using var db = new AppDbContext();
+        var invoice = db.Invoices.FirstOrDefault(i => i.Id == invoiceId);
+        if (invoice == null)
+        {
+            MessageBox.Show("The selected invoice could not be found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var sales = db.Sales
+            .Include(s => s.Product)
+            .Where(s => s.InvoiceId == invoice.Id)
+            .ToList();
+
+        if (sales.Count == 0)
+        {
+            MessageBox.Show("No sales were found for the selected invoice.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var store = db.StoreSettings.FirstOrDefault();
+        new KabyliaTaste.Services.InvoicePrinter(
+            sales,
+            invoice.BuyerName,
+            store?.StoreName ?? "KabyliaTaste",
+            store?.LogoData,
+            invoice.Id,
+            invoice.Date,
+            invoice.TotalAmount,
+            invoice.AmountPaid,
+            invoice.PaymentStatus).PrintPreview();
+    }
+
+    private void DgvInvoices_CurrentCellDirtyStateChanged(object? sender, EventArgs e)
+    {
+        if (!dgvInvoices.IsCurrentCellDirty || dgvInvoices.CurrentCell == null)
+            return;
+
+        if (dgvInvoices.CurrentCell is DataGridViewCheckBoxCell ||
+            dgvInvoices.CurrentCell is DataGridViewComboBoxCell)
+        {
+            dgvInvoices.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        }
+    }
+
+    private void DgvInvoices_CellParsing(object? sender, DataGridViewCellParsingEventArgs e)
+    {
+        if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+        if (dgvInvoices.Columns[e.ColumnIndex].Name != "Paid") return;
+
+        if (e.Value == null || string.IsNullOrWhiteSpace(e.Value.ToString()))
+        {
+            e.Value = 0m;
+            e.ParsingApplied = true;
+        }
+    }
+
+    private void DgvInvoices_CellValidating(object? sender, DataGridViewCellValidatingEventArgs e)
+    {
+        if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+        if (dgvInvoices.Columns[e.ColumnIndex].Name != "Paid") return;
+
+        var text = e.FormattedValue?.ToString()?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(text))
+            return;
+
+        if (!decimal.TryParse(text, out var paid))
+        {
+            MessageBox.Show("Amount paid must be a valid number.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            e.Cancel = true;
+            return;
+        }
+
+        if (dgvInvoices.Rows[e.RowIndex].Cells["Total"].Value == null ||
+            !decimal.TryParse(dgvInvoices.Rows[e.RowIndex].Cells["Total"].Value.ToString(), out var total))
+            return;
+
+        if (paid < 0 || paid > total)
+        {
+            MessageBox.Show("Amount paid must not exceed the invoice total.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            e.Cancel = true;
+        }
+    }
+
+    private void DgvInvoices_DataError(object? sender, DataGridViewDataErrorEventArgs e)
+    {
+        if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+        if (dgvInvoices.Columns[e.ColumnIndex].Name != "Paid") return;
+
+        e.ThrowException = false;
+        ReloadInvoices();
+    }
+
+    private void DgvInvoices_CellValueChanged(object? sender, DataGridViewCellEventArgs e)
+    {
+        if (_loadingInvoices || e.RowIndex < 0) return;
+
+        var row = dgvInvoices.Rows[e.RowIndex];
+        if (row.Cells["Id"]?.Value == null ||
+            !int.TryParse(row.Cells["Id"].Value.ToString(), out var invoiceId))
+            return;
+
+        var columnName = dgvInvoices.Columns[e.ColumnIndex].Name;
+        if (columnName != "Status" && columnName != "Paid") return;
+
+        using var db = new AppDbContext();
+        var invoice = db.Invoices.Find(invoiceId);
+        if (invoice == null) return;
+
+        if (columnName == "Status")
+        {
+            var statusText = row.Cells["Status"].Value?.ToString() ?? "No";
+            invoice.PaymentStatus = statusText switch
+            {
+                "Yes" => InvoicePaymentStatus.Yes,
+                "PP" => InvoicePaymentStatus.PartiallyPaid,
+                _ => InvoicePaymentStatus.No
+            };
+
+            if (invoice.PaymentStatus == InvoicePaymentStatus.Yes)
+                invoice.AmountPaid = invoice.TotalAmount;
+            else if (invoice.PaymentStatus == InvoicePaymentStatus.No)
+                invoice.AmountPaid = 0;
+        }
+        else if (columnName == "Paid")
+        {
+            var paidText = row.Cells["Paid"].Value?.ToString();
+            var paid = 0m;
+
+            if (!string.IsNullOrWhiteSpace(paidText) && !decimal.TryParse(paidText, out paid))
+            {
+                MessageBox.Show("Amount paid must be a valid number.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ReloadInvoices();
+                return;
+            }
+
+            if (paid < 0 || paid > invoice.TotalAmount)
+            {
+                MessageBox.Show("Amount paid must not exceed the invoice total.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ReloadInvoices();
+                return;
+            }
+
+            invoice.AmountPaid = paid;
+            invoice.PaymentStatus = paid >= invoice.TotalAmount
+                ? InvoicePaymentStatus.Yes
+                : paid <= 0
+                    ? InvoicePaymentStatus.No
+                    : InvoicePaymentStatus.PartiallyPaid;
+        }
+
+        db.SaveChanges();
+        ReloadInvoices();
     }
 
     // ── Settings Tab ─────────────────────────────────────────────────────────

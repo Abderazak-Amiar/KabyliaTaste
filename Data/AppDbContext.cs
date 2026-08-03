@@ -10,6 +10,7 @@ namespace KabyliaTaste.Data
         public DbSet<Expense> Expenses { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<StoreSettings> StoreSettings { get; set; } = null!;
+        public DbSet<Invoice> Invoices { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

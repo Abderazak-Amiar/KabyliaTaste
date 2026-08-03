@@ -10,5 +10,7 @@ namespace KabyliaTaste.Models
         public decimal TotalPrice { get; set; }
         public DateTime SaleDate { get; set; }
         public string? BuyerName { get; set; }
+        public int? InvoiceId { get; set; }
+        public Invoice? Invoice { get; set; }
     }
 }
