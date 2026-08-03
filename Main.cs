@@ -12,11 +12,15 @@
     {
         private int? selectedProductId = null;
         private int? selectedSaleId = null;
+        private int? selectedExpenseId = null;
         private int _currentSalePage = 1;
         private const int SalePageSize = 20;
         private int _currentProductPage = 1;
         private const int ProductPageSize = 20;
+        private int _currentExpensePage = 1;
+        private const int ExpensePageSize = 20;
         private string _productFilter = "";
+        private string _expenseCategoryFilter = "";
 
         public bool LogoutRequested { get; private set; } = false;
 
@@ -57,6 +61,15 @@
             dtpFilterDate.ValueChanged += SaleFilter_Changed;
             btnClearSaleFilter.Click += BtnClearSaleFilter_Click;
             btnPrintReport.Click += BtnPrintReport_Click;
+            btnAddExpense.Click += BtnAddExpense_Click;
+            btnUpdateExpense.Click += BtnUpdateExpense_Click;
+            btnDeleteExpense.Click += BtnDeleteExpense_Click;
+            btnClearExpense.Click += BtnClearExpense_Click;
+            dgvExpenses.SelectionChanged += DgvExpenses_SelectionChanged;
+            cmbExpenseFilterCategory.SelectedIndexChanged += ExpenseFilter_Changed;
+            btnClearExpenseFilter.Click += BtnClearExpenseFilter_Click;
+            btnExpensePrev.Click += BtnExpensePrev_Click;
+            btnExpenseNext.Click += BtnExpenseNext_Click;
             btnLogout.Click += BtnLogout_Click;
             btnChangePassword.Click += BtnChangePassword_Click;
             btnSaveStoreName.Click += BtnSaveStoreName_Click;
@@ -111,6 +124,7 @@
             if (!isAdmin)
             {
                 tabControlMain.TabPages.Remove(tabStats);
+                tabControlMain.TabPages.Remove(tabExpenses);
                 tabControlMain.TabPages.Remove(tabSettings);
             }
         }
@@ -172,6 +186,11 @@
 
         if (dgvProducts.Columns.Contains("BuyPrice"))
             dgvProducts.Columns["BuyPrice"].Visible = Session.IsAdmin && chkShowBuyPrice.Checked;
+        if (dgvProducts.Columns.Contains("Date"))
+        {
+            dgvProducts.Columns["Date"].DefaultCellStyle.Format = "dd/MM/yyyy";
+            dgvProducts.Columns["Date"].HeaderText = "Date";
+        }
         ClearForm(false);
         // auto-select first row if available
         if (dgvProducts.Rows.Count > 0)
@@ -234,6 +253,7 @@
             product.SellPrice = numSellPrice.Value;
             product.Quantity = (int)numQuantity.Value;
             product.Unit = (ProductUnit)cmbUnit.SelectedIndex;
+            product.Date = DateTime.Now;
             db.SaveChanges();
             _currentProductPage = 1;
             LoadProducts();
@@ -404,6 +424,8 @@
             LoadSalesTab();
         else if (tabControlMain.SelectedTab == tabStats)
             LoadStatsTab();
+        else if (tabControlMain.SelectedTab == tabExpenses)
+            LoadExpensesTab();
         else if (tabControlMain.SelectedTab == tabSettings)
             LoadSettingsTab();
     }
@@ -840,9 +862,11 @@
 
             dgvStats.DataSource = stats;
 
-            var totalProfit = stats.Sum(x => x.Profit);
-            lblTotalProfitValue.Text = totalProfit.ToString("F2");
-            lblTotalProfitValue.ForeColor = totalProfit >= 0
+            var grossProfit = stats.Sum(x => x.Profit);
+            var totalExpenses = db.Expenses.AsEnumerable().Sum(e => e.Amount);
+            var netProfit = grossProfit - totalExpenses;
+            lblTotalProfitValue.Text = $"{netProfit:F2}  (Gross: {grossProfit:F2}  Expenses: {totalExpenses:F2})";
+            lblTotalProfitValue.ForeColor = netProfit >= 0
                 ? System.Drawing.Color.Green
                 : System.Drawing.Color.Red;
         }
@@ -1021,6 +1045,173 @@
     {
         db.Database.ExecuteSqlRaw("UPDATE Sales SET Id = Id - 1 WHERE Id > {0}", deletedId);
         db.Database.ExecuteSqlRaw("UPDATE sqlite_sequence SET seq = (SELECT IFNULL(MAX(Id), 0) FROM Sales) WHERE name = 'Sales'");
+    }
+
+    // ── Expenses Tab ──────────────────────────────────────────────────────────
+
+    private void LoadExpensesTab()
+    {
+        using var db = new AppDbContext();
+        var categories = db.Expenses
+            .Where(e => e.Category != null && e.Category != "")
+            .Select(e => e.Category)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+        categories.Insert(0, "");
+        cmbExpenseFilterCategory.SelectedIndexChanged -= ExpenseFilter_Changed;
+        cmbExpenseFilterCategory.DataSource = categories;
+        cmbExpenseFilterCategory.SelectedIndex = 0;
+        cmbExpenseFilterCategory.SelectedIndexChanged += ExpenseFilter_Changed;
+        LoadExpenses();
+    }
+
+    private void LoadExpenses()
+    {
+        using var db = new AppDbContext();
+        var query = db.Expenses.OrderByDescending(e => e.Date).AsQueryable();
+        if (!string.IsNullOrEmpty(_expenseCategoryFilter))
+            query = query.Where(e => e.Category == _expenseCategoryFilter);
+
+        var totalCount = query.Count();
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)ExpensePageSize));
+        _currentExpensePage = Math.Clamp(_currentExpensePage, 1, totalPages);
+
+        var list = query
+            .Skip((_currentExpensePage - 1) * ExpensePageSize)
+            .Take(ExpensePageSize)
+            .ToList();
+        dgvExpenses.DataSource = list;
+
+        if (dgvExpenses.Columns.Contains("Date"))
+            dgvExpenses.Columns["Date"].DefaultCellStyle.Format = "dd/MM/yyyy";
+
+        lblExpensePage.Text = $"Page {_currentExpensePage} / {totalPages}";
+        btnExpensePrev.Enabled = _currentExpensePage > 1;
+        btnExpenseNext.Enabled = _currentExpensePage < totalPages;
+
+        ClearExpenseForm(false);
+        if (dgvExpenses.Rows.Count > 0)
+        {
+            dgvExpenses.ClearSelection();
+            dgvExpenses.Rows[0].Selected = true;
+            DgvExpenses_SelectionChanged(null, EventArgs.Empty);
+        }
+    }
+
+    private void ClearExpenseForm(bool clearSelection = true)
+    {
+        selectedExpenseId = null;
+        txtExpenseDescription.Clear();
+        numExpenseAmount.Value = 0;
+        txtExpenseCategory.Clear();
+        dtpExpenseDate.Value = DateTime.Today;
+        if (clearSelection && dgvExpenses.CurrentRow != null)
+            dgvExpenses.ClearSelection();
+    }
+
+    private void DgvExpenses_SelectionChanged(object? sender, EventArgs e)
+    {
+        if (dgvExpenses.CurrentRow == null || dgvExpenses.CurrentRow.Index < 0) return;
+        if (dgvExpenses.CurrentRow.DataBoundItem is not KabyliaTaste.Models.Expense expense) return;
+        selectedExpenseId = expense.Id;
+        txtExpenseDescription.Text = expense.Description;
+        numExpenseAmount.Value = expense.Amount;
+        txtExpenseCategory.Text = expense.Category;
+        dtpExpenseDate.Value = expense.Date;
+    }
+
+    private void BtnAddExpense_Click(object? sender, EventArgs e)
+    {
+        var description = txtExpenseDescription.Text.Trim();
+        if (string.IsNullOrEmpty(description))
+        {
+            MessageBox.Show("Description is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        using var db = new AppDbContext();
+        var expense = new KabyliaTaste.Models.Expense
+        {
+            Description = description,
+            Amount = numExpenseAmount.Value,
+            Category = txtExpenseCategory.Text.Trim(),
+            Date = dtpExpenseDate.Value.Date
+        };
+        db.Expenses.Add(expense);
+        db.SaveChanges();
+        _currentExpensePage = 1;
+        LoadExpensesTab();
+    }
+
+    private void BtnUpdateExpense_Click(object? sender, EventArgs e)
+    {
+        if (!selectedExpenseId.HasValue)
+        {
+            MessageBox.Show("Select an expense to update.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        var description = txtExpenseDescription.Text.Trim();
+        if (string.IsNullOrEmpty(description))
+        {
+            MessageBox.Show("Description is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        using var db = new AppDbContext();
+        var expense = db.Expenses.Find(selectedExpenseId.Value);
+        if (expense == null) return;
+        expense.Description = description;
+        expense.Amount = numExpenseAmount.Value;
+        expense.Category = txtExpenseCategory.Text.Trim();
+        expense.Date = dtpExpenseDate.Value.Date;
+        db.SaveChanges();
+        _currentExpensePage = 1;
+        LoadExpensesTab();
+    }
+
+    private void BtnDeleteExpense_Click(object? sender, EventArgs e)
+    {
+        if (!selectedExpenseId.HasValue)
+        {
+            MessageBox.Show("Select an expense to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        var ok = MessageBox.Show("Are you sure you want to delete the selected expense?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        if (ok != DialogResult.Yes) return;
+        using var db = new AppDbContext();
+        var expense = db.Expenses.Find(selectedExpenseId.Value);
+        if (expense == null) return;
+        db.Expenses.Remove(expense);
+        db.SaveChanges();
+        _currentExpensePage = 1;
+        LoadExpensesTab();
+    }
+
+    private void BtnClearExpense_Click(object? sender, EventArgs e) => ClearExpenseForm();
+
+    private void ExpenseFilter_Changed(object? sender, EventArgs e)
+    {
+        _expenseCategoryFilter = cmbExpenseFilterCategory.SelectedItem as string ?? "";
+        _currentExpensePage = 1;
+        LoadExpenses();
+    }
+
+    private void BtnClearExpenseFilter_Click(object? sender, EventArgs e)
+    {
+        cmbExpenseFilterCategory.SelectedIndex = 0;
+        _currentExpensePage = 1;
+        LoadExpenses();
+    }
+
+    private void BtnExpensePrev_Click(object? sender, EventArgs e)
+    {
+        _currentExpensePage--;
+        LoadExpenses();
+    }
+
+    private void BtnExpenseNext_Click(object? sender, EventArgs e)
+    {
+        _currentExpensePage++;
+        LoadExpenses();
     }
 
     // ── Settings Tab ─────────────────────────────────────────────────────────
