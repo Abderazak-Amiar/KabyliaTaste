@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="KabyliaTaste"
+    Manufacturer="Abderazak Amiar"
+    Version="1.0.0.0"
+    UpgradeCode="4D6E03B5-4FD3-45C7-AF0F-0B6F5A0B6E6A"
+    Language="1033"
+    Compressed="yes"
+    Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of KabyliaTaste is already installed." />
+    <MediaTemplate />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="KabyliaTaste" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="KabyliaTaste" />
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="KabyliaTaste" Level="1">
+      <ComponentGroupRef Id="ApplicationComponents" />
+      <ComponentGroupRef Id="ShortcutComponents" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="ApplicationComponents">
+      <Component Id="KabyliaTasteExecutable" Guid="A4D2E4D5-1A77-45C0-8D16-4A3E5C3F1D1D" Directory="INSTALLFOLDER">
+        <File Id="KabyliaTasteExe" Source="$(var.PublishOutputDir)KabyliaTaste.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="D3DCompiler47" Guid="2F4D2B1E-7B7E-4B3B-9B8C-2D55A6BEF8A1" Directory="INSTALLFOLDER">
+        <File Id="D3DCompiler47File" Source="$(var.PublishOutputDir)D3DCompiler_47_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="ESqlite3" Guid="7C3D8D12-97C4-4E96-9A2D-1B3D0B4C6B72" Directory="INSTALLFOLDER">
+        <File Id="ESqlite3File" Source="$(var.PublishOutputDir)e_sqlite3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="PenImc" Guid="9F08D2F0-7C55-42A0-84D2-A2BE6E2F6F2F" Directory="INSTALLFOLDER">
+        <File Id="PenImcFile" Source="$(var.PublishOutputDir)PenImc_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="PresentationNative" Guid="6A4C6C31-1D94-4B43-9C0A-8D43F9D2C3E8" Directory="INSTALLFOLDER">
+        <File Id="PresentationNativeFile" Source="$(var.PublishOutputDir)PresentationNative_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="VCRuntime140" Guid="0D4B92B9-8A1A-48B7-8A2C-6E6B1D3D5A9C" Directory="INSTALLFOLDER">
+        <File Id="VCRuntime140File" Source="$(var.PublishOutputDir)vcruntime140_cor3.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="WpfGfx" Guid="D7A5E8BC-2D65-4E6C-8F9E-2E3A9B4D1A77" Directory="INSTALLFOLDER">
+        <File Id="WpfGfxFile" Source="$(var.PublishOutputDir)wpfgfx_cor3.dll" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ShortcutComponents">
+      <Component Id="KabyliaTasteStartMenuShortcut" Guid="F7D5E1A0-7F5A-4F5A-9B8B-0AE0C4A9D7C6" Directory="ApplicationProgramsFolder">
+        <Shortcut
+          Id="KabyliaTasteShortcut"
+          Name="KabyliaTaste"
+          Target="[INSTALLFOLDER]KabyliaTaste.exe"
+          WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="RemoveKabyliaTasteProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\KabyliaTaste" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

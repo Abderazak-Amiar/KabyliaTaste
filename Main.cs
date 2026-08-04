@@ -12,6 +12,16 @@
 
     public partial class Main : Form
     {
+        private static string GetAppDataFolder()
+        {
+            var folder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "KabyliaTaste");
+
+            Directory.CreateDirectory(folder);
+            return folder;
+        }
+
         private sealed class InvoiceGridRow
         {
             public int Id { get; set; }
@@ -1878,7 +1888,8 @@
         using var dlg = new OpenFileDialog
         {
             Title = "Select Logo Image",
-            Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif"
+                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif",
+                RestoreDirectory = true
         };
         if (dlg.ShowDialog() != DialogResult.OK) return;
 
@@ -2007,7 +2018,9 @@
             {
                 Title = "Save Database Backup",
                 Filter = "SQLite Database|*.db",
-                FileName = $"KabyliaTaste-{DateTime.Now:yyyyMMdd-HHmmss}.db"
+                FileName = $"KabyliaTaste-{DateTime.Now:yyyyMMdd-HHmmss}.db",
+                InitialDirectory = GetAppDataFolder(),
+                RestoreDirectory = true
             };
 
             if (dlg.ShowDialog() != DialogResult.OK)
@@ -2030,7 +2043,10 @@
             using var dlg = new OpenFileDialog
             {
                 Title = "Select Database Backup",
-                Filter = "SQLite Database|*.db"
+                Filter = "SQLite Database|*.db",
+                InitialDirectory = GetAppDataFolder(),
+                RestoreDirectory = true,
+                CheckFileExists = true
             };
 
             if (dlg.ShowDialog() != DialogResult.OK)
@@ -2126,7 +2142,7 @@
             return store;
         }
 
-        private static string GetDatabaseFilePath() => Path.GetFullPath("app.db");
+        private static string GetDatabaseFilePath() => Path.Combine(GetAppDataFolder(), "app.db");
 
         private static void CopyRelatedSqliteFiles(string sourceDatabasePath, string targetDatabasePath)
         {
