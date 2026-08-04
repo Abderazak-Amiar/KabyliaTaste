@@ -16,7 +16,13 @@ namespace KabyliaTaste.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlite("Data Source=app.db");
+                var appDataFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "KabyliaTaste");
+
+                Directory.CreateDirectory(appDataFolder);
+
+                optionsBuilder.UseSqlite($"Data Source={Path.Combine(appDataFolder, "app.db")}");
             }
         }
     }

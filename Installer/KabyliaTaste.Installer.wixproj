@@ -1,0 +1,13 @@
+<Project Sdk="WixToolset.Sdk/4.0.4">
+  <PropertyGroup>
+    <OutputName>KabyliaTaste.Setup</OutputName>
+    <Platform>x64</Platform>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <PublishOutputDir>$(MSBuildProjectDirectory)\obj\publish\</PublishOutputDir>
+    <DefineConstants>PublishOutputDir=$(PublishOutputDir)</DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="PublishApplication" BeforeTargets="CoreCompile">
+    <Exec Command='dotnet publish "$(MSBuildProjectDirectory)\..\KabyliaTaste.csproj" -c $(Configuration) -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishTrimmed=false /p:PublishDir="$(PublishOutputDir)"' />
+  </Target>
+</Project>
