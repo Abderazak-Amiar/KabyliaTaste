@@ -129,25 +129,25 @@ namespace KabyliaTaste.Services
                 y += lineH * 2;
             }
 
-            g.DrawString("Sales Statistics Report", headerFont, Brushes.Black, x, y);
+            g.DrawString(AppLocalization.T("Sales Statistics Report"), headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Generated: {DateTime.Now:dd-MM-yyyy HH:mm}", smallFont, Brushes.DarkGray, x, y);
+            g.DrawString($"{AppLocalization.T("Generated")}: {DateTime.Now:dd-MM-yyyy HH:mm}", smallFont, Brushes.DarkGray, x, y);
             y += lineH;
 
             // ?? Filters ????????????????????????????????????????????????????????
             string filterDesc = BuildFilterDescription();
-            g.DrawString($"Filters: {filterDesc}", smallFont, Brushes.DarkRed, x, y);
+            g.DrawString($"{AppLocalization.T("Filters")}: {filterDesc}", smallFont, Brushes.DarkRed, x, y);
             y += lineH * 1.5f;
 
             // ?? Table header ???????????????????????????????????????????????????
             g.FillRectangle(Brushes.DarkSlateGray, x, y, tableRight - x, lineH);
-            g.DrawString("Date",      headerFont, Brushes.White, colDate,      y + 3);
-            g.DrawString("Hour",      headerFont, Brushes.White, colHour,      y + 3);
-            g.DrawString("Product",   headerFont, Brushes.White, colProduct,   y + 3);
-            g.DrawString("Units",     headerFont, Brushes.White, colUnits,     y + 3);
-            g.DrawString("Revenue",   headerFont, Brushes.White, colRevenue,   y + 3);
-            g.DrawString("Cost",      headerFont, Brushes.White, colCost,      y + 3);
-            g.DrawString("Profit",    headerFont, Brushes.White, colProfit,    y + 3);
+            g.DrawString(AppLocalization.T("Date"),      headerFont, Brushes.White, colDate,      y + 3);
+            g.DrawString(AppLocalization.T("Hour"),      headerFont, Brushes.White, colHour,      y + 3);
+            g.DrawString(AppLocalization.T("Product"),   headerFont, Brushes.White, colProduct,   y + 3);
+            g.DrawString(AppLocalization.T("Units"),     headerFont, Brushes.White, colUnits,     y + 3);
+            g.DrawString(AppLocalization.T("Revenue"),   headerFont, Brushes.White, colRevenue,   y + 3);
+            g.DrawString(AppLocalization.T("Cost"),      headerFont, Brushes.White, colCost,      y + 3);
+            g.DrawString(AppLocalization.T("Profit"),    headerFont, Brushes.White, colProfit,    y + 3);
             y += lineH;
 
             // ?? Table rows ?????????????????????????????????????????????????????
@@ -193,13 +193,13 @@ namespace KabyliaTaste.Services
             y += lineH + 8;
             var netProfit = _collectedAmount - _expensesAmount;
             var netProfitBrush = netProfit >= 0 ? Brushes.DarkGreen : Brushes.Red;
-            g.DrawString($"Collected: {CurrencyFormatting.FormatAmount(_collectedAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
+            g.DrawString($"{AppLocalization.T("Collected")}: {CurrencyFormatting.FormatAmount(_collectedAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Debt: {CurrencyFormatting.FormatAmount(_debtAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
+            g.DrawString($"{AppLocalization.T("Debt")}: {CurrencyFormatting.FormatAmount(_debtAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Expenses: {CurrencyFormatting.FormatAmount(_expensesAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
+            g.DrawString($"{AppLocalization.T("Expenses")}: {CurrencyFormatting.FormatAmount(_expensesAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Net Profit: {CurrencyFormatting.FormatAmount(netProfit, _currencyCode)}", headerFont, netProfitBrush, x, y);
+            g.DrawString($"{AppLocalization.T("Net Profit")}: {CurrencyFormatting.FormatAmount(netProfit, _currencyCode)}", headerFont, netProfitBrush, x, y);
 
             e.HasMorePages = false;
         }
@@ -208,12 +208,12 @@ namespace KabyliaTaste.Services
         {
             var parts = new System.Collections.Generic.List<string>();
             if (!string.IsNullOrEmpty(_productFilter))
-                parts.Add($"Product: {_productFilter}");
+                parts.Add($"{AppLocalization.T("Product")}: {_productFilter}");
             if (!string.IsNullOrEmpty(_clientFilter))
-                parts.Add($"Client: {_clientFilter}");
+                parts.Add($"{AppLocalization.T("Client")}: {_clientFilter}");
             if (!string.IsNullOrEmpty(_period))
-                parts.Add($"Period: {_period} ({_refDate:dd-MM-yyyy})");
-            return parts.Count > 0 ? string.Join(", ", parts) : "None";
+                parts.Add($"{AppLocalization.T("Period")}: {_period} ({_refDate:dd-MM-yyyy})");
+            return parts.Count > 0 ? string.Join(", ", parts) : AppLocalization.T("None");
         }
     }
 }

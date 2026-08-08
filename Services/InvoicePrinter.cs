@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Collections.Generic;
@@ -123,30 +122,30 @@ namespace KabyliaTaste.Services
             }
 
             var invoiceNumber = _invoiceId ?? _sales[0].Id;
-            g.DrawString($"Invoice #INV-{invoiceNumber:D5}", headerFont, Brushes.Black, x, y);
+            g.DrawString($"{AppLocalization.T("Invoice #")}INV-{invoiceNumber:D5}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Date: {(_invoiceDate ?? DateTime.Now):dd-MM-yyyy HH:mm}", bodyFont, Brushes.DarkRed, x, y);
+            g.DrawString($"{AppLocalization.T("Date")}: {(_invoiceDate ?? DateTime.Now):dd-MM-yyyy HH:mm}", bodyFont, Brushes.DarkRed, x, y);
             y += lineH;
-            g.DrawString($"Client: {_buyerName}", bodyFont, Brushes.DarkRed, x, y);
+            g.DrawString($"{AppLocalization.T("Client")}: {_buyerName}", bodyFont, Brushes.DarkRed, x, y);
             y += lineH * 1.5f;
 
             var grandTotal = _invoiceTotal > 0 ? _invoiceTotal : _sales.Sum(s => s.TotalPrice);
             var dueAmount = grandTotal - _amountPaid;
 
-            g.DrawString("Invoice Details", headerFont, Brushes.Black, x, y);
+            g.DrawString(AppLocalization.T("Invoice Details"), headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Total: {CurrencyFormatting.FormatAmount(grandTotal, _currencyCode)}", bodyFont, Brushes.Black, x, y);
-            g.DrawString($"Paid: {CurrencyFormatting.FormatAmount(_amountPaid, _currencyCode)}", bodyFont, Brushes.Black, x + 220, y);
+            g.DrawString($"{AppLocalization.T("Total")}: {CurrencyFormatting.FormatAmount(grandTotal, _currencyCode)}", bodyFont, Brushes.Black, x, y);
+            g.DrawString($"{AppLocalization.T("Paid")}: {CurrencyFormatting.FormatAmount(_amountPaid, _currencyCode)}", bodyFont, Brushes.Black, x + 220, y);
             y += lineH;
-            g.DrawString($"Due: {CurrencyFormatting.FormatAmount(dueAmount, _currencyCode)}", bodyFont, Brushes.Black, x, y);
-            g.DrawString($"Status: {_paymentStatus}", bodyFont, Brushes.Black, x + 220, y);
+            g.DrawString($"{AppLocalization.T("Due")}: {CurrencyFormatting.FormatAmount(dueAmount, _currencyCode)}", bodyFont, Brushes.Black, x, y);
+            g.DrawString($"{AppLocalization.T("Status")}: {AppLocalization.GetInvoiceStatusDisplayText(_paymentStatus)}", bodyFont, Brushes.Black, x + 220, y);
             y += lineH * 1.5f;
 
             // ?? Table header ????????????????????????????????????????????????
-            g.DrawString("Product",    headerFont, Brushes.Black, colProduct,   y);
-            g.DrawString("Qty",        headerFont, Brushes.Black, colQty,       y);
-            g.DrawString("Unit Price", headerFont, Brushes.Black, colUnitPrice, y);
-            g.DrawString("Total",      headerFont, Brushes.Black, colTotal,     y);
+            g.DrawString(AppLocalization.T("Product"),    headerFont, Brushes.Black, colProduct,   y);
+            g.DrawString(AppLocalization.T("Qty"),        headerFont, Brushes.Black, colQty,       y);
+            g.DrawString(AppLocalization.T("Unit Price"), headerFont, Brushes.Black, colUnitPrice, y);
+            g.DrawString(AppLocalization.T("Total"),      headerFont, Brushes.Black, colTotal,     y);
             y += lineH;
             g.DrawLine(Pens.Black, x, y, tableRight, y);
             y += 6;
@@ -169,11 +168,11 @@ namespace KabyliaTaste.Services
             y += lineH;
 
             // ?? Grand total ?????????????????????????????????????????????????
-            g.DrawString($"Grand Total: {CurrencyFormatting.FormatAmount(grandTotal, _currencyCode)}", headerFont, Brushes.Black, colUnitPrice, y);
+            g.DrawString($"{AppLocalization.T("Grand Total")}: {CurrencyFormatting.FormatAmount(grandTotal, _currencyCode)}", headerFont, Brushes.Black, colUnitPrice, y);
             y += lineH * 2;
 
             // ?? Footer ??????????????????????????????????????????????????????
-            g.DrawString("Thank you for your purchase!", bodyFont, Brushes.DarkGreen, x, y);
+            g.DrawString(AppLocalization.T("Thank you for your purchase!"), bodyFont, Brushes.DarkGreen, x, y);
 
             e.HasMorePages = false;
         }

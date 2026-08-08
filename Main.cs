@@ -81,10 +81,15 @@
         private string _expenseCategoryFilter = "";
         private bool _closingAfterBackup = false;
         private bool _loadingSettingsUi = false;
+        private bool _clearingProductForm = false;
         private List<string> _productUnits = new();
         private TabPage? tabLanguages;
         private ComboBox? cmbLanguage;
         private ComboBox? cmbCurrency;
+        private Label? lblLanguage;
+        private Label? lblCurrency;
+        private Label? lblUnits;
+        private Button? btnSaveLanguagePreference;
         private DataGridView? dgvProductUnits;
         private TextBox? txtProductUnitName;
         private Button? btnAddUnit;
@@ -237,6 +242,7 @@
             UpdateDateTime();
 
             LoadStorePreferences();
+            ApplyLocalizedSettingsTexts();
 
             using var db = new AppDbContext();
             CompactProductIds(db);
@@ -265,17 +271,16 @@
 
         private void UpdateGreeting()
         {
-            var hour = DateTime.Now.Hour;
-            var timeOfDay = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-            var role     = Session.CurrentUser?.IsAdmin == true ? "admin" : "user";
-            var username = Session.CurrentUser?.Username ?? "";
+            var timeOfDay = AppLocalization.GetGreeting(DateTime.Now);
+            var role      = AppLocalization.GetRoleLabel(Session.CurrentUser?.IsAdmin == true);
+            var username = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Session.CurrentUser?.Username ?? "");
 
             lblGreeting.SetSegments(new[]
             {
                 new KabyliaTaste.Controls.MixedFontLabel.Segment($"{timeOfDay}, ",          Bold: false),
                 new KabyliaTaste.Controls.MixedFontLabel.Segment(username,                  Bold: true),
-                new KabyliaTaste.Controls.MixedFontLabel.Segment("  |  You're logged in as: ", Bold: false),
-                new KabyliaTaste.Controls.MixedFontLabel.Segment(role,                      Bold: true),
+                new KabyliaTaste.Controls.MixedFontLabel.Segment($"  |  {AppLocalization.T("You're logged in as:")}", Bold: false),
+                new KabyliaTaste.Controls.MixedFontLabel.Segment($" {role}",                  Bold: true),
             });
 
             UpdateDateTime();
@@ -283,7 +288,8 @@
 
         private void UpdateDateTime()
         {
-            lblDateTime.Text = DateTime.Now.ToString("dddd, dd MMMM yyyy   HH:mm:ss");
+            lblDateTime.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(
+                DateTime.Now.ToString("dddd, dd MMMM yyyy   HH:mm:ss"));
             // Centre in the gap between the greeting and the logout button
             int areaLeft  = lblGreeting.Right + 5;
             int areaRight = btnLogout.Left - 5;
@@ -313,8 +319,9 @@
                 .Take(ProductPageSize)
                 .ToList();
             dgvProducts.DataSource = list;
+            RefreshLocalizedGridHeaders();
 
-            lblProductPage.Text = $"Page {_currentProductPage} / {totalPages}";
+            lblProductPage.Text = $"{AppLocalization.T("Page")} {_currentProductPage} / {totalPages}";
             btnProductPrev.Enabled = _currentProductPage > 1;
             btnProductNext.Enabled = _currentProductPage < totalPages;
 
@@ -440,15 +447,25 @@
 
         private void ClearForm(bool clearSelection)
         {
-            txtName.Text = string.Empty;
-            numBuyPrice.Value = 0;
-            numSellPrice.Value = 0;
-            numQuantity.Value = 0;
-            SelectDefaultProductUnit();
             selectedProductId = null;
-            if (clearSelection && dgvProducts.CurrentRow != null)
+            _clearingProductForm = true;
+            try
             {
-                dgvProducts.ClearSelection();
+                if (clearSelection)
+                {
+                    dgvProducts.ClearSelection();
+                    dgvProducts.CurrentCell = null;
+                }
+
+                txtName.Text = string.Empty;
+                numBuyPrice.Value = 0;
+                numSellPrice.Value = 0;
+                numQuantity.Value = 0;
+                SelectDefaultProductUnit();
+            }
+            finally
+            {
+                _clearingProductForm = false;
             }
         }
 
@@ -492,6 +509,9 @@
 
         private void DgvProducts_SelectionChanged(object? sender, EventArgs e)
         {
+            if (_clearingProductForm)
+                return;
+
             if (dgvProducts.CurrentRow == null || dgvProducts.CurrentRow.Cells.Count == 0)
             {
                 ClearForm(false);
@@ -638,6 +658,19 @@
         cmbStatsBuyer.SelectedIndex = 0;
         cmbStatsBuyer.SelectedIndexChanged += StatsFilter_Changed;
 
+        cmbStatsPeriod.SelectedIndexChanged -= StatsFilter_Changed;
+        cmbStatsPeriod.Items.Clear();
+        cmbStatsPeriod.Items.AddRange(new object[]
+        {
+            "",
+            AppLocalization.T("Day"),
+            AppLocalization.T("Week"),
+            AppLocalization.T("Month"),
+            AppLocalization.T("Year")
+        });
+        cmbStatsPeriod.SelectedIndex = 0;
+        cmbStatsPeriod.SelectedIndexChanged += StatsFilter_Changed;
+
         LoadStats();
     }
 
@@ -714,6 +747,7 @@
             })
             .ToList();
         dgvSales.DataSource = sales;
+        RefreshLocalizedGridHeaders();
 
         if (dgvSales.Columns.Contains("Date"))
             dgvSales.Columns["Date"].DefaultCellStyle.Format = "yyyy-MM-dd HH:mm";
@@ -1065,10 +1099,14 @@
 
                 query = period switch
                 {
-                    "Day"   => query.Where(s => s.SaleDate >= dayStart   && s.SaleDate < dayEnd),
-                    "Week"  => query.Where(s => s.SaleDate >= weekStart  && s.SaleDate < weekEnd),
-                    "Month" => query.Where(s => s.SaleDate >= monthStart && s.SaleDate < monthEnd),
-                    "Year"  => query.Where(s => s.SaleDate >= yearStart  && s.SaleDate < yearEnd),
+                    var p when string.Equals(p, "Day", StringComparison.OrdinalIgnoreCase) || string.Equals(p, AppLocalization.T("Day"), StringComparison.OrdinalIgnoreCase)
+                        => query.Where(s => s.SaleDate >= dayStart && s.SaleDate < dayEnd),
+                    var p when string.Equals(p, "Week", StringComparison.OrdinalIgnoreCase) || string.Equals(p, AppLocalization.T("Week"), StringComparison.OrdinalIgnoreCase)
+                        => query.Where(s => s.SaleDate >= weekStart && s.SaleDate < weekEnd),
+                    var p when string.Equals(p, "Month", StringComparison.OrdinalIgnoreCase) || string.Equals(p, AppLocalization.T("Month"), StringComparison.OrdinalIgnoreCase)
+                        => query.Where(s => s.SaleDate >= monthStart && s.SaleDate < monthEnd),
+                    var p when string.Equals(p, "Year", StringComparison.OrdinalIgnoreCase) || string.Equals(p, AppLocalization.T("Year"), StringComparison.OrdinalIgnoreCase)
+                        => query.Where(s => s.SaleDate >= yearStart && s.SaleDate < yearEnd),
                     _ => query
                 };
             }
@@ -1092,11 +1130,19 @@
 
             dgvStats.DataSource = stats;
 
+            if (dgvStats.Columns.Contains("Product")) dgvStats.Columns["Product"].HeaderText = AppLocalization.T("Product");
+            if (dgvStats.Columns.Contains("Date")) dgvStats.Columns["Date"].HeaderText = AppLocalization.T("Date");
+            if (dgvStats.Columns.Contains("Hour")) dgvStats.Columns["Hour"].HeaderText = AppLocalization.T("Hour");
+            if (dgvStats.Columns.Contains("UnitsSold")) dgvStats.Columns["UnitsSold"].HeaderText = AppLocalization.T("Units Sold");
+            if (dgvStats.Columns.Contains("Revenue")) dgvStats.Columns["Revenue"].HeaderText = AppLocalization.T("Revenue");
+            if (dgvStats.Columns.Contains("Cost")) dgvStats.Columns["Cost"].HeaderText = AppLocalization.T("Cost");
+            if (dgvStats.Columns.Contains("Profit")) dgvStats.Columns["Profit"].HeaderText = AppLocalization.T("Profit");
+
             var grossProfit = stats.Sum(x => x.Profit);
             var invoiceTotals = GetInvoiceTotals(db, filteredSales);
             var totalExpenses = db.Expenses.AsEnumerable().Sum(e => e.Amount);
             var netProfit = grossProfit - totalExpenses;
-            lblTotalProfitValue.Text = $"{netProfit:F2}  (Gross: {grossProfit:F2}  Debt: {invoiceTotals.Debt:F2}  Expenses: {totalExpenses:F2})";
+            lblTotalProfitValue.Text = $"{AppLocalization.T("Net Profit")}: {netProfit:F2}  ({AppLocalization.T("Gross")}: {grossProfit:F2}  {AppLocalization.T("Debt")}: {invoiceTotals.Debt:F2}  {AppLocalization.T("Expenses")}: {totalExpenses:F2})";
             lblTotalProfitValue.ForeColor = netProfit >= 0
                 ? System.Drawing.Color.Green
                 : System.Drawing.Color.Red;
@@ -1358,6 +1404,7 @@
             .Take(ExpensePageSize)
             .ToList();
         dgvExpenses.DataSource = list;
+        RefreshLocalizedGridHeaders();
 
         if (dgvExpenses.Columns.Contains("Date"))
             dgvExpenses.Columns["Date"].DefaultCellStyle.Format = "dd/MM/yyyy";
@@ -1510,7 +1557,7 @@
 
         cmbInvoiceFilterStatus.SelectedIndexChanged -= InvoiceFilter_Changed;
         cmbInvoiceFilterStatus.Items.Clear();
-        cmbInvoiceFilterStatus.Items.AddRange(new object[] { "", "No", "Yes", "PP" });
+        cmbInvoiceFilterStatus.Items.AddRange(new object[] { "", AppLocalization.T("No"), AppLocalization.T("Yes"), AppLocalization.T("Partially Paid") });
         cmbInvoiceFilterStatus.SelectedIndex = 0;
         cmbInvoiceFilterStatus.SelectedIndexChanged += InvoiceFilter_Changed;
 
@@ -1531,12 +1578,8 @@
 
         if (!string.IsNullOrEmpty(statusFilter))
         {
-            var status = statusFilter switch
-            {
-                "Yes" => InvoicePaymentStatus.Yes,
-                "PP" => InvoicePaymentStatus.PartiallyPaid,
-                _ => InvoicePaymentStatus.No
-            };
+                if (!AppLocalization.TryParseInvoiceStatus(statusFilter, out var status))
+                    status = InvoicePaymentStatus.No;
             query = query.Where(i => i.PaymentStatus == status);
         }
 
@@ -1557,8 +1600,7 @@
                 Total = i.TotalAmount,
                 Paid = i.AmountPaid,
                 DueAmount = i.TotalAmount - i.AmountPaid,
-                Status = i.PaymentStatus == InvoicePaymentStatus.Yes ? "Yes" :
-                         i.PaymentStatus == InvoicePaymentStatus.PartiallyPaid ? "PP" : "No"
+                    Status = AppLocalization.GetInvoiceStatusText(i.PaymentStatus)
             })
             .ToList();
 
@@ -1569,6 +1611,7 @@
             try
             {
                 dgvInvoices.DataSource = invoices;
+                RefreshLocalizedGridHeaders();
 
                 if (dgvInvoices.Columns.Contains("Date"))
                     dgvInvoices.Columns["Date"].DefaultCellStyle.Format = "yyyy-MM-dd";
@@ -1595,9 +1638,9 @@
                     var statusCol = new DataGridViewComboBoxColumn
                     {
                         Name = "Status",
-                        HeaderText = "Status",
+                        HeaderText = AppLocalization.T("Status"),
                         DataPropertyName = "Status",
-                        Items = { "No", "Yes", "PP" }
+                        Items = { AppLocalization.T("No"), AppLocalization.T("Yes"), AppLocalization.T("Partially Paid") }
                     };
                     dgvInvoices.Columns.Insert(idx, statusCol);
                 }
@@ -1824,12 +1867,10 @@
         if (columnName == "Status")
         {
             var statusText = row.Cells["Status"].Value?.ToString() ?? "No";
-            invoice.PaymentStatus = statusText switch
-            {
-                "Yes" => InvoicePaymentStatus.Yes,
-                "PP" => InvoicePaymentStatus.PartiallyPaid,
-                _ => InvoicePaymentStatus.No
-            };
+            if (!AppLocalization.TryParseInvoiceStatus(statusText, out var paymentStatus))
+                paymentStatus = InvoicePaymentStatus.No;
+
+            invoice.PaymentStatus = paymentStatus;
 
             if (invoice.PaymentStatus == InvoicePaymentStatus.Yes)
                 invoice.AmountPaid = invoice.TotalAmount;
@@ -1872,6 +1913,7 @@
     private void LoadSettingsTab()
     {
             LoadStorePreferences();
+            ApplyLocalizedSettingsTexts();
     }
 
         private void InitializeSettingsUi()
@@ -1879,18 +1921,18 @@
             tabLanguages = new TabPage
             {
                 Name = "tabLanguages",
-                Text = "Languages",
+                Text = AppLocalization.T("Languages"),
                 UseVisualStyleBackColor = true,
                 Padding = new Padding(20)
             };
 
             tabControlSettings.TabPages.Insert(2, tabLanguages);
 
-            var lblLanguage = new Label
+            lblLanguage = new Label
             {
                 AutoSize = true,
                 Location = new Point(30, 30),
-                Text = "Language"
+                Text = AppLocalization.T("Language")
             };
 
             cmbLanguage = new ComboBox
@@ -1901,14 +1943,23 @@
             };
             cmbLanguage.SelectedIndexChanged += CmbLanguage_SelectedIndexChanged;
 
+            btnSaveLanguagePreference = new Button
+            {
+                Location = new Point(285, 50),
+                Size = new Size(160, 30),
+                Text = AppLocalization.T("Save Preference")
+            };
+            btnSaveLanguagePreference.Click += BtnSaveLanguagePreference_Click;
+
             tabLanguages.Controls.Add(lblLanguage);
             tabLanguages.Controls.Add(cmbLanguage);
+            tabLanguages.Controls.Add(btnSaveLanguagePreference);
 
-            var lblCurrency = new Label
+            lblCurrency = new Label
             {
                 AutoSize = true,
                 Location = new Point(30, 285),
-                Text = "Currency"
+                Text = AppLocalization.T("Currency")
             };
 
             cmbCurrency = new ComboBox
@@ -1921,11 +1972,11 @@
             };
             cmbCurrency.SelectedIndexChanged += CmbCurrency_SelectedIndexChanged;
 
-            var lblUnits = new Label
+            lblUnits = new Label
             {
                 AutoSize = true,
                 Location = new Point(450, 30),
-                Text = "Product Units"
+                Text = AppLocalization.T("Product Units")
             };
 
             txtProductUnitName = new TextBox
@@ -1999,17 +2050,13 @@
                 using var db = new AppDbContext();
                 var store = db.StoreSettings.FirstOrDefault();
 
+                AppLocalization.SetLanguage(store?.LanguageCode);
+
                 if (store != null)
                 {
                     this.Text = store.StoreName;
 
-                    if (store.LogoData != null && store.LogoData.Length > 0)
-                    {
-                        using var ms = new MemoryStream(store.LogoData);
-                        var img = Image.FromStream(ms);
-                        var bmp = new Bitmap(img, 32, 32);
-                        this.Icon = Icon.FromHandle(bmp.GetHicon());
-                    }
+                    SetStoreLogoPreview(store.LogoData);
 
                     txtStoreName.Text = store.StoreName;
                     txtGoogleDriveClientId.Text = store.GoogleDriveClientId ?? string.Empty;
@@ -2044,6 +2091,198 @@
             }
         }
 
+        private void SetStoreLogoPreview(byte[]? logoData)
+        {
+            if (picStoreLogo == null)
+                return;
+
+            picStoreLogo.Image?.Dispose();
+            picStoreLogo.Image = null;
+
+            if (logoData == null || logoData.Length == 0)
+                return;
+
+            using var ms = new MemoryStream(logoData);
+            using var img = Image.FromStream(ms);
+            picStoreLogo.Image = new Bitmap(img);
+
+            using var iconBitmap = new Bitmap(img, 32, 32);
+            this.Icon = Icon.FromHandle(iconBitmap.GetHicon());
+        }
+
+        private void ApplyLocalizedSettingsTexts()
+        {
+            tabControlMain.TabPages[0].Text = AppLocalization.T("Products");
+            tabControlMain.TabPages[1].Text = AppLocalization.T("Sales");
+            if (tabControlMain.TabPages.Contains(tabStats)) tabStats.Text = AppLocalization.T("Stats");
+            if (tabControlMain.TabPages.Contains(tabExpenses)) tabExpenses.Text = AppLocalization.T("Expenses");
+            if (tabControlMain.TabPages.Contains(tabInvoices)) tabInvoices.Text = AppLocalization.T("Invoices");
+            if (tabControlMain.TabPages.Contains(tabSettings)) tabSettings.Text = AppLocalization.T("Settings");
+
+            if (tabControlSettings.TabPages.Contains(tabProfile)) tabProfile.Text = AppLocalization.T("Profile");
+            if (tabControlSettings.TabPages.Contains(tabStore)) tabStore.Text = AppLocalization.T("Store");
+            if (tabControlSettings.TabPages.Contains(tabGoogleDrive)) tabGoogleDrive.Text = AppLocalization.T("Google Drive");
+            if (tabControlSettings.TabPages.Contains(tabBackup)) tabBackup.Text = AppLocalization.T("Backup");
+            if (tabLanguages != null) tabLanguages.Text = AppLocalization.T("Languages");
+
+            if (lblCurrentPassword != null) lblCurrentPassword.Text = AppLocalization.T("Current Password");
+            if (lblNewPassword != null) lblNewPassword.Text = AppLocalization.T("New Password");
+            if (lblConfirmPassword != null) lblConfirmPassword.Text = AppLocalization.T("Confirm New Password");
+            if (btnChangePassword != null) btnChangePassword.Text = AppLocalization.T("Change Password");
+            if (lblUsernameProfile != null) lblUsernameProfile.Text = AppLocalization.T("Username");
+            if (btnChangeUsername != null) btnChangeUsername.Text = AppLocalization.T("Change Username");
+
+            if (lblStoreName != null) lblStoreName.Text = AppLocalization.T("Store Name");
+            if (btnSaveStoreName != null) btnSaveStoreName.Text = AppLocalization.T("Save Name");
+            if (btnChangeLogo != null) btnChangeLogo.Text = AppLocalization.T("Change Logo");
+
+            if (lblGoogleDriveClientId != null) lblGoogleDriveClientId.Text = AppLocalization.T("Client ID");
+            if (lblGoogleDriveClientSecret != null) lblGoogleDriveClientSecret.Text = AppLocalization.T("Client Secret");
+            if (lblGoogleDriveFolderId != null) lblGoogleDriveFolderId.Text = AppLocalization.T("Folder ID or Name");
+            if (lblGoogleDriveRefreshToken != null) lblGoogleDriveRefreshToken.Text = AppLocalization.T("Refresh Token");
+            if (btnSaveGoogleDriveConfig != null) btnSaveGoogleDriveConfig.Text = AppLocalization.T("Save Google Drive Config");
+            if (btnGenerateGoogleDriveRefreshToken != null) btnGenerateGoogleDriveRefreshToken.Text = AppLocalization.T("Generate Refresh Token");
+            if (btnGoogleDriveHelp != null) btnGoogleDriveHelp.Text = AppLocalization.T("Setup Help");
+            if (btnOpenGoogleCloudConsole != null) btnOpenGoogleCloudConsole.Text = AppLocalization.T("Open Console");
+
+            if (lblBackupInfo != null)
+                lblBackupInfo.Text = AppLocalization.T("Download creates a local copy of the SQLite database. Restore replaces the current local database file.");
+            if (btnDownloadDatabaseBackup != null) btnDownloadDatabaseBackup.Text = AppLocalization.T("Download DB Backup");
+            if (btnRestoreDatabaseBackup != null) btnRestoreDatabaseBackup.Text = AppLocalization.T("Upload / Restore DB Backup");
+            if (btnUploadGoogleDriveBackup != null) btnUploadGoogleDriveBackup.Text = AppLocalization.T("Upload to Google Drive");
+            if (btnDownloadGoogleDriveBackup != null) btnDownloadGoogleDriveBackup.Text = AppLocalization.T("Download from Google Drive");
+
+            if (lblLanguage != null) lblLanguage.Text = AppLocalization.T("Language");
+            if (btnSaveLanguagePreference != null) btnSaveLanguagePreference.Text = AppLocalization.T("Save Preference");
+            if (lblCurrency != null) lblCurrency.Text = AppLocalization.T("Currency");
+            if (lblUnits != null) lblUnits.Text = AppLocalization.T("Product Units");
+            if (btnAddUnit != null) btnAddUnit.Text = AppLocalization.T("Add");
+            if (btnUpdateUnit != null) btnUpdateUnit.Text = AppLocalization.T("Update");
+            if (btnDeleteUnit != null) btnDeleteUnit.Text = AppLocalization.T("Delete");
+            if (btnClearUnit != null) btnClearUnit.Text = AppLocalization.T("Clear");
+
+            lblName.Text = AppLocalization.T("Name");
+            lblBuyPrice.Text = AppLocalization.T("Buy Price");
+            lblSellPrice.Text = AppLocalization.T("Sell Price");
+            lblQuantity.Text = AppLocalization.T("Quantity");
+            lblUnit.Text = AppLocalization.T("Unit");
+            lblSearch.Text = AppLocalization.T("Search");
+            btnAdd.Text = AppLocalization.T("Add");
+            btnUpdate.Text = AppLocalization.T("Update");
+            btnDelete.Text = AppLocalization.T("Delete");
+            btnClear.Text = AppLocalization.T("Clear");
+            chkShowBuyPrice.Text = AppLocalization.T("Show Buy Price");
+
+            btnProductPrev.Text = $"< {AppLocalization.T("Previous")}";
+            btnProductNext.Text = $"{AppLocalization.T("Next")} >";
+
+            lblSaleProduct.Text = AppLocalization.T("Product");
+            lblSaleQuantity.Text = AppLocalization.T("Quantity");
+            lblSaleUnitPrice.Text = AppLocalization.T("Unit Price");
+            lblSaleTotal.Text = AppLocalization.T("Total");
+            lblBuyerName.Text = AppLocalization.T("Buyer");
+            lblFilterBuyer.Text = AppLocalization.T("Buyer");
+            lblFilterProduct.Text = AppLocalization.T("Product");
+            chkFilterDate.Text = AppLocalization.T("Date");
+            btnClearSaleFilter.Text = AppLocalization.T("Clear Filters");
+            btnSell.Text = AppLocalization.T("Add Sale");
+            btnDeleteSale.Text = AppLocalization.T("Delete Sale");
+            btnUpdateSale.Text = AppLocalization.T("Update Sale");
+            btnClearSale.Text = AppLocalization.T("Clear");
+            btnPrintInvoice.Text = AppLocalization.T("Invoice");
+
+            btnSalePrev.Text = $"< {AppLocalization.T("Previous")}";
+            btnSaleNext.Text = $"{AppLocalization.T("Next")} >";
+
+            lblStatsFilterProduct.Text = AppLocalization.T("Product");
+            lblStatsFilterBuyer.Text = AppLocalization.T("Buyer");
+            lblStatsFilterPeriod.Text = AppLocalization.T("Period");
+            btnClearStatsFilter.Text = AppLocalization.T("Clear Filters");
+            btnPrintReport.Text = AppLocalization.T("Print Report");
+
+            lblExpenseDescription.Text = AppLocalization.T("Description");
+            lblExpenseAmount.Text = AppLocalization.T("Total");
+            lblExpenseCategory.Text = AppLocalization.T("Category");
+            lblExpenseFilterCategory.Text = AppLocalization.T("Category");
+            btnAddExpense.Text = AppLocalization.T("Add Expense");
+            btnUpdateExpense.Text = AppLocalization.T("Update Expense");
+            btnDeleteExpense.Text = AppLocalization.T("Delete Expense");
+            btnClearExpense.Text = AppLocalization.T("Clear");
+            btnClearExpenseFilter.Text = AppLocalization.T("Clear Filters");
+
+            btnExpensePrev.Text = $"< {AppLocalization.T("Previous")}";
+            btnExpenseNext.Text = $"{AppLocalization.T("Next")} >";
+
+            lblInvoiceFilterBuyer.Text = AppLocalization.T("Buyer");
+            lblInvoiceFilterStatus.Text = AppLocalization.T("Status");
+            btnClearInvoiceFilter.Text = AppLocalization.T("Clear Filters");
+            btnInvoicePreview.Text = AppLocalization.T("Invoice");
+            btnDeleteInvoice.Text = AppLocalization.T("Delete");
+
+            btnInvoicePrev.Text = $"< {AppLocalization.T("Previous")}";
+            btnInvoiceNext.Text = $"{AppLocalization.T("Next")} >";
+
+            lblSaleProduct.Text = AppLocalization.T("Product");
+            if(lblStoreName != null) lblStoreName.Text = AppLocalization.T("Store");
+            if (btnSaveStoreName != null) btnSaveStoreName.Text = AppLocalization.T("Save Preference");
+            if (btnChangePassword != null) btnChangePassword.Text = AppLocalization.T("Update");
+            if (btnChangeUsername != null) btnChangeUsername.Text = AppLocalization.T("Update");
+            if (btnLogout != null) btnLogout.Text = AppLocalization.T("Logout");
+
+            RefreshLocalizedGridHeaders();
+        }
+
+        private void RefreshLocalizedGridHeaders()
+        {
+            if (dgvProducts.Columns.Contains("UnitName")) dgvProducts.Columns["UnitName"].HeaderText = AppLocalization.T("Unit");
+            if (dgvProducts.Columns.Contains("Date")) dgvProducts.Columns["Date"].HeaderText = AppLocalization.T("Date");
+            if (dgvProducts.Columns.Contains("Name")) dgvProducts.Columns["Name"].HeaderText = AppLocalization.T("Name");
+            if (dgvProducts.Columns.Contains("SellPrice")) dgvProducts.Columns["SellPrice"].HeaderText = AppLocalization.T("Sell Price");
+            if (dgvProducts.Columns.Contains("BuyPrice")) dgvProducts.Columns["BuyPrice"].HeaderText = AppLocalization.T("Buy Price");
+            if (dgvProducts.Columns.Contains("Quantity")) dgvProducts.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+
+            lblTotalProfit.Text = AppLocalization.T("Total Profit") + ":";
+
+            if (dgvInvoices.Columns.Contains("Status") && dgvInvoices.Columns["Status"] is DataGridViewComboBoxColumn statusCol)
+            {
+                statusCol.HeaderText = AppLocalization.T("Status");
+                statusCol.Items.Clear();
+                statusCol.Items.AddRange(new object[]
+                {
+                    AppLocalization.T("No"),
+                    AppLocalization.T("Yes"),
+                    AppLocalization.T("Partially Paid")
+                });
+            }
+
+            if (dgvInvoices.Columns.Contains("Buyer")) dgvInvoices.Columns["Buyer"].HeaderText = AppLocalization.T("Client");
+            if (dgvInvoices.Columns.Contains("Date")) dgvInvoices.Columns["Date"].HeaderText = AppLocalization.T("Date");
+            if (dgvInvoices.Columns.Contains("Total")) dgvInvoices.Columns["Total"].HeaderText = AppLocalization.T("Total");
+            if (dgvInvoices.Columns.Contains("DueAmount")) dgvInvoices.Columns["DueAmount"].HeaderText = AppLocalization.T("Due");
+            if (dgvInvoices.Columns.Contains("Paid")) dgvInvoices.Columns["Paid"].HeaderText = AppLocalization.T("Paid");
+            if (dgvInvoices.Columns.Contains("Hour")) dgvInvoices.Columns["Hour"].HeaderText = AppLocalization.T("Hour");
+
+            if (dgvSales.Columns.Contains("Product")) dgvSales.Columns["Product"].HeaderText = AppLocalization.T("Product");
+            if (dgvSales.Columns.Contains("Buyer")) dgvSales.Columns["Buyer"].HeaderText = AppLocalization.T("Client");
+            if (dgvSales.Columns.Contains("Date")) dgvSales.Columns["Date"].HeaderText = AppLocalization.T("Date");
+            if (dgvSales.Columns.Contains("Quantity")) dgvSales.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+            if (dgvSales.Columns.Contains("UnitPrice")) dgvSales.Columns["UnitPrice"].HeaderText = AppLocalization.T("Unit Price");
+            if (dgvSales.Columns.Contains("Total")) dgvSales.Columns["Total"].HeaderText = AppLocalization.T("Total");
+
+            if (dgvStats.Columns.Contains("Product")) dgvStats.Columns["Product"].HeaderText = AppLocalization.T("Product");
+            if (dgvStats.Columns.Contains("Date")) dgvStats.Columns["Date"].HeaderText = AppLocalization.T("Date");
+            if (dgvStats.Columns.Contains("Hour")) dgvStats.Columns["Hour"].HeaderText = AppLocalization.T("Hour");
+            if (dgvStats.Columns.Contains("UnitsSold")) dgvStats.Columns["UnitsSold"].HeaderText = AppLocalization.T("Units Sold");
+            if (dgvStats.Columns.Contains("Revenue")) dgvStats.Columns["Revenue"].HeaderText = AppLocalization.T("Revenue");
+            if (dgvStats.Columns.Contains("Cost")) dgvStats.Columns["Cost"].HeaderText = AppLocalization.T("Cost");
+            if (dgvStats.Columns.Contains("Profit")) dgvStats.Columns["Profit"].HeaderText = AppLocalization.T("Profit");
+
+            if (dgvExpenses.Columns.Contains("Description")) dgvExpenses.Columns["Description"].HeaderText = AppLocalization.T("Description");
+            if (dgvExpenses.Columns.Contains("Amount")) dgvExpenses.Columns["Amount"].HeaderText = AppLocalization.T("Total");
+            if (dgvExpenses.Columns.Contains("Category")) dgvExpenses.Columns["Category"].HeaderText = AppLocalization.T("Category");
+            if (dgvExpenses.Columns.Contains("Date")) dgvExpenses.Columns["Date"].HeaderText = AppLocalization.T("Date");
+        }
+
         private void LoadLanguageOptions()
         {
             if (cmbLanguage == null)
@@ -2053,8 +2292,8 @@
             cmbLanguage.Items.Clear();
             cmbLanguage.Items.AddRange(new object[]
             {
-                new LanguageOption { Code = "en", Name = "English" },
-                new LanguageOption { Code = "fr", Name = "French" }
+                new LanguageOption { Code = "en", Name = AppLocalization.T("English") },
+                new LanguageOption { Code = "fr", Name = AppLocalization.T("French") }
             });
             SelectLanguage(current);
         }
@@ -2202,6 +2441,7 @@
                 return units
                     .Select(u => u?.Trim())
                     .Where(u => !string.IsNullOrWhiteSpace(u))
+                    .Select(u => u!)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
             }
@@ -2231,7 +2471,7 @@
 
             if (!string.IsNullOrWhiteSpace(selectedUnit))
                 SetSelectedProductUnit(selectedUnit);
-            else if (cmbUnit.Items.Count > 0 && cmbUnit.SelectedIndex < 0)
+            else if (cmbUnit is not null && cmbUnit.Items.Count > 0 && cmbUnit.SelectedIndex < 0)
                 cmbUnit.SelectedIndex = 0;
 
             if (dgvProductUnits?.Rows.Count > 0)
@@ -2285,7 +2525,23 @@
             if (_loadingSettingsUi || cmbLanguage?.SelectedItem is not LanguageOption language)
                 return;
 
+            AppLocalization.SetLanguage(language.Code);
+            ApplyLocalizedSettingsTexts();
+        }
+
+        private void BtnSaveLanguagePreference_Click(object? sender, EventArgs e)
+        {
+            if (cmbLanguage?.SelectedItem is not LanguageOption language)
+                return;
+
             UpdateStoreSettings(store => store.LanguageCode = language.Code);
+            AppLocalization.SetLanguage(language.Code);
+            ApplyLocalizedSettingsTexts();
+            LoadInvoicesTab();
+            LoadProducts(_productFilter);
+            LoadSalesTab();
+            LoadStatsTab();
+            LoadExpensesTab();
         }
 
         private void CmbCurrency_SelectedIndexChanged(object? sender, EventArgs e)
