@@ -10,6 +10,7 @@ namespace KabyliaTaste
         private System.Windows.Forms.TextBox txtPassword;
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Label lblError;
+        private System.Windows.Forms.Label lblTrialStatus;
 
         protected override void Dispose(bool disposing)
         {
@@ -27,10 +28,11 @@ namespace KabyliaTaste
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.btnLogin = new System.Windows.Forms.Button();
             this.lblError = new System.Windows.Forms.Label();
+            this.lblTrialStatus = new System.Windows.Forms.Label();
             this.SuspendLayout();
 
             // lblTitle
-            this.lblTitle.Text = "KabyliaTaste";
+            this.lblTitle.Text = "Amiar Store Manager";
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
             this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lblTitle.Location = new System.Drawing.Point(60, 20);
@@ -64,14 +66,21 @@ namespace KabyliaTaste
             this.lblError.Location = new System.Drawing.Point(80, 195);
             this.lblError.Size = new System.Drawing.Size(240, 15);
 
+            // lblTrialStatus
+            this.lblTrialStatus.Text = "";
+            this.lblTrialStatus.AutoSize = true;
+            this.lblTrialStatus.Location = new System.Drawing.Point(80, 214);
+            this.lblTrialStatus.Size = new System.Drawing.Size(240, 15);
+            this.lblTrialStatus.ForeColor = System.Drawing.Color.DarkGreen;
+
             // btnLogin
             this.btnLogin.Text = "Login";
-            this.btnLogin.Location = new System.Drawing.Point(160, 220);
+            this.btnLogin.Location = new System.Drawing.Point(160, 242);
             this.btnLogin.Size = new System.Drawing.Size(80, 30);
             this.btnLogin.UseVisualStyleBackColor = true;
 
             // LoginForm
-            this.ClientSize = new System.Drawing.Size(400, 280);
+            this.ClientSize = new System.Drawing.Size(400, 305);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -84,6 +93,7 @@ namespace KabyliaTaste
             this.Controls.Add(this.lblPassword);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.lblError);
+            this.Controls.Add(this.lblTrialStatus);
             this.Controls.Add(this.btnLogin);
             this.ResumeLayout(false);
         }
