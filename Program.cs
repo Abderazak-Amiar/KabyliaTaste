@@ -21,7 +21,7 @@ namespace KabyliaTaste
                 if (license.IsPackagedApp && !license.IsLicenseValid)
                 {
                     var message = license.ErrorMessage ?? "A valid Microsoft Store license was not found.";
-                    MessageBox.Show(message, "KabyliaTaste", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(message, "Amiar Store Manager", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -73,6 +73,21 @@ namespace KabyliaTaste
                     if (TableExists("Invoices") && ColumnExists("Sales", "InvoiceId"))
                         MarkApplied("20260803132253_AddInvoices");
 
+                    if (ColumnExists("StoreSettings", "CurrencyCode") &&
+                        ColumnExists("StoreSettings", "LanguageCode") &&
+                        ColumnExists("StoreSettings", "ProductUnitsJson") &&
+                        ColumnExists("Products", "UnitName"))
+                    {
+                        MarkApplied("20260808151006_AddStorePreferencesAndCustomProductUnits");
+                    }
+
+                    if (ColumnExists("StoreSettings", "CurrencyCode") &&
+                        ColumnExists("StoreSettings", "LanguageCode") &&
+                        ColumnExists("StoreSettings", "ProductUnitsJson"))
+                    {
+                        MarkApplied("20260808170000_AddStoreSettingsPreferenceColumns");
+                    }
+
                     // Now only truly pending migrations will be applied
                     db.Database.Migrate();
 
@@ -113,12 +128,12 @@ namespace KabyliaTaste
             }
             catch (Exception ex)
             {
-                var error = $"KabyliaTaste failed to start:{Environment.NewLine}{Environment.NewLine}{ex}";
+                var error = $"Amiar Store Manager failed to start:{Environment.NewLine}{Environment.NewLine}{ex}";
                 try
                 {
                     var logFolder = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "KabyliaTaste");
+                        "AmiarStoreManager");
                     Directory.CreateDirectory(logFolder);
                     File.AppendAllText(Path.Combine(logFolder, "startup.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}{Environment.NewLine}{error}{Environment.NewLine}{Environment.NewLine}");
                 }
@@ -127,7 +142,7 @@ namespace KabyliaTaste
                     // ignore logging failures
                 }
 
-                MessageBox.Show(error, "KabyliaTaste", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(error, "Amiar Store Manager", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

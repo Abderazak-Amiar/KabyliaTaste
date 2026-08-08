@@ -5,7 +5,9 @@ namespace KabyliaTaste
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using KabyliaTaste.Data;
+    using KabyliaTaste.Models;
     using KabyliaTaste.Services;
+    using Microsoft.EntityFrameworkCore;
 
     public partial class LoginForm : Form
     {
@@ -92,8 +94,12 @@ namespace KabyliaTaste
 
         private async Task RefreshDatabaseFromGoogleDriveAsync()
         {
-            using var db = new AppDbContext();
-            var store = db.StoreSettings.FirstOrDefault();
+            StoreSettings? store;
+
+            using (var db = new AppDbContext())
+            {
+                store = db.StoreSettings.FirstOrDefault();
+            }
 
             if (store == null ||
                 string.IsNullOrWhiteSpace(store.GoogleDriveClientId) ||
@@ -118,6 +124,11 @@ namespace KabyliaTaste
                     var service = new GoogleDriveBackupService();
                     service.DownloadDatabaseBackup(store, GetDatabaseFilePath(), progress);
                 });
+
+                using (var db = new AppDbContext())
+                {
+                    db.Database.Migrate();
+                }
 
                 progressToast.SetProgress(100, "Database is up to date.");
             }

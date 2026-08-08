@@ -1,9 +1,11 @@
 ﻿namespace KabyliaTaste
 {
     using System;
+    using System.Globalization;
     using System.Drawing;
     using System.IO;
     using System.Linq;
+    using System.Text.Json;
     using System.Windows.Forms;
     using KabyliaTaste.Data;
     using KabyliaTaste.Models;
@@ -34,6 +36,25 @@
             public string Status { get; set; } = "No";
         }
 
+        private sealed class LanguageOption
+        {
+            public string Code { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public override string ToString() => Name;
+        }
+
+        private sealed class CurrencyOption
+        {
+            public string Code { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public override string ToString() => $"{Code} - {Name}";
+        }
+
+        private sealed class ProductUnitRow
+        {
+            public string Name { get; set; } = string.Empty;
+        }
+
         private sealed class StatsGridRow
         {
             public string Product { get; set; } = string.Empty;
@@ -59,6 +80,17 @@
         private string _productFilter = "";
         private string _expenseCategoryFilter = "";
         private bool _closingAfterBackup = false;
+        private bool _loadingSettingsUi = false;
+        private List<string> _productUnits = new();
+        private TabPage? tabLanguages;
+        private ComboBox? cmbLanguage;
+        private ComboBox? cmbCurrency;
+        private DataGridView? dgvProductUnits;
+        private TextBox? txtProductUnitName;
+        private Button? btnAddUnit;
+        private Button? btnUpdateUnit;
+        private Button? btnDeleteUnit;
+        private Button? btnClearUnit;
 
         public bool LogoutRequested { get; private set; } = false;
 
@@ -130,11 +162,14 @@
             btnInvoicePrev.Click += BtnInvoicePrev_Click;
             btnInvoiceNext.Click += BtnInvoiceNext_Click;
             btnInvoicePreview.Click += BtnInvoicePreview_Click;
+            btnDeleteInvoice.Click += BtnDeleteInvoice_Click;
             dgvInvoices.CellValueChanged += DgvInvoices_CellValueChanged;
             dgvInvoices.CurrentCellDirtyStateChanged += DgvInvoices_CurrentCellDirtyStateChanged;
             dgvInvoices.CellParsing += DgvInvoices_CellParsing;
             dgvInvoices.CellValidating += DgvInvoices_CellValidating;
             dgvInvoices.DataError += DgvInvoices_DataError;
+
+            InitializeSettingsUi();
         }
 
         private async void Main_FormClosing(object? sender, FormClosingEventArgs e)
@@ -197,24 +232,13 @@
 
         private void Main_Load(object? sender, EventArgs e)
         {
-            using var db = new AppDbContext();
-            var store = db.StoreSettings.FirstOrDefault();
-            if (store != null)
-            {
-                this.Text = store.StoreName;
-                if (store.LogoData != null && store.LogoData.Length > 0)
-                {
-                    using var ms = new System.IO.MemoryStream(store.LogoData);
-                    var img = System.Drawing.Image.FromStream(ms);
-                    // Convert image to icon for the title bar / taskbar
-                    var bmp = new System.Drawing.Bitmap(img, 32, 32);
-                    this.Icon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
-                }
-            }
-
             ApplyRoleRestrictions();
             UpdateGreeting();
             UpdateDateTime();
+
+            LoadStorePreferences();
+
+            using var db = new AppDbContext();
             CompactProductIds(db);
             LoadProducts();
         }
@@ -296,6 +320,13 @@
 
         if (dgvProducts.Columns.Contains("BuyPrice"))
             dgvProducts.Columns["BuyPrice"].Visible = Session.IsAdmin && chkShowBuyPrice.Checked;
+        if (dgvProducts.Columns.Contains("Unit"))
+            dgvProducts.Columns["Unit"].Visible = false;
+        if (dgvProducts.Columns.Contains("UnitName"))
+        {
+            dgvProducts.Columns["UnitName"].HeaderText = "Unit";
+            dgvProducts.Columns["UnitName"].ReadOnly = true;
+        }
         if (dgvProducts.Columns.Contains("Date"))
         {
             dgvProducts.Columns["Date"].DefaultCellStyle.Format = "dd/MM/yyyy";
@@ -306,6 +337,7 @@
         if (dgvProducts.Rows.Count > 0)
         {
             dgvProducts.ClearSelection();
+            dgvProducts.CurrentCell = dgvProducts.Rows[0].Cells[0];
             dgvProducts.Rows[0].Selected = true;
             DgvProducts_SelectionChanged(null, EventArgs.Empty);
         }
@@ -333,7 +365,8 @@
                 BuyPrice = numBuyPrice.Value,
                 SellPrice = numSellPrice.Value,
                 Quantity = (int)numQuantity.Value,
-                Unit = (ProductUnit)cmbUnit.SelectedIndex
+                Unit = ProductUnit.Piece,
+                UnitName = GetSelectedProductUnit()
             };
             db.Products.Add(product);
             db.SaveChanges();
@@ -362,7 +395,8 @@
             product.BuyPrice = numBuyPrice.Value;
             product.SellPrice = numSellPrice.Value;
             product.Quantity = (int)numQuantity.Value;
-            product.Unit = (ProductUnit)cmbUnit.SelectedIndex;
+            product.UnitName = GetSelectedProductUnit();
+            product.Unit = ProductUnit.Piece;
             product.Date = DateTime.Now;
             db.SaveChanges();
             _currentProductPage = 1;
@@ -410,12 +444,50 @@
             numBuyPrice.Value = 0;
             numSellPrice.Value = 0;
             numQuantity.Value = 0;
-            cmbUnit.SelectedIndex = 2; // default: Piece
+            SelectDefaultProductUnit();
             selectedProductId = null;
             if (clearSelection && dgvProducts.CurrentRow != null)
             {
                 dgvProducts.ClearSelection();
             }
+        }
+
+        private string GetSelectedProductUnit()
+        {
+            var selected = cmbUnit.SelectedItem?.ToString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(selected))
+                return selected;
+
+            return _productUnits.FirstOrDefault() ?? "Piece";
+        }
+
+        private void SelectDefaultProductUnit()
+        {
+            if (cmbUnit.Items.Count == 0)
+                return;
+
+            var defaultUnit = _productUnits.FirstOrDefault() ?? cmbUnit.Items[0]?.ToString() ?? "Piece";
+            SetSelectedProductUnit(defaultUnit);
+        }
+
+        private void SetSelectedProductUnit(string? unitName)
+        {
+            if (string.IsNullOrWhiteSpace(unitName) || cmbUnit.Items.Count == 0)
+                return;
+
+            var index = cmbUnit.Items.Cast<object>().ToList().FindIndex(item => string.Equals(item?.ToString(), unitName, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0)
+                cmbUnit.SelectedIndex = index;
+            else
+                cmbUnit.SelectedIndex = 0;
+        }
+
+        private static string GetProductUnitName(Product product)
+        {
+            if (!string.IsNullOrWhiteSpace(product.UnitName))
+                return product.UnitName.Trim();
+
+            return product.Unit.ToString();
         }
 
         private void DgvProducts_SelectionChanged(object? sender, EventArgs e)
@@ -453,7 +525,7 @@
             numBuyPrice.Value = product.BuyPrice;
             numSellPrice.Value = product.SellPrice;
             numQuantity.Value = product.Quantity;
-            cmbUnit.SelectedIndex = (int)product.Unit;
+            SetSelectedProductUnit(GetProductUnitName(product));
         }
 
     private void DgvProducts_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
@@ -648,6 +720,19 @@
 
         RefreshInvoiceCheckboxColumn();
 
+        if (dgvSales.Rows.Count > 0)
+        {
+            dgvSales.ClearSelection();
+            dgvSales.CurrentCell = dgvSales.Rows[0].Cells[0];
+            dgvSales.Rows[0].Selected = true;
+            DgvSales_SelectionChanged(null, EventArgs.Empty);
+        }
+        else
+        {
+            selectedSaleId = null;
+            ClearSaleForm();
+        }
+
         lblSalePage.Text = $"Page {_currentSalePage} / {totalPages}";
         btnSalePrev.Enabled = _currentSalePage > 1;
         btnSaleNext.Enabled = _currentSalePage < totalPages;
@@ -750,7 +835,8 @@
             invoice.Date,
             invoice.TotalAmount,
             invoice.AmountPaid,
-            invoice.PaymentStatus).PrintPreview();
+            invoice.PaymentStatus,
+            storeForInvoice?.CurrencyCode).PrintPreview();
 
         if (tabControlMain.SelectedTab == tabInvoices)
             LoadInvoices();
@@ -1150,7 +1236,8 @@
             storeForReport?.LogoData,
             invoiceTotals.Collected,
             invoiceTotals.Debt,
-            totalExpenses).PrintPreview();
+            totalExpenses,
+            storeForReport?.CurrencyCode).PrintPreview();
     }
 
     private void ChkFilterDate_CheckedChanged(object? sender, EventArgs e)
@@ -1612,7 +1699,50 @@
             invoice.Date,
             invoice.TotalAmount,
             invoice.AmountPaid,
-            invoice.PaymentStatus).PrintPreview();
+            invoice.PaymentStatus,
+            store?.CurrencyCode).PrintPreview();
+    }
+
+    private void BtnDeleteInvoice_Click(object? sender, EventArgs e)
+    {
+        if (dgvInvoices.CurrentRow == null)
+        {
+            MessageBox.Show("Select an invoice to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var idCell = dgvInvoices.CurrentRow.Cells["Id"];
+        if (idCell?.Value == null || !int.TryParse(idCell.Value.ToString(), out var invoiceId))
+        {
+            MessageBox.Show("Select a valid invoice to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var confirm = MessageBox.Show(
+            "Are you sure you want to delete the selected invoice?",
+            "Confirm Delete",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirm != DialogResult.Yes)
+            return;
+
+        using var db = new AppDbContext();
+        var invoice = db.Invoices.FirstOrDefault(i => i.Id == invoiceId);
+        if (invoice == null)
+        {
+            MessageBox.Show("The selected invoice could not be found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var sales = db.Sales.Where(s => s.InvoiceId == invoice.Id).ToList();
+        foreach (var sale in sales)
+            sale.InvoiceId = null;
+
+        db.Invoices.Remove(invoice);
+        db.SaveChanges();
+
+        LoadInvoicesTab();
     }
 
     private void DgvInvoices_CurrentCellDirtyStateChanged(object? sender, EventArgs e)
@@ -1741,46 +1871,548 @@
 
     private void LoadSettingsTab()
     {
-        using var db = new Data.AppDbContext();
-        var store = db.StoreSettings.FirstOrDefault();
-
-        if (store != null)
-        {
-            txtStoreName.Text = store.StoreName;
-
-            if (store.LogoData != null && store.LogoData.Length > 0)
-            {
-                using var ms = new System.IO.MemoryStream(store.LogoData);
-                picStoreLogo.Image = System.Drawing.Image.FromStream(ms);
-            }
-            else
-            {
-                picStoreLogo.Image = null;
-            }
-
-            txtGoogleDriveClientId.Text = store.GoogleDriveClientId ?? string.Empty;
-            txtGoogleDriveClientSecret.Text = store.GoogleDriveClientSecret ?? string.Empty;
-            txtGoogleDriveFolderId.Text = store.GoogleDriveFolderId ?? string.Empty;
-            txtGoogleDriveRefreshToken.Text = store.GoogleDriveRefreshToken ?? string.Empty;
-        }
-        else
-        {
-            txtStoreName.Clear();
-            picStoreLogo.Image = null;
-            txtGoogleDriveClientId.Clear();
-            txtGoogleDriveClientSecret.Clear();
-            txtGoogleDriveFolderId.Clear();
-            txtGoogleDriveRefreshToken.Clear();
-        }
-
-        // Clear password fields
-        txtCurrentPassword.Clear();
-        txtNewPassword.Clear();
-        txtConfirmPassword.Clear();
-
-        // Populate username field
-        txtUsernameProfile.Text = Session.CurrentUser?.Username ?? "";
+            LoadStorePreferences();
     }
+
+        private void InitializeSettingsUi()
+        {
+            tabLanguages = new TabPage
+            {
+                Name = "tabLanguages",
+                Text = "Languages",
+                UseVisualStyleBackColor = true,
+                Padding = new Padding(20)
+            };
+
+            tabControlSettings.TabPages.Insert(2, tabLanguages);
+
+            var lblLanguage = new Label
+            {
+                AutoSize = true,
+                Location = new Point(30, 30),
+                Text = "Language"
+            };
+
+            cmbLanguage = new ComboBox
+            {
+                Location = new Point(30, 52),
+                Width = 240,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbLanguage.SelectedIndexChanged += CmbLanguage_SelectedIndexChanged;
+
+            tabLanguages.Controls.Add(lblLanguage);
+            tabLanguages.Controls.Add(cmbLanguage);
+
+            var lblCurrency = new Label
+            {
+                AutoSize = true,
+                Location = new Point(30, 285),
+                Text = "Currency"
+            };
+
+            cmbCurrency = new ComboBox
+            {
+                Location = new Point(30, 307),
+                Width = 260,
+                DropDownStyle = ComboBoxStyle.DropDown,
+                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+                AutoCompleteSource = AutoCompleteSource.ListItems
+            };
+            cmbCurrency.SelectedIndexChanged += CmbCurrency_SelectedIndexChanged;
+
+            var lblUnits = new Label
+            {
+                AutoSize = true,
+                Location = new Point(450, 30),
+                Text = "Product Units"
+            };
+
+            txtProductUnitName = new TextBox
+            {
+                Location = new Point(450, 50),
+                Width = 240
+            };
+
+            btnAddUnit = new Button
+            {
+                Location = new Point(450, 85),
+                Size = new Size(60, 28),
+                Text = "Add"
+            };
+            btnAddUnit.Click += BtnAddUnit_Click;
+
+            btnUpdateUnit = new Button
+            {
+                Location = new Point(518, 85),
+                Size = new Size(70, 28),
+                Text = "Update"
+            };
+            btnUpdateUnit.Click += BtnUpdateUnit_Click;
+
+            btnDeleteUnit = new Button
+            {
+                Location = new Point(596, 85),
+                Size = new Size(70, 28),
+                Text = "Delete"
+            };
+            btnDeleteUnit.Click += BtnDeleteUnit_Click;
+
+            btnClearUnit = new Button
+            {
+                Location = new Point(674, 85),
+                Size = new Size(60, 28),
+                Text = "Clear"
+            };
+            btnClearUnit.Click += BtnClearUnit_Click;
+
+            dgvProductUnits = new DataGridView
+            {
+                Location = new Point(450, 125),
+                Size = new Size(330, 220),
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                RowHeadersVisible = false
+            };
+            dgvProductUnits.SelectionChanged += DgvProductUnits_SelectionChanged;
+
+            tabStore.Controls.Add(lblCurrency);
+            tabStore.Controls.Add(cmbCurrency);
+            tabStore.Controls.Add(lblUnits);
+            tabStore.Controls.Add(txtProductUnitName);
+            tabStore.Controls.Add(btnAddUnit);
+            tabStore.Controls.Add(btnUpdateUnit);
+            tabStore.Controls.Add(btnDeleteUnit);
+            tabStore.Controls.Add(btnClearUnit);
+            tabStore.Controls.Add(dgvProductUnits);
+        }
+
+        private void LoadStorePreferences()
+        {
+            _loadingSettingsUi = true;
+            try
+            {
+                using var db = new AppDbContext();
+                var store = db.StoreSettings.FirstOrDefault();
+
+                if (store != null)
+                {
+                    this.Text = store.StoreName;
+
+                    if (store.LogoData != null && store.LogoData.Length > 0)
+                    {
+                        using var ms = new MemoryStream(store.LogoData);
+                        var img = Image.FromStream(ms);
+                        var bmp = new Bitmap(img, 32, 32);
+                        this.Icon = Icon.FromHandle(bmp.GetHicon());
+                    }
+
+                    txtStoreName.Text = store.StoreName;
+                    txtGoogleDriveClientId.Text = store.GoogleDriveClientId ?? string.Empty;
+                    txtGoogleDriveClientSecret.Text = store.GoogleDriveClientSecret ?? string.Empty;
+                    txtGoogleDriveFolderId.Text = store.GoogleDriveFolderId ?? string.Empty;
+                    txtGoogleDriveRefreshToken.Text = store.GoogleDriveRefreshToken ?? string.Empty;
+                }
+                else
+                {
+                    txtStoreName.Clear();
+                    txtGoogleDriveClientId.Clear();
+                    txtGoogleDriveClientSecret.Clear();
+                    txtGoogleDriveFolderId.Clear();
+                    txtGoogleDriveRefreshToken.Clear();
+                }
+
+                LoadLanguageOptions();
+                LoadCurrencyOptions();
+                LoadProductUnits(db, store);
+
+                SelectLanguage(store?.LanguageCode);
+                SelectCurrency(store?.CurrencyCode);
+
+                txtCurrentPassword.Clear();
+                txtNewPassword.Clear();
+                txtConfirmPassword.Clear();
+                txtUsernameProfile.Text = Session.CurrentUser?.Username ?? string.Empty;
+            }
+            finally
+            {
+                _loadingSettingsUi = false;
+            }
+        }
+
+        private void LoadLanguageOptions()
+        {
+            if (cmbLanguage == null)
+                return;
+
+            var current = (cmbLanguage.SelectedItem as LanguageOption)?.Code;
+            cmbLanguage.Items.Clear();
+            cmbLanguage.Items.AddRange(new object[]
+            {
+                new LanguageOption { Code = "en", Name = "English" },
+                new LanguageOption { Code = "fr", Name = "French" }
+            });
+            SelectLanguage(current);
+        }
+
+        private void LoadCurrencyOptions()
+        {
+            if (cmbCurrency == null)
+                return;
+
+            var current = (cmbCurrency.SelectedItem as CurrencyOption)?.Code;
+            var currencies = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+                .Select(c => new RegionInfo(c.Name))
+                .GroupBy(r => r.ISOCurrencySymbol)
+                .Select(g => g.First())
+                .OrderBy(r => r.ISOCurrencySymbol)
+                .Select(r => new CurrencyOption
+                {
+                    Code = r.ISOCurrencySymbol,
+                    Name = r.CurrencyEnglishName
+                })
+                .ToList();
+
+            foreach (var fallbackCurrency in GetFallbackCurrencyOptions())
+                AddCurrencyOptionIfMissing(currencies, fallbackCurrency.Code, fallbackCurrency.Name);
+
+            currencies = currencies
+                .OrderBy(c => c.Code)
+                .ToList();
+
+            cmbCurrency.Items.Clear();
+            cmbCurrency.Items.AddRange(currencies.Cast<object>().ToArray());
+            SelectCurrency(current);
+        }
+
+        private static void AddCurrencyOptionIfMissing(List<CurrencyOption> currencies, string code, string name)
+        {
+            if (currencies.Any(c => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase)))
+                return;
+
+            currencies.Add(new CurrencyOption
+            {
+                Code = code,
+                Name = name
+            });
+        }
+
+        private static IEnumerable<CurrencyOption> GetFallbackCurrencyOptions()
+        {
+            return new[]
+            {
+                new CurrencyOption { Code = "AED", Name = "UAE Dirham" },
+                new CurrencyOption { Code = "AFN", Name = "Afghan Afghani" },
+                new CurrencyOption { Code = "ALL", Name = "Albanian Lek" },
+                new CurrencyOption { Code = "AMD", Name = "Armenian Dram" },
+                new CurrencyOption { Code = "ARS", Name = "Argentine Peso" },
+                new CurrencyOption { Code = "AUD", Name = "Australian Dollar" },
+                new CurrencyOption { Code = "BHD", Name = "Bahraini Dinar" },
+                new CurrencyOption { Code = "BDT", Name = "Bangladeshi Taka" },
+                new CurrencyOption { Code = "BHD", Name = "Bahraini Dinar" },
+                new CurrencyOption { Code = "BND", Name = "Brunei Dollar" },
+                new CurrencyOption { Code = "BRL", Name = "Brazilian Real" },
+                new CurrencyOption { Code = "CAD", Name = "Canadian Dollar" },
+                new CurrencyOption { Code = "CHF", Name = "Swiss Franc" },
+                new CurrencyOption { Code = "CNY", Name = "Chinese Yuan" },
+                new CurrencyOption { Code = "COP", Name = "Colombian Peso" },
+                new CurrencyOption { Code = "CZK", Name = "Czech Koruna" },
+                new CurrencyOption { Code = "DKK", Name = "Danish Krone" },
+                new CurrencyOption { Code = "EGP", Name = "Egyptian Pound" },
+                new CurrencyOption { Code = "EUR", Name = "Euro" },
+                new CurrencyOption { Code = "GBP", Name = "British Pound Sterling" },
+                new CurrencyOption { Code = "HKD", Name = "Hong Kong Dollar" },
+                new CurrencyOption { Code = "HUF", Name = "Hungarian Forint" },
+                new CurrencyOption { Code = "IDR", Name = "Indonesian Rupiah" },
+                new CurrencyOption { Code = "INR", Name = "Indian Rupee" },
+                new CurrencyOption { Code = "IQD", Name = "Iraqi Dinar" },
+                new CurrencyOption { Code = "IRR", Name = "Iranian Rial" },
+                new CurrencyOption { Code = "JPY", Name = "Japanese Yen" },
+                new CurrencyOption { Code = "KRW", Name = "South Korean Won" },
+                new CurrencyOption { Code = "KWD", Name = "Kuwaiti Dinar" },
+                new CurrencyOption { Code = "LKR", Name = "Sri Lankan Rupee" },
+                new CurrencyOption { Code = "MAD", Name = "Moroccan Dirham" },
+                new CurrencyOption { Code = "MDL", Name = "Moldovan Leu" },
+                new CurrencyOption { Code = "MGA", Name = "Malagasy Ariary" },
+                new CurrencyOption { Code = "MKD", Name = "Macedonian Denar" },
+                new CurrencyOption { Code = "MMK", Name = "Myanmar Kyat" },
+                new CurrencyOption { Code = "MNT", Name = "Mongolian Tugrik" },
+                new CurrencyOption { Code = "MOP", Name = "Macanese Pataca" },
+                new CurrencyOption { Code = "MUR", Name = "Mauritian Rupee" },
+                new CurrencyOption { Code = "MXN", Name = "Mexican Peso" },
+                new CurrencyOption { Code = "MYR", Name = "Malaysian Ringgit" },
+                new CurrencyOption { Code = "NAD", Name = "Namibian Dollar" },
+                new CurrencyOption { Code = "NGN", Name = "Nigerian Naira" },
+                new CurrencyOption { Code = "NOK", Name = "Norwegian Krone" },
+                new CurrencyOption { Code = "NZD", Name = "New Zealand Dollar" },
+                new CurrencyOption { Code = "OMR", Name = "Omani Rial" },
+                new CurrencyOption { Code = "PHP", Name = "Philippine Peso" },
+                new CurrencyOption { Code = "PKR", Name = "Pakistani Rupee" },
+                new CurrencyOption { Code = "PLN", Name = "Polish Zloty" },
+                new CurrencyOption { Code = "QAR", Name = "Qatari Riyal" },
+                new CurrencyOption { Code = "RON", Name = "Romanian Leu" },
+                new CurrencyOption { Code = "RSD", Name = "Serbian Dinar" },
+                new CurrencyOption { Code = "RUB", Name = "Russian Ruble" },
+                new CurrencyOption { Code = "SAR", Name = "Saudi Riyal" },
+                new CurrencyOption { Code = "SEK", Name = "Swedish Krona" },
+                new CurrencyOption { Code = "SGD", Name = "Singapore Dollar" },
+                new CurrencyOption { Code = "THB", Name = "Thai Baht" },
+                new CurrencyOption { Code = "TND", Name = "Tunisian Dinar" },
+                new CurrencyOption { Code = "TRY", Name = "Turkish Lira" },
+                new CurrencyOption { Code = "TWD", Name = "New Taiwan Dollar" },
+                new CurrencyOption { Code = "USD", Name = "US Dollar" },
+                new CurrencyOption { Code = "VND", Name = "Vietnamese Dong" },
+                new CurrencyOption { Code = "ZAR", Name = "South African Rand" }
+            };
+        }
+
+        private void LoadProductUnits(AppDbContext db, StoreSettings? store)
+        {
+            var units = ParseProductUnits(store?.ProductUnitsJson);
+            var usedUnits = db.Products
+                .Select(p => p.UnitName)
+                .Where(u => !string.IsNullOrWhiteSpace(u))
+                .Select(u => u.Trim())
+                .AsEnumerable()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var usedUnit in usedUnits)
+            {
+                if (!units.Any(u => string.Equals(u, usedUnit, StringComparison.OrdinalIgnoreCase)))
+                    units.Add(usedUnit);
+            }
+
+            _productUnits = units;
+            RefreshProductUnitControls();
+        }
+
+        private static List<string> ParseProductUnits(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return new List<string> { "Bottle", "Kg", "Piece" };
+
+            try
+            {
+                var units = JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+                return units
+                    .Select(u => u?.Trim())
+                    .Where(u => !string.IsNullOrWhiteSpace(u))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+            catch
+            {
+                return new List<string> { "Bottle", "Kg", "Piece" };
+            }
+        }
+
+        private void RefreshProductUnitControls(string? selectedUnit = null)
+        {
+            if (cmbUnit != null)
+            {
+                cmbUnit.BeginUpdate();
+                cmbUnit.Items.Clear();
+                cmbUnit.Items.AddRange(_productUnits.Cast<object>().ToArray());
+                cmbUnit.EndUpdate();
+            }
+
+            if (dgvProductUnits != null)
+            {
+                var rows = _productUnits.Select(u => new ProductUnitRow { Name = u }).ToList();
+                dgvProductUnits.DataSource = rows;
+                if (dgvProductUnits.Columns.Contains("Name"))
+                    dgvProductUnits.Columns["Name"].HeaderText = "Unit";
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedUnit))
+                SetSelectedProductUnit(selectedUnit);
+            else if (cmbUnit.Items.Count > 0 && cmbUnit.SelectedIndex < 0)
+                cmbUnit.SelectedIndex = 0;
+
+            if (dgvProductUnits?.Rows.Count > 0)
+            {
+                dgvProductUnits.ClearSelection();
+                dgvProductUnits.Rows[0].Selected = true;
+            }
+        }
+
+        private void SelectLanguage(string? languageCode)
+        {
+            if (cmbLanguage == null || cmbLanguage.Items.Count == 0)
+                return;
+
+            var match = cmbLanguage.Items.Cast<LanguageOption>()
+                .FirstOrDefault(x => string.Equals(x.Code, languageCode, StringComparison.OrdinalIgnoreCase));
+            cmbLanguage.SelectedItem = match ?? cmbLanguage.Items[0];
+        }
+
+        private void SelectCurrency(string? currencyCode)
+        {
+            if (cmbCurrency == null || cmbCurrency.Items.Count == 0)
+                return;
+
+            var match = cmbCurrency.Items.Cast<CurrencyOption>()
+                .FirstOrDefault(x => string.Equals(x.Code, currencyCode, StringComparison.OrdinalIgnoreCase));
+            cmbCurrency.SelectedItem = match ?? cmbCurrency.Items[0];
+        }
+
+        private void UpdateStoreSettings(Action<StoreSettings> updater)
+        {
+            using var db = new AppDbContext();
+            var store = db.StoreSettings.FirstOrDefault();
+            if (store == null)
+            {
+                store = new StoreSettings();
+                db.StoreSettings.Add(store);
+            }
+
+            updater(store);
+            db.SaveChanges();
+        }
+
+        private void PersistProductUnits()
+        {
+            UpdateStoreSettings(store => store.ProductUnitsJson = JsonSerializer.Serialize(_productUnits));
+        }
+
+        private void CmbLanguage_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (_loadingSettingsUi || cmbLanguage?.SelectedItem is not LanguageOption language)
+                return;
+
+            UpdateStoreSettings(store => store.LanguageCode = language.Code);
+        }
+
+        private void CmbCurrency_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (_loadingSettingsUi || cmbCurrency?.SelectedItem is not CurrencyOption currency)
+                return;
+
+            UpdateStoreSettings(store => store.CurrencyCode = currency.Code);
+        }
+
+        private void DgvProductUnits_SelectionChanged(object? sender, EventArgs e)
+        {
+            if (dgvProductUnits?.CurrentRow == null || dgvProductUnits.CurrentRow.Cells.Count == 0)
+                return;
+
+            var name = dgvProductUnits.CurrentRow.Cells["Name"]?.Value?.ToString()?.Trim();
+            if (string.IsNullOrWhiteSpace(name))
+                return;
+
+            txtProductUnitName!.Text = name;
+        }
+
+        private void BtnAddUnit_Click(object? sender, EventArgs e)
+        {
+            var unitName = txtProductUnitName?.Text.Trim();
+            if (string.IsNullOrWhiteSpace(unitName))
+            {
+                MessageBox.Show("Unit name is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (_productUnits.Any(u => string.Equals(u, unitName, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("This unit already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            _productUnits.Add(unitName);
+            PersistProductUnits();
+            RefreshProductUnitControls(unitName);
+        }
+
+        private void BtnUpdateUnit_Click(object? sender, EventArgs e)
+        {
+            if (dgvProductUnits?.CurrentRow == null)
+            {
+                MessageBox.Show("Select a unit to update.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var oldName = dgvProductUnits.CurrentRow.Cells["Name"]?.Value?.ToString()?.Trim();
+            var newName = txtProductUnitName?.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName))
+            {
+                MessageBox.Show("Unit name is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase) &&
+                _productUnits.Any(u => string.Equals(u, newName, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("This unit already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var index = _productUnits.FindIndex(u => string.Equals(u, oldName, StringComparison.OrdinalIgnoreCase));
+            if (index < 0)
+                return;
+
+            using (var db = new AppDbContext())
+            {
+                var productsToUpdate = db.Products.Where(p => p.UnitName == oldName).ToList();
+                foreach (var product in productsToUpdate)
+                    product.UnitName = newName;
+
+                db.SaveChanges();
+            }
+
+            _productUnits[index] = newName;
+            PersistProductUnits();
+            RefreshProductUnitControls(newName);
+            LoadProducts();
+        }
+
+        private void BtnDeleteUnit_Click(object? sender, EventArgs e)
+        {
+            if (dgvProductUnits?.CurrentRow == null)
+            {
+                MessageBox.Show("Select a unit to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var unitName = dgvProductUnits.CurrentRow.Cells["Name"]?.Value?.ToString()?.Trim();
+            if (string.IsNullOrWhiteSpace(unitName))
+                return;
+
+            using var db = new AppDbContext();
+            var inUse = db.Products.Any(p => p.UnitName == unitName);
+            if (inUse)
+            {
+                MessageBox.Show("This unit is used by one or more products and cannot be deleted.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var ok = MessageBox.Show("Delete this unit?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (ok != DialogResult.Yes) return;
+
+            _productUnits.RemoveAll(u => string.Equals(u, unitName, StringComparison.OrdinalIgnoreCase));
+            PersistProductUnits();
+            RefreshProductUnitControls();
+            ClearUnitEditor();
+        }
+
+        private void BtnClearUnit_Click(object? sender, EventArgs e) => ClearUnitEditor();
+
+        private void ClearUnitEditor()
+        {
+            if (txtProductUnitName != null)
+                txtProductUnitName.Clear();
+
+            if (dgvProductUnits?.Rows.Count > 0)
+            {
+                dgvProductUnits.ClearSelection();
+                dgvProductUnits.CurrentCell = null;
+            }
+        }
 
     private void BtnChangeUsername_Click(object? sender, EventArgs e)
     {

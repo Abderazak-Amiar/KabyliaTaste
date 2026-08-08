@@ -30,6 +30,7 @@ namespace KabyliaTaste.Services
         private readonly decimal _collectedAmount;
         private readonly decimal _debtAmount;
         private readonly decimal _expensesAmount;
+        private readonly string? _currencyCode;
 
         public StatsReportPrinter(
             IReadOnlyList<StatsReportRow> rows,
@@ -41,7 +42,8 @@ namespace KabyliaTaste.Services
             byte[]? logoData = null,
             decimal collectedAmount = 0m,
             decimal debtAmount = 0m,
-            decimal expensesAmount = 0m)
+            decimal expensesAmount = 0m,
+            string? currencyCode = null)
         {
             _rows          = rows;
             _productFilter = productFilter;
@@ -53,6 +55,7 @@ namespace KabyliaTaste.Services
             _collectedAmount = collectedAmount;
             _debtAmount      = debtAmount;
             _expensesAmount  = expensesAmount;
+            _currencyCode    = currencyCode;
         }
 
         public void PrintPreview()
@@ -160,9 +163,9 @@ namespace KabyliaTaste.Services
                 g.DrawString(row.Hour,                       bodyFont, Brushes.Black, colHour, y + 2);
                 g.DrawString(row.Product,                       bodyFont, Brushes.Black,   colProduct,  y + 2);
                 g.DrawString(row.UnitsSold.ToString(),          bodyFont, Brushes.Black,   colUnits,    y + 2);
-                g.DrawString(row.Revenue.ToString("F2"),        bodyFont, Brushes.Black,   colRevenue,  y + 2);
-                g.DrawString(row.Cost.ToString("F2"),           bodyFont, Brushes.Black,   colCost,     y + 2);
-                g.DrawString(row.Profit.ToString("F2"),         bodyFont, profitBrush,     colProfit,   y + 2);
+                g.DrawString(CurrencyFormatting.FormatAmount(row.Revenue, _currencyCode), bodyFont, Brushes.Black,   colRevenue,  y + 2);
+                g.DrawString(CurrencyFormatting.FormatAmount(row.Cost, _currencyCode),    bodyFont, Brushes.Black,   colCost,     y + 2);
+                g.DrawString(CurrencyFormatting.FormatAmount(row.Profit, _currencyCode),  bodyFont, profitBrush,     colProfit,   y + 2);
 
                 y += lineH;
                 shade = !shade;
@@ -183,20 +186,20 @@ namespace KabyliaTaste.Services
 
             g.DrawString("TOTAL",                       headerFont, Brushes.Black,       colProduct,  y);
             g.DrawString(totalUnits.ToString(),         headerFont, Brushes.Black,       colUnits,    y);
-            g.DrawString(totalRevenue.ToString("F2"),   headerFont, Brushes.Black,       colRevenue,  y);
-            g.DrawString(totalCost.ToString("F2"),      headerFont, Brushes.Black,       colCost,     y);
-            g.DrawString(totalProfit.ToString("F2"),    headerFont, totalProfitBrush,    colProfit,   y);
+            g.DrawString(CurrencyFormatting.FormatAmount(totalRevenue, _currencyCode), headerFont, Brushes.Black,       colRevenue,  y);
+            g.DrawString(CurrencyFormatting.FormatAmount(totalCost, _currencyCode),    headerFont, Brushes.Black,       colCost,     y);
+            g.DrawString(CurrencyFormatting.FormatAmount(totalProfit, _currencyCode),  headerFont, totalProfitBrush,    colProfit,   y);
 
             y += lineH + 8;
             var netProfit = _collectedAmount - _expensesAmount;
             var netProfitBrush = netProfit >= 0 ? Brushes.DarkGreen : Brushes.Red;
-            g.DrawString($"Collected: {_collectedAmount:F2}", headerFont, Brushes.Black, x, y);
+            g.DrawString($"Collected: {CurrencyFormatting.FormatAmount(_collectedAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Debt: {_debtAmount:F2}", headerFont, Brushes.Black, x, y);
+            g.DrawString($"Debt: {CurrencyFormatting.FormatAmount(_debtAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Expenses: {_expensesAmount:F2}", headerFont, Brushes.Black, x, y);
+            g.DrawString($"Expenses: {CurrencyFormatting.FormatAmount(_expensesAmount, _currencyCode)}", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Net Profit: {netProfit:F2}", headerFont, netProfitBrush, x, y);
+            g.DrawString($"Net Profit: {CurrencyFormatting.FormatAmount(netProfit, _currencyCode)}", headerFont, netProfitBrush, x, y);
 
             e.HasMorePages = false;
         }
