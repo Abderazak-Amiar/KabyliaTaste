@@ -520,13 +520,13 @@
             // lblSearch
             // 
             this.lblSearch.AutoSize = true;
-            this.lblSearch.Location = new System.Drawing.Point(6, 10);
+            this.lblSearch.Location = new System.Drawing.Point(12, 10);
             this.lblSearch.Name = "lblSearch";
             this.lblSearch.Text = "Search:";
             // 
             // txtSearch
             // 
-            this.txtSearch.Location = new System.Drawing.Point(60, 7);
+            this.txtSearch.Location = new System.Drawing.Point(110, 7);
             this.txtSearch.Name = "txtSearch";
             this.txtSearch.Width = 250;
             this.txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
@@ -543,7 +543,7 @@
             // 
             this.btnProductPrev.Text = "< Prev";
             this.btnProductPrev.Name = "btnProductPrev";
-            this.btnProductPrev.Size = new System.Drawing.Size(70, 25);
+            this.btnProductPrev.Size = new System.Drawing.Size(95, 25);
             this.btnProductPrev.Location = new System.Drawing.Point(5, 5);
             // 
             // lblProductPage
@@ -551,7 +551,7 @@
             this.lblProductPage.Name = "lblProductPage";
             this.lblProductPage.Text = "Page 1";
             this.lblProductPage.AutoSize = true;
-            this.lblProductPage.Location = new System.Drawing.Point(85, 9);
+            this.lblProductPage.Location = new System.Drawing.Point(110, 9);
             this.lblProductPage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btnProductNext
@@ -559,7 +559,7 @@
             this.btnProductNext.Text = "Next >";
             this.btnProductNext.Name = "btnProductNext";
             this.btnProductNext.Size = new System.Drawing.Size(70, 25);
-            this.btnProductNext.Location = new System.Drawing.Point(155, 5);
+            this.btnProductNext.Location = new System.Drawing.Point(180, 5);
             // 
             // panelProductPagination
             // 
@@ -665,7 +665,7 @@
             // 
             this.btnSalePrev.Text = "< Prev";
             this.btnSalePrev.Name = "btnSalePrev";
-            this.btnSalePrev.Size = new System.Drawing.Size(70, 25);
+            this.btnSalePrev.Size = new System.Drawing.Size(95, 25);
             this.btnSalePrev.Location = new System.Drawing.Point(5, 5);
             // 
             // lblSalePage
@@ -673,7 +673,7 @@
             this.lblSalePage.Name = "lblSalePage";
             this.lblSalePage.Text = "Page 1";
             this.lblSalePage.AutoSize = true;
-            this.lblSalePage.Location = new System.Drawing.Point(85, 9);
+            this.lblSalePage.Location = new System.Drawing.Point(110, 9);
             this.lblSalePage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btnSaleNext
@@ -681,7 +681,7 @@
             this.btnSaleNext.Text = "Next >";
             this.btnSaleNext.Name = "btnSaleNext";
             this.btnSaleNext.Size = new System.Drawing.Size(70, 25);
-            this.btnSaleNext.Location = new System.Drawing.Point(155, 5);
+            this.btnSaleNext.Location = new System.Drawing.Point(180, 5);
             // 
             // panelSalePagination
             // 
@@ -805,7 +805,7 @@
             this.cmbStatsPeriod.SelectedIndex = 0;
             this.cmbStatsPeriod.SelectedIndexChanged += new System.EventHandler(this.StatsFilter_Changed);
 
-            this.dtpStatsDate.Location = new System.Drawing.Point(368, 6);
+            this.dtpStatsDate.Location = new System.Drawing.Point(368, 7);
             this.dtpStatsDate.Width = 130;
             this.dtpStatsDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpStatsDate.ValueChanged += new System.EventHandler(this.StatsFilter_Changed);
@@ -816,16 +816,16 @@
 
             this.cmbStatsBuyer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbStatsBuyer.Location = new System.Drawing.Point(553, 7);
-            this.cmbStatsBuyer.Width = 130;
+            this.cmbStatsBuyer.Size = new System.Drawing.Size(130, 25);
             this.cmbStatsBuyer.SelectedIndexChanged += new System.EventHandler(this.StatsFilter_Changed);
 
             this.btnClearStatsFilter.Text = "Clear";
-            this.btnClearStatsFilter.Location = new System.Drawing.Point(693, 5);
-            this.btnClearStatsFilter.Width = 60;
+            this.btnClearStatsFilter.Location = new System.Drawing.Point(693, 6);
+            this.btnClearStatsFilter.Size = new System.Drawing.Size(130, 25);
             this.btnClearStatsFilter.Click += new System.EventHandler(this.BtnClearStatsFilter_Click);
 
             this.btnPrintReport.Text = "🖨 Print Report";
-            this.btnPrintReport.Location = new System.Drawing.Point(763, 4);
+            this.btnPrintReport.Location = new System.Drawing.Point(833, 6);
             this.btnPrintReport.Size = new System.Drawing.Size(120, 25);
             this.btnPrintReport.UseVisualStyleBackColor = true;
 
@@ -944,19 +944,19 @@
             // btnExpensePrev
             this.btnExpensePrev.Text = "< Prev";
             this.btnExpensePrev.Name = "btnExpensePrev";
-            this.btnExpensePrev.Size = new System.Drawing.Size(70, 25);
+            this.btnExpensePrev.Size = new System.Drawing.Size(95, 25);
             this.btnExpensePrev.Location = new System.Drawing.Point(5, 5);
             // lblExpensePage
             this.lblExpensePage.Name = "lblExpensePage";
             this.lblExpensePage.Text = "Page 1";
             this.lblExpensePage.AutoSize = true;
-            this.lblExpensePage.Location = new System.Drawing.Point(85, 9);
+            this.lblExpensePage.Location = new System.Drawing.Point(110, 9);
             this.lblExpensePage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // btnExpenseNext
             this.btnExpenseNext.Text = "Next >";
             this.btnExpenseNext.Name = "btnExpenseNext";
             this.btnExpenseNext.Size = new System.Drawing.Size(70, 25);
-            this.btnExpenseNext.Location = new System.Drawing.Point(155, 5);
+            this.btnExpenseNext.Location = new System.Drawing.Point(180, 5);
             // panelExpensePagination
             this.panelExpensePagination.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelExpensePagination.Height = 35;
@@ -976,7 +976,7 @@
             this.btnClearExpenseFilter.Text = "Clear";
             this.btnClearExpenseFilter.Name = "btnClearExpenseFilter";
             this.btnClearExpenseFilter.Location = new System.Drawing.Point(240, 9);
-            this.btnClearExpenseFilter.Size = new System.Drawing.Size(70, 25);
+            this.btnClearExpenseFilter.Size = new System.Drawing.Size(130, 25);
             this.btnClearExpenseFilter.UseVisualStyleBackColor = true;
             this.panelExpenseFilter.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelExpenseFilter.Height = 35;
@@ -1029,7 +1029,7 @@
             this.btnClearInvoiceFilter.Text = "Clear";
             this.btnClearInvoiceFilter.Name = "btnClearInvoiceFilter";
             this.btnClearInvoiceFilter.Location = new System.Drawing.Point(420, 9);
-            this.btnClearInvoiceFilter.Size = new System.Drawing.Size(70, 25);
+            this.btnClearInvoiceFilter.Size = new System.Drawing.Size(130, 25);
             this.btnClearInvoiceFilter.UseVisualStyleBackColor = true;
             // panelInvoiceFilter
             this.panelInvoiceFilter.Dock = System.Windows.Forms.DockStyle.Top;
@@ -1043,19 +1043,19 @@
             // btnInvoicePrev
             this.btnInvoicePrev.Text = "< Prev";
             this.btnInvoicePrev.Name = "btnInvoicePrev";
-            this.btnInvoicePrev.Size = new System.Drawing.Size(70, 25);
+            this.btnInvoicePrev.Size = new System.Drawing.Size(95, 25);
             this.btnInvoicePrev.Location = new System.Drawing.Point(5, 5);
             // lblInvoicePage
             this.lblInvoicePage.Name = "lblInvoicePage";
             this.lblInvoicePage.Text = "Page 1";
             this.lblInvoicePage.AutoSize = true;
-            this.lblInvoicePage.Location = new System.Drawing.Point(85, 9);
+            this.lblInvoicePage.Location = new System.Drawing.Point(110, 9);
             this.lblInvoicePage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // btnInvoiceNext
             this.btnInvoiceNext.Text = "Next >";
             this.btnInvoiceNext.Name = "btnInvoiceNext";
             this.btnInvoiceNext.Size = new System.Drawing.Size(70, 25);
-            this.btnInvoiceNext.Location = new System.Drawing.Point(155, 5);
+            this.btnInvoiceNext.Location = new System.Drawing.Point(180, 5);
             // btnInvoicePreview
             this.btnInvoicePreview.Text = "🖨 Preview Invoice";
             this.btnInvoicePreview.Name = "btnInvoicePreview";
@@ -1261,13 +1261,13 @@
             this.btnGoogleDriveHelp.Text = "Setup Help";
             this.btnGoogleDriveHelp.Name = "btnGoogleDriveHelp";
             this.btnGoogleDriveHelp.Location = new System.Drawing.Point(400, 255);
-            this.btnGoogleDriveHelp.Size = new System.Drawing.Size(90, 30);
+            this.btnGoogleDriveHelp.Size = new System.Drawing.Size(150, 30);
             this.btnGoogleDriveHelp.UseVisualStyleBackColor = true;
 
             this.btnOpenGoogleCloudConsole.Text = "Open Console";
             this.btnOpenGoogleCloudConsole.Name = "btnOpenGoogleCloudConsole";
-            this.btnOpenGoogleCloudConsole.Location = new System.Drawing.Point(500, 255);
-            this.btnOpenGoogleCloudConsole.Size = new System.Drawing.Size(110, 30);
+            this.btnOpenGoogleCloudConsole.Location = new System.Drawing.Point(560, 255);
+            this.btnOpenGoogleCloudConsole.Size = new System.Drawing.Size(140, 30);
             this.btnOpenGoogleCloudConsole.UseVisualStyleBackColor = true;
 
             this.tabGoogleDrive.Controls.Add(this.lblGoogleDriveClientId);

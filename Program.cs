@@ -15,6 +15,12 @@ namespace KabyliaTaste
                 ApplicationConfiguration.Initialize();
                 Environment.CurrentDirectory = AppContext.BaseDirectory;
 
+                using (var db = new KabyliaTaste.Data.AppDbContext())
+                {
+                    var languageCode = db.StoreSettings.Select(s => s.LanguageCode).FirstOrDefault();
+                    KabyliaTaste.Services.AppLocalization.SetLanguage(languageCode);
+                }
+
                 var licenseService = new KabyliaTaste.Services.StoreLicenseService();
                 var license = licenseService.CheckLicenseAsync().GetAwaiter().GetResult();
 
@@ -57,7 +63,7 @@ namespace KabyliaTaste
 
                     bool ColumnExists(string tableName, string columnName) =>
                         db.Database.SqlQueryRaw<string>(
-                                $"SELECT name FROM pragma_table_info('{tableName}') WHERE name={{0}}", columnName)
+                                "SELECT name FROM pragma_table_info({0}) WHERE name={1}", tableName, columnName)
                             .ToList()
                             .Any();
 
