@@ -1,6 +1,6 @@
 <Project Sdk="WixToolset.Sdk/4.0.4">
   <PropertyGroup>
-    <OutputName>KabyliaTaste.Setup</OutputName>
+    <OutputName>AmiarStoreManager.Setup</OutputName>
     <Platform>x64</Platform>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <PublishOutputDir>$(MSBuildProjectDirectory)\obj\publish\</PublishOutputDir>

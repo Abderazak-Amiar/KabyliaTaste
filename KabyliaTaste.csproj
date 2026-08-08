@@ -7,6 +7,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Assets\AmiarStoreManager.ico</ApplicationIcon>
+    <AssemblyName>AmiarStoreManager</AssemblyName>
+    <AssemblyTitle>Amiar Store Manager</AssemblyTitle>
+    <Product>Amiar Store Manager</Product>
   </PropertyGroup>
 
   <ItemGroup>

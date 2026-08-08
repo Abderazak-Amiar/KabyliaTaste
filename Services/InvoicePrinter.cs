@@ -18,12 +18,13 @@ namespace KabyliaTaste.Services
         private readonly decimal _invoiceTotal;
         private readonly decimal _amountPaid;
         private readonly InvoicePaymentStatus _paymentStatus;
+        private readonly string? _currencyCode;
 
         // A4 at 100 dpi: 827 x 1169 pts (printer units are 1/100 inch)
         private const float PageWidthPt  = 827f;
         private const float PageHeightPt = 1169f;
 
-        public InvoicePrinter(IReadOnlyList<Sale> sales, string buyerName, string storeName = "KabyliaTaste", byte[]? logoData = null, int? invoiceId = null, DateTime? invoiceDate = null, decimal invoiceTotal = 0m, decimal amountPaid = 0m, InvoicePaymentStatus paymentStatus = InvoicePaymentStatus.No)
+        public InvoicePrinter(IReadOnlyList<Sale> sales, string buyerName, string storeName = "KabyliaTaste", byte[]? logoData = null, int? invoiceId = null, DateTime? invoiceDate = null, decimal invoiceTotal = 0m, decimal amountPaid = 0m, InvoicePaymentStatus paymentStatus = InvoicePaymentStatus.No, string? currencyCode = null)
         {
             _sales = sales;
             _buyerName = buyerName;
@@ -34,6 +35,7 @@ namespace KabyliaTaste.Services
             _invoiceTotal = invoiceTotal;
             _amountPaid = amountPaid;
             _paymentStatus = paymentStatus;
+            _currencyCode = currencyCode;
         }
 
         public void PrintPreview()
@@ -133,10 +135,10 @@ namespace KabyliaTaste.Services
 
             g.DrawString("Invoice Details", headerFont, Brushes.Black, x, y);
             y += lineH;
-            g.DrawString($"Total: {grandTotal:F2} DA", bodyFont, Brushes.Black, x, y);
-            g.DrawString($"Paid: {_amountPaid:F2} DA", bodyFont, Brushes.Black, x + 220, y);
+            g.DrawString($"Total: {CurrencyFormatting.FormatAmount(grandTotal, _currencyCode)}", bodyFont, Brushes.Black, x, y);
+            g.DrawString($"Paid: {CurrencyFormatting.FormatAmount(_amountPaid, _currencyCode)}", bodyFont, Brushes.Black, x + 220, y);
             y += lineH;
-            g.DrawString($"Due: {dueAmount:F2} DA", bodyFont, Brushes.Black, x, y);
+            g.DrawString($"Due: {CurrencyFormatting.FormatAmount(dueAmount, _currencyCode)}", bodyFont, Brushes.Black, x, y);
             g.DrawString($"Status: {_paymentStatus}", bodyFont, Brushes.Black, x + 220, y);
             y += lineH * 1.5f;
 
@@ -157,8 +159,8 @@ namespace KabyliaTaste.Services
 
                 g.DrawString(sale.Product?.Name ?? "-",               bodyFont, rowBrush, colProduct,   y);
                 g.DrawString(sale.Quantity.ToString(),                 bodyFont, rowBrush, colQty,       y);
-                g.DrawString(sale.UnitPrice.ToString("F2") + " DA",   bodyFont, rowBrush, colUnitPrice, y);
-                g.DrawString(sale.TotalPrice.ToString("F2") + " DA",  bodyFont, rowBrush, colTotal,     y);
+                g.DrawString(CurrencyFormatting.FormatAmount(sale.UnitPrice, _currencyCode), bodyFont, rowBrush, colUnitPrice, y);
+                g.DrawString(CurrencyFormatting.FormatAmount(sale.TotalPrice, _currencyCode), bodyFont, rowBrush, colTotal,     y);
                 y += lineH;
                 rowTotal += sale.TotalPrice;
             }
@@ -167,7 +169,7 @@ namespace KabyliaTaste.Services
             y += lineH;
 
             // ?? Grand total ?????????????????????????????????????????????????
-            g.DrawString($"Grand Total: {grandTotal:F2} DA", headerFont, Brushes.Black, colUnitPrice, y);
+            g.DrawString($"Grand Total: {CurrencyFormatting.FormatAmount(grandTotal, _currencyCode)}", headerFont, Brushes.Black, colUnitPrice, y);
             y += lineH * 2;
 
             // ?? Footer ??????????????????????????????????????????????????????

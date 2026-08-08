@@ -118,6 +118,7 @@
     private System.Windows.Forms.Button btnInvoicePrev;
     private System.Windows.Forms.Button btnInvoiceNext;
      private System.Windows.Forms.Button btnInvoicePreview;
+      private System.Windows.Forms.Button btnDeleteInvoice;
     private System.Windows.Forms.Label lblInvoicePage;
     // Settings tab inner controls
     private System.Windows.Forms.TabControl tabControlSettings;
@@ -332,6 +333,7 @@
             this.btnInvoicePrev = new System.Windows.Forms.Button();
             this.btnInvoiceNext = new System.Windows.Forms.Button();
             this.btnInvoicePreview = new System.Windows.Forms.Button();
+            this.btnDeleteInvoice = new System.Windows.Forms.Button();
             this.lblInvoicePage = new System.Windows.Forms.Label();
             SuspendLayout();
             // 
@@ -1059,6 +1061,11 @@
             this.btnInvoicePreview.Name = "btnInvoicePreview";
             this.btnInvoicePreview.Size = new System.Drawing.Size(130, 25);
             this.btnInvoicePreview.Location = new System.Drawing.Point(230, 5);
+            // btnDeleteInvoice
+            this.btnDeleteInvoice.Text = "Delete Invoice";
+            this.btnDeleteInvoice.Name = "btnDeleteInvoice";
+            this.btnDeleteInvoice.Size = new System.Drawing.Size(110, 25);
+            this.btnDeleteInvoice.Location = new System.Drawing.Point(370, 5);
             // panelInvoicePagination
             this.panelInvoicePagination.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelInvoicePagination.Height = 35;
@@ -1067,6 +1074,7 @@
             this.panelInvoicePagination.Controls.Add(this.lblInvoicePage);
             this.panelInvoicePagination.Controls.Add(this.btnInvoiceNext);
             this.panelInvoicePagination.Controls.Add(this.btnInvoicePreview);
+            this.panelInvoicePagination.Controls.Add(this.btnDeleteInvoice);
             // tabInvoices
             this.tabInvoices.Controls.Add(this.dgvInvoices);
             this.tabInvoices.Controls.Add(this.panelInvoicePagination);
@@ -1394,7 +1402,7 @@
             this.Controls.Add(this.btnLogout);
             this.Controls.Add(this.tabControlMain);
             this.Name = "Main";
-            this.Text = "KabyliaTaste";
+            this.Text = "Amiar Store Manager";
             this.ResumeLayout(false);
 
         }
