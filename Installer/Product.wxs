@@ -11,6 +11,8 @@
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of KabyliaTaste is already installed." />
     <MediaTemplate />
+    <Icon Id="AmiarStoreManagerIcon" SourceFile="..\Assets\AmiarStoreManager.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AmiarStoreManagerIcon" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="KabyliaTaste" />
@@ -59,7 +61,8 @@
           Id="KabyliaTasteShortcut"
           Name="KabyliaTaste"
           Target="[INSTALLFOLDER]KabyliaTaste.exe"
-          WorkingDirectory="INSTALLFOLDER" />
+          WorkingDirectory="INSTALLFOLDER"
+          Icon="AmiarStoreManagerIcon" />
         <RemoveFolder Id="RemoveKabyliaTasteProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\KabyliaTaste" Name="installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>

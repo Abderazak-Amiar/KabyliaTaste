@@ -156,13 +156,12 @@
                     return;
                 }
 
-                using var progressForm = new BackupProgressForm();
-                progressForm.Show(this);
-                progressForm.SetProgress(0, "Preparing database backup...");
+                using var progressToast = new BackupToastForm();
+                progressToast.ShowToast("Preparing database backup...");
 
                 var progress = new Progress<int>(percent =>
                 {
-                    progressForm.SetProgress(percent, $"Uploading database backup... {percent}%");
+                    progressToast.SetProgress(percent, $"Uploading database backup... {percent}%");
                 });
 
                 await Task.Run(() =>
@@ -171,7 +170,7 @@
                     service.UploadDatabaseBackup(store, GetDatabaseFilePath(), progress);
                 });
 
-                progressForm.SetProgress(100, "Upload complete.");
+                progressToast.SetProgress(100, "Upload complete.");
                 _closingAfterBackup = true;
                 Close();
             }
@@ -2106,13 +2105,12 @@
         {
             try
             {
-                using var progressForm = new BackupProgressForm();
-                progressForm.Show(this);
-                progressForm.SetProgress(0, "Downloading database backup from Google Drive...");
+                using var progressToast = new BackupToastForm();
+                progressToast.ShowToast("Downloading database backup from Google Drive...");
 
                 var progress = new Progress<int>(percent =>
                 {
-                    progressForm.SetProgress(percent, $"Downloading database backup from Google Drive... {percent}%");
+                    progressToast.SetProgress(percent, $"Downloading database backup from Google Drive... {percent}%");
                 });
 
                 await Task.Run(() =>
@@ -2122,7 +2120,7 @@
                     service.DownloadDatabaseBackup(store, GetDatabaseFilePath(), progress);
                 });
 
-                progressForm.SetProgress(100, "Database downloaded successfully.");
+                progressToast.SetProgress(100, "Database downloaded successfully.");
                 MessageBox.Show("Database downloaded from Google Drive successfully. The application will restart.", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Application.Restart();
             }

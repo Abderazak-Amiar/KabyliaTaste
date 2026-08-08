@@ -9,8 +9,21 @@ namespace KabyliaTaste
 
     public partial class LoginForm : Form
     {
-        public LoginForm()
+        private readonly bool _syncDatabaseOnLoad;
+
+        private static string GetDatabaseFilePath()
         {
+            var appDataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "KabyliaTaste");
+
+            Directory.CreateDirectory(appDataFolder);
+            return Path.Combine(appDataFolder, "app.db");
+        }
+
+        public LoginForm(bool syncDatabaseOnLoad = true)
+        {
+            _syncDatabaseOnLoad = syncDatabaseOnLoad;
             InitializeComponent();
             AcceptButton = btnLogin;
             Load += LoginForm_Load;
@@ -19,8 +32,62 @@ namespace KabyliaTaste
 
         private async void LoginForm_Load(object? sender, EventArgs e)
         {
-            await RefreshDatabaseFromGoogleDriveAsync();
+            await UpdateLicenseStatusAsync();
+            if (_syncDatabaseOnLoad)
+            {
+                await RefreshDatabaseFromGoogleDriveAsync();
+            }
+            ApplyStoreName();
             txtUsername.Focus();
+        }
+
+        private void ApplyStoreName()
+        {
+            using var db = new AppDbContext();
+            var storeName = db.StoreSettings.FirstOrDefault()?.StoreName;
+
+            if (string.IsNullOrWhiteSpace(storeName))
+                storeName = "Amiar Store Manager";
+
+            lblTitle.Text = storeName;
+            Text = $"Login - {storeName}";
+        }
+
+        private async Task UpdateLicenseStatusAsync()
+        {
+            try
+            {
+                var license = await new StoreLicenseService().CheckLicenseAsync();
+
+                if (!license.IsPackagedApp)
+                {
+                    lblTrialStatus.Text = string.Empty;
+                    return;
+                }
+
+                if (!license.IsLicenseValid)
+                {
+                    lblTrialStatus.ForeColor = System.Drawing.Color.DarkRed;
+                    lblTrialStatus.Text = license.ErrorMessage ?? "Microsoft Store license is not valid.";
+                    return;
+                }
+
+                if (license.IsTrial && license.ExpirationDate.HasValue)
+                {
+                    var daysRemaining = Math.Max(0, (int)Math.Ceiling((license.ExpirationDate.Value - DateTimeOffset.Now).TotalDays));
+                    lblTrialStatus.ForeColor = System.Drawing.Color.DarkGreen;
+                    lblTrialStatus.Text = $"Trial remaining: {daysRemaining} day{(daysRemaining == 1 ? string.Empty : "s")} (expires {license.ExpirationDate.Value:dd/MM/yyyy})";
+                }
+                else
+                {
+                    lblTrialStatus.ForeColor = System.Drawing.Color.DarkGreen;
+                    lblTrialStatus.Text = "Microsoft Store license active.";
+                }
+            }
+            catch
+            {
+                lblTrialStatus.Text = string.Empty;
+            }
         }
 
         private async Task RefreshDatabaseFromGoogleDriveAsync()
@@ -36,13 +103,12 @@ namespace KabyliaTaste
                 return;
             }
 
-            using var progressForm = new BackupProgressForm();
-            progressForm.Show(this);
-            progressForm.SetProgress(0, "Downloading database backup from Google Drive...");
+            using var progressToast = new BackupToastForm();
+            progressToast.ShowToast("Downloading database backup from Google Drive...");
 
             var progress = new Progress<int>(percent =>
             {
-                progressForm.SetProgress(percent, $"Downloading database backup from Google Drive... {percent}%");
+                progressToast.SetProgress(percent, $"Downloading database backup from Google Drive... {percent}%");
             });
 
             try
@@ -50,18 +116,14 @@ namespace KabyliaTaste
                 await Task.Run(() =>
                 {
                     var service = new GoogleDriveBackupService();
-                    service.DownloadDatabaseBackup(store, Path.GetFullPath("app.db"), progress);
+                    service.DownloadDatabaseBackup(store, GetDatabaseFilePath(), progress);
                 });
 
-                progressForm.SetProgress(100, "Database is up to date.");
+                progressToast.SetProgress(100, "Database is up to date.");
             }
             catch
             {
                 // Keep the local database available if the remote download fails.
-            }
-            finally
-            {
-                progressForm.Close();
             }
         }
 

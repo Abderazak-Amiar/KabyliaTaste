@@ -15,6 +15,16 @@ namespace KabyliaTaste
                 ApplicationConfiguration.Initialize();
                 Environment.CurrentDirectory = AppContext.BaseDirectory;
 
+                var licenseService = new KabyliaTaste.Services.StoreLicenseService();
+                var license = licenseService.CheckLicenseAsync().GetAwaiter().GetResult();
+
+                if (license.IsPackagedApp && !license.IsLicenseValid)
+                {
+                    var message = license.ErrorMessage ?? "A valid Microsoft Store license was not found.";
+                    MessageBox.Show(message, "KabyliaTaste", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
                 using (var db = new KabyliaTaste.Data.AppDbContext())
                 {
                     // Ensure the migrations history table exists (created by EnsureCreated previously)
@@ -77,18 +87,21 @@ namespace KabyliaTaste
                     // Seed default store settings if none exist
                     if (!db.StoreSettings.Any())
                     {
-                        db.StoreSettings.Add(new KabyliaTaste.Models.StoreSettings { StoreName = "KabyliaTaste" });
+                        db.StoreSettings.Add(new KabyliaTaste.Models.StoreSettings { StoreName = "Amiar Store Manager" });
                         db.SaveChanges();
                     }
                 }
 
                 // Show login; loop so logout brings back the login screen
+                var syncDatabaseOnLogin = true;
                 while (true)
                 {
                     Session.CurrentUser = null;
-                    using var loginForm = new LoginForm();
+                    using var loginForm = new LoginForm(syncDatabaseOnLoad: syncDatabaseOnLogin);
                     if (loginForm.ShowDialog() != System.Windows.Forms.DialogResult.OK)
                         break;
+
+                    syncDatabaseOnLogin = false;
 
                     using var main = new Main();
                     Application.Run(main);
