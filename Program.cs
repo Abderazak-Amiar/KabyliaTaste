@@ -15,12 +15,6 @@ namespace KabyliaTaste
                 ApplicationConfiguration.Initialize();
                 Environment.CurrentDirectory = AppContext.BaseDirectory;
 
-                using (var db = new KabyliaTaste.Data.AppDbContext())
-                {
-                    var languageCode = db.StoreSettings.Select(s => s.LanguageCode).FirstOrDefault();
-                    KabyliaTaste.Services.AppLocalization.SetLanguage(languageCode);
-                }
-
                 var licenseService = new KabyliaTaste.Services.StoreLicenseService();
                 var license = licenseService.CheckLicenseAsync().GetAwaiter().GetResult();
 
@@ -111,6 +105,9 @@ namespace KabyliaTaste
                         db.StoreSettings.Add(new KabyliaTaste.Models.StoreSettings { StoreName = "Amiar Store Manager" });
                         db.SaveChanges();
                     }
+
+                    var languageCode = db.StoreSettings.Select(s => s.LanguageCode).FirstOrDefault();
+                    KabyliaTaste.Services.AppLocalization.SetLanguage(languageCode);
                 }
 
                 // Show login; loop so logout brings back the login screen
