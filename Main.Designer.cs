@@ -11,8 +11,9 @@
     private System.Windows.Forms.TabPage tabSales;
     private System.Windows.Forms.TabPage tabStats;
     private System.Windows.Forms.TabPage tabExpenses;
-    private System.Windows.Forms.TabPage tabInvoices;
-    private System.Windows.Forms.TabPage tabSettings;
+     private System.Windows.Forms.TabPage tabInvoices;
+     private System.Windows.Forms.TabPage tabHelp;
+     private System.Windows.Forms.TabPage tabSettings;
     private System.Windows.Forms.Panel panelLeft;
     private System.Windows.Forms.Label lblName;
     private System.Windows.Forms.TextBox txtName;
@@ -219,6 +220,7 @@
             this.tabStats = new System.Windows.Forms.TabPage();
             this.tabExpenses = new System.Windows.Forms.TabPage();
             this.tabSettings = new System.Windows.Forms.TabPage();
+            this.tabHelp = new System.Windows.Forms.TabPage();
             this.tabGoogleDrive = new System.Windows.Forms.TabPage();
             this.tabBackup = new System.Windows.Forms.TabPage();
             this.panelSaleLeft = new System.Windows.Forms.Panel();
@@ -352,6 +354,7 @@
             this.tabStats,
             this.tabExpenses,
             this.tabInvoices,
+            this.tabHelp,
             this.tabSettings});
             // 
             // tabProducts
@@ -1060,12 +1063,12 @@
             this.btnInvoicePreview.Text = "🖨 Preview Invoice";
             this.btnInvoicePreview.Name = "btnInvoicePreview";
             this.btnInvoicePreview.Size = new System.Drawing.Size(130, 25);
-            this.btnInvoicePreview.Location = new System.Drawing.Point(230, 5);
+            this.btnInvoicePreview.Location = new System.Drawing.Point(270, 5);
             // btnDeleteInvoice
             this.btnDeleteInvoice.Text = "Delete Invoice";
             this.btnDeleteInvoice.Name = "btnDeleteInvoice";
             this.btnDeleteInvoice.Size = new System.Drawing.Size(110, 25);
-            this.btnDeleteInvoice.Location = new System.Drawing.Point(370, 5);
+            this.btnDeleteInvoice.Location = new System.Drawing.Point(410, 5);
             // panelInvoicePagination
             this.panelInvoicePagination.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelInvoicePagination.Height = 35;
@@ -1085,6 +1088,13 @@
             this.tabInvoices.TabIndex = 5;
             this.tabInvoices.Text = "Invoices";
             this.tabInvoices.UseVisualStyleBackColor = true;
+            // tabHelp
+            this.tabHelp.Location = new System.Drawing.Point(4, 24);
+            this.tabHelp.Name = "tabHelp";
+            this.tabHelp.Size = new System.Drawing.Size(792, 422);
+            this.tabHelp.TabIndex = 6;
+            this.tabHelp.Text = "Help";
+            this.tabHelp.UseVisualStyleBackColor = true;
             // tabSettings
             this.tabSettings.Location = new System.Drawing.Point(4, 24);
             this.tabSettings.Name = "tabSettings";
@@ -1250,24 +1260,32 @@
             this.btnSaveGoogleDriveConfig.Name = "btnSaveGoogleDriveConfig";
             this.btnSaveGoogleDriveConfig.Location = new System.Drawing.Point(30, 255);
             this.btnSaveGoogleDriveConfig.Size = new System.Drawing.Size(190, 30);
+            this.btnSaveGoogleDriveConfig.Padding = new System.Windows.Forms.Padding(0);
+            this.btnSaveGoogleDriveConfig.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.btnSaveGoogleDriveConfig.UseVisualStyleBackColor = true;
 
             this.btnGenerateGoogleDriveRefreshToken.Text = "Generate Refresh Token";
             this.btnGenerateGoogleDriveRefreshToken.Name = "btnGenerateGoogleDriveRefreshToken";
             this.btnGenerateGoogleDriveRefreshToken.Location = new System.Drawing.Point(230, 255);
             this.btnGenerateGoogleDriveRefreshToken.Size = new System.Drawing.Size(160, 30);
+            this.btnGenerateGoogleDriveRefreshToken.Padding = new System.Windows.Forms.Padding(0);
+            this.btnGenerateGoogleDriveRefreshToken.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.btnGenerateGoogleDriveRefreshToken.UseVisualStyleBackColor = true;
 
             this.btnGoogleDriveHelp.Text = "Setup Help";
             this.btnGoogleDriveHelp.Name = "btnGoogleDriveHelp";
             this.btnGoogleDriveHelp.Location = new System.Drawing.Point(400, 255);
             this.btnGoogleDriveHelp.Size = new System.Drawing.Size(150, 30);
+            this.btnGoogleDriveHelp.Padding = new System.Windows.Forms.Padding(0);
+            this.btnGoogleDriveHelp.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.btnGoogleDriveHelp.UseVisualStyleBackColor = true;
 
             this.btnOpenGoogleCloudConsole.Text = "Open Console";
             this.btnOpenGoogleCloudConsole.Name = "btnOpenGoogleCloudConsole";
             this.btnOpenGoogleCloudConsole.Location = new System.Drawing.Point(560, 255);
             this.btnOpenGoogleCloudConsole.Size = new System.Drawing.Size(140, 30);
+            this.btnOpenGoogleCloudConsole.Padding = new System.Windows.Forms.Padding(0);
+            this.btnOpenGoogleCloudConsole.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.btnOpenGoogleCloudConsole.UseVisualStyleBackColor = true;
 
             this.tabGoogleDrive.Controls.Add(this.lblGoogleDriveClientId);

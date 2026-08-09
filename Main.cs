@@ -5,6 +5,7 @@
     using System.Drawing;
     using System.IO;
     using System.Linq;
+    using System.Reflection;
     using System.Text.Json;
     using System.Windows.Forms;
     using KabyliaTaste.Data;
@@ -175,6 +176,7 @@
             dgvInvoices.DataError += DgvInvoices_DataError;
 
             InitializeSettingsUi();
+            InitializeHelpUi();
         }
 
         private async void Main_FormClosing(object? sender, FormClosingEventArgs e)
@@ -2012,7 +2014,7 @@
             btnClearUnit = new Button
             {
                 Location = new Point(674, 85),
-                Size = new Size(60, 28),
+                Size = new Size(80, 28),
                 Text = "Clear"
             };
             btnClearUnit.Click += BtnClearUnit_Click;
@@ -2040,6 +2042,214 @@
             tabStore.Controls.Add(btnDeleteUnit);
             tabStore.Controls.Add(btnClearUnit);
             tabStore.Controls.Add(dgvProductUnits);
+        }
+
+        private void InitializeHelpUi()
+        {
+            var helpTabs = new TabControl
+            {
+                Dock = DockStyle.Fill,
+                Name = "tabControlHelp"
+            };
+
+            var tabDocumentation = new TabPage
+            {
+                Name = "tabDocumentation",
+                Text = AppLocalization.T("Documentation"),
+                UseVisualStyleBackColor = true,
+                Padding = new Padding(20)
+            };
+
+            var tabAboutUs = new TabPage
+            {
+                Name = "tabAboutUs",
+                Text = AppLocalization.T("About Us"),
+                UseVisualStyleBackColor = true,
+                Padding = new Padding(20)
+            };
+            tabAboutUs.AutoScroll = true;
+
+            var tabContact = new TabPage
+            {
+                Name = "tabContact",
+                Text = AppLocalization.T("Contact"),
+                UseVisualStyleBackColor = true,
+                Padding = new Padding(20)
+            };
+
+            var tabBugReporting = new TabPage
+            {
+                Name = "tabBugReporting",
+                Text = AppLocalization.T("Bug Reporting"),
+                UseVisualStyleBackColor = true,
+                Padding = new Padding(20)
+            };
+
+            var tabSoftwareVersion = new TabPage
+            {
+                Name = "tabSoftwareVersion",
+                Text = AppLocalization.T("Software Version"),
+                UseVisualStyleBackColor = true,
+                Padding = new Padding(20)
+            };
+
+            var openRepositoryButton = new Button
+            {
+                Text = AppLocalization.T("Open Documentation"),
+                Location = new Point(20, 95),
+                Size = new Size(180, 30)
+            };
+            openRepositoryButton.Click += (_, _) => OpenUrl("https://github.com/Abderazak-Amiar/amiar-store-manager-doc");
+
+            var contactRepositoryButton = new Button
+            {
+                Text = AppLocalization.T("Email Us"),
+                Location = new Point(20, 125),
+                Size = new Size(150, 30)
+            };
+            contactRepositoryButton.Click += (_, _) => OpenUrl("mailto:amiar.software@gmail.com");
+
+            var contactEmailLabel = new LinkLabel
+            {
+                AutoSize = true,
+                Location = new Point(20, 55),
+                Text = "amiar.software@gmail.com",
+                LinkBehavior = LinkBehavior.HoverUnderline
+            };
+            contactEmailLabel.Click += (_, _) => CopyToClipboard("amiar.software@gmail.com", "Email address copied to clipboard.");
+
+            var reportIssueButton = new Button
+            {
+                Text = AppLocalization.T("Report an issue"),
+                Location = new Point(20, 95),
+                Size = new Size(150, 30)
+            };
+            reportIssueButton.Click += (_, _) => OpenUrl("https://github.com/Abderazak-Amiar/amiar-store-manager-bug-report/issues");
+
+            var documentationLabel = new Label
+            {
+                AutoSize = false,
+                Location = new Point(20, 20),
+                Size = new Size(700, 60),
+                Text = "Use the main tabs to manage products, sales, stats, expenses, invoices, and settings. " +
+                       "This Help area provides quick reference information for the application.",
+                MaximumSize = new Size(700, 0)
+            };
+
+            var aboutLabel = new Label
+            {
+                Name = "lblAboutUs",
+                AutoSize = true,
+                Location = new Point(20, 20),
+                Text = AppLocalization.T("Amiar Software builds practical business software focused on store operations, sales tracking, backups, and day-to-day management. Amiar Store Manager is designed to keep core workflows organized and easy to use."),
+                MaximumSize = new Size(700, 0)
+            };
+
+            var contactLabel = new Label
+            {
+                AutoSize = false,
+                Location = new Point(20, 20),
+                Size = new Size(700, 30),
+                Text = "Email us for product questions and support requests. Click the email below to copy it.",
+                MaximumSize = new Size(700, 0)
+            };
+
+            var bugLabel = new Label
+            {
+                AutoSize = false,
+                Location = new Point(20, 20),
+                Size = new Size(700, 60),
+                Text = "If you find a bug, open the issue tracker and include the steps to reproduce it, " +
+                       "expected behavior, and screenshots if available.",
+                MaximumSize = new Size(700, 0)
+            };
+
+            var versionLabel = new Label
+            {
+                AutoSize = true,
+                Location = new Point(20, 20),
+                Text = AppLocalization.T("App Version:")
+            };
+
+            var versionValueLabel = new Label
+            {
+                AutoSize = true,
+                Location = new Point(20, 50),
+                Text = GetAppVersionDisplay()
+            };
+
+            var runtimeLabel = new Label
+            {
+                AutoSize = true,
+                Location = new Point(20, 85),
+                Text = AppLocalization.T("Runtime Version:") + $" {Environment.Version}"
+            };
+
+            tabDocumentation.Controls.Add(documentationLabel);
+            tabDocumentation.Controls.Add(openRepositoryButton);
+            tabAboutUs.Controls.Add(aboutLabel);
+            tabContact.Controls.Add(contactLabel);
+            tabContact.Controls.Add(contactEmailLabel);
+            tabContact.Controls.Add(contactRepositoryButton);
+            tabBugReporting.Controls.Add(bugLabel);
+            tabBugReporting.Controls.Add(reportIssueButton);
+            tabSoftwareVersion.Controls.Add(versionLabel);
+            tabSoftwareVersion.Controls.Add(versionValueLabel);
+            tabSoftwareVersion.Controls.Add(runtimeLabel);
+
+            helpTabs.TabPages.AddRange(new[]
+            {
+                tabDocumentation,
+                tabAboutUs,
+                tabContact,
+                tabBugReporting,
+                tabSoftwareVersion
+            });
+
+            tabHelp.Controls.Add(helpTabs);
+        }
+
+        private static void OpenUrl(string url)
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                };
+
+                System.Diagnostics.Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open link: {ex.Message}", "Help", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private static string GetAppVersionDisplay()
+        {
+            var version = Assembly.GetEntryAssembly()
+                ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion;
+
+            if (string.IsNullOrWhiteSpace(version))
+                version = Application.ProductVersion;
+
+            return version.Split('+', 2)[0];
+        }
+
+        private static void CopyToClipboard(string text, string message)
+        {
+            try
+            {
+                Clipboard.SetText(text);
+                MessageBox.Show(message, "Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to copy text: {ex.Message}", "Help", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void LoadStorePreferences()
@@ -2117,6 +2327,7 @@
             if (tabControlMain.TabPages.Contains(tabStats)) tabStats.Text = AppLocalization.T("Stats");
             if (tabControlMain.TabPages.Contains(tabExpenses)) tabExpenses.Text = AppLocalization.T("Expenses");
             if (tabControlMain.TabPages.Contains(tabInvoices)) tabInvoices.Text = AppLocalization.T("Invoices");
+            if (tabControlMain.TabPages.Contains(tabHelp)) tabHelp.Text = AppLocalization.T("Help");
             if (tabControlMain.TabPages.Contains(tabSettings)) tabSettings.Text = AppLocalization.T("Settings");
 
             if (tabControlSettings.TabPages.Contains(tabProfile)) tabProfile.Text = AppLocalization.T("Profile");
@@ -2144,6 +2355,7 @@
             if (btnGenerateGoogleDriveRefreshToken != null) btnGenerateGoogleDriveRefreshToken.Text = AppLocalization.T("Generate Refresh Token");
             if (btnGoogleDriveHelp != null) btnGoogleDriveHelp.Text = AppLocalization.T("Setup Help");
             if (btnOpenGoogleCloudConsole != null) btnOpenGoogleCloudConsole.Text = AppLocalization.T("Open Console");
+            AdjustGoogleDriveButtonLayout();
 
             if (lblBackupInfo != null)
                 lblBackupInfo.Text = AppLocalization.T("Download creates a local copy of the SQLite database. Restore replaces the current local database file.");
@@ -2160,6 +2372,8 @@
             if (btnUpdateUnit != null) btnUpdateUnit.Text = AppLocalization.T("Update");
             if (btnDeleteUnit != null) btnDeleteUnit.Text = AppLocalization.T("Delete");
             if (btnClearUnit != null) btnClearUnit.Text = AppLocalization.T("Clear");
+
+            ApplyLocalizedHelpTexts();
 
             lblName.Text = AppLocalization.T("Name");
             lblBuyPrice.Text = AppLocalization.T("Buy Price");
@@ -2230,6 +2444,104 @@
             if (btnLogout != null) btnLogout.Text = AppLocalization.T("Logout");
 
             RefreshLocalizedGridHeaders();
+        }
+
+        private void AdjustGoogleDriveButtonLayout()
+        {
+            if (btnSaveGoogleDriveConfig == null || btnGenerateGoogleDriveRefreshToken == null ||
+                btnGoogleDriveHelp == null || btnOpenGoogleCloudConsole == null)
+            {
+                return;
+            }
+
+            var buttons = new[]
+            {
+                btnSaveGoogleDriveConfig,
+                btnGenerateGoogleDriveRefreshToken,
+                btnGoogleDriveHelp,
+                btnOpenGoogleCloudConsole
+            };
+
+            var left = 30;
+            const int top = 255;
+            const int gap = 10;
+
+            foreach (var button in buttons)
+            {
+                var textSize = TextRenderer.MeasureText(
+                    button.Text ?? string.Empty,
+                    button.Font,
+                    new Size(int.MaxValue, int.MaxValue),
+                    TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+
+                var width = Math.Max(button.Width, textSize.Width + 24);
+                button.Location = new Point(left, top);
+                button.Size = new Size(width, button.Height);
+                button.TextAlign = ContentAlignment.MiddleCenter;
+
+                left += width + gap;
+            }
+        }
+
+        private void ApplyLocalizedHelpTexts()
+        {
+            if (tabHelp == null)
+                return;
+
+            var helpTabs = tabHelp.Controls.Find("tabControlHelp", true).OfType<TabControl>().FirstOrDefault();
+            if (helpTabs == null)
+                return;
+
+            tabHelp.Text = AppLocalization.T("Help");
+
+            var tabDocumentation = helpTabs.TabPages["tabDocumentation"];
+            var tabAboutUs = helpTabs.TabPages["tabAboutUs"];
+            var tabContact = helpTabs.TabPages["tabContact"];
+            var tabBugReporting = helpTabs.TabPages["tabBugReporting"];
+            var tabSoftwareVersion = helpTabs.TabPages["tabSoftwareVersion"];
+
+            if (tabDocumentation != null) tabDocumentation.Text = AppLocalization.T("Documentation");
+            if (tabAboutUs != null) tabAboutUs.Text = AppLocalization.T("About Us");
+            if (tabContact != null) tabContact.Text = AppLocalization.T("Contact");
+            if (tabBugReporting != null) tabBugReporting.Text = AppLocalization.T("Bug Reporting");
+            if (tabSoftwareVersion != null) tabSoftwareVersion.Text = AppLocalization.T("Software Version");
+
+            var openDocumentationButton = tabDocumentation?.Controls.Find("btnOpenDocumentation", true).OfType<Button>().FirstOrDefault();
+            if (openDocumentationButton != null) openDocumentationButton.Text = AppLocalization.T("Open Documentation");
+
+            var emailButton = tabContact?.Controls.Find("btnEmailUs", true).OfType<Button>().FirstOrDefault();
+            if (emailButton != null) emailButton.Text = AppLocalization.T("Email Us");
+
+            var emailLabel = tabContact?.Controls.Find("lblSupportEmail", true).OfType<LinkLabel>().FirstOrDefault();
+            if (emailLabel != null) emailLabel.Text = "amiar.software@gmail.com";
+
+            var documentationLabel = tabDocumentation?.Controls.Find("lblHelpDocumentation", true).OfType<Label>().FirstOrDefault();
+            if (documentationLabel != null)
+                documentationLabel.Text = AppLocalization.T("Use the main tabs to manage products, sales, stats, expenses, invoices, and settings. This Help area provides quick reference information for the application.");
+
+            var aboutLabel = tabAboutUs?.Controls.Find("lblAboutUs", true).OfType<Label>().FirstOrDefault();
+            if (aboutLabel != null)
+            {
+                aboutLabel.AutoSize = true;
+                aboutLabel.MaximumSize = new Size(700, 0);
+                aboutLabel.Text = AppLocalization.T("Amiar Software builds practical business software focused on store operations, sales tracking, backups, and day-to-day management. Amiar Store Manager is designed to keep core workflows organized and easy to use.");
+            }
+
+            var contactLabel = tabContact?.Controls.Find("lblHelpContact", true).OfType<Label>().FirstOrDefault();
+            if (contactLabel != null)
+                contactLabel.Text = AppLocalization.T("Email us for product questions and support requests. Click the email below to copy it.");
+
+            var bugLabel = tabBugReporting?.Controls.Find("lblBugReporting", true).OfType<Label>().FirstOrDefault();
+            if (bugLabel != null)
+                bugLabel.Text = AppLocalization.T("If you find a bug, open the issue tracker and include the steps to reproduce it, expected behavior, and screenshots if available.");
+
+            var versionLabel = tabSoftwareVersion?.Controls.Find("lblApplicationVersion", true).OfType<Label>().FirstOrDefault();
+            if (versionLabel != null)
+                versionLabel.Text = AppLocalization.T("App Version:");
+
+            var runtimeLabel = tabSoftwareVersion?.Controls.Find("lblRuntimeVersion", true).OfType<Label>().FirstOrDefault();
+            if (runtimeLabel != null)
+                runtimeLabel.Text = AppLocalization.T("Runtime Version:") + $" {Environment.Version}";
         }
 
         private void RefreshLocalizedGridHeaders()
