@@ -346,7 +346,7 @@
         if (dgvProducts.Rows.Count > 0)
         {
             dgvProducts.ClearSelection();
-            dgvProducts.CurrentCell = dgvProducts.Rows[0].Cells[0];
+            SelectFirstVisibleCell(dgvProducts);
             dgvProducts.Rows[0].Selected = true;
             DgvProducts_SelectionChanged(null, EventArgs.Empty);
         }
@@ -420,7 +420,7 @@
                 return;
             }
 
-            var ok = MessageBox.Show(AppLocalization.T("Are you sure you want to delete the selected product?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Are you sure you want to delete the selected product?"), AppLocalization.T("Confirm"));
             if (ok != DialogResult.Yes) return;
 
             using var db = new AppDbContext();
@@ -759,7 +759,7 @@
         if (dgvSales.Rows.Count > 0)
         {
             dgvSales.ClearSelection();
-            dgvSales.CurrentCell = dgvSales.Rows[0].Cells[0];
+            SelectFirstVisibleCell(dgvSales);
             dgvSales.Rows[0].Selected = true;
             DgvSales_SelectionChanged(null, EventArgs.Empty);
         }
@@ -806,6 +806,87 @@
             if (col.Name != "Select")
                 col.ReadOnly = true;
         }
+    }
+
+    private static void SelectFirstVisibleCell(DataGridView grid)
+    {
+        if (grid.Rows.Count == 0)
+            return;
+
+        var firstVisibleCell = grid.Rows[0].Cells.Cast<DataGridViewCell>().FirstOrDefault(c => c.Visible);
+        if (firstVisibleCell != null)
+            grid.CurrentCell = firstVisibleCell;
+    }
+
+    private static DialogResult ShowEnglishYesNoConfirmation(string message, string title)
+    {
+        const int contentWidth = 340;
+        const int margin = 12;
+        const int iconSize = 32;
+        const int buttonWidth = 80;
+        const int buttonHeight = 28;
+        const int buttonGap = 8;
+
+        var textSize = TextRenderer.MeasureText(
+            message,
+            SystemFonts.MessageBoxFont,
+            new Size(contentWidth, 0),
+            TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
+
+        using var form = new Form
+        {
+            Text = title,
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            StartPosition = FormStartPosition.CenterParent,
+            MinimizeBox = false,
+            MaximizeBox = false,
+            ShowInTaskbar = false,
+            ClientSize = new Size(margin * 2 + iconSize + 10 + contentWidth, margin * 2 + Math.Max(iconSize, textSize.Height) + 20 + buttonHeight),
+            TopMost = true,
+            Font = SystemFonts.MessageBoxFont
+        };
+
+        var iconBox = new PictureBox
+        {
+            Image = SystemIcons.Question.ToBitmap(),
+            SizeMode = PictureBoxSizeMode.AutoSize,
+            Location = new Point(margin, margin)
+        };
+
+        var label = new Label
+        {
+            AutoSize = false,
+            Location = new Point(margin + iconSize + 10, margin),
+            Size = new Size(contentWidth, Math.Max(iconSize, textSize.Height)),
+            Text = message
+        };
+
+        var btnNo = new Button
+        {
+            Text = AppLocalization.T("No"),
+            DialogResult = DialogResult.No,
+            Size = new Size(buttonWidth, buttonHeight)
+        };
+
+        var btnYes = new Button
+        {
+            Text = AppLocalization.T("Yes"),
+            DialogResult = DialogResult.Yes,
+            Size = new Size(buttonWidth, buttonHeight)
+        };
+
+        var buttonTop = form.ClientSize.Height - margin - buttonHeight;
+        btnNo.Location = new Point(form.ClientSize.Width - margin - buttonWidth, buttonTop);
+        btnYes.Location = new Point(btnNo.Left - buttonGap - buttonWidth, buttonTop);
+
+        form.Controls.Add(iconBox);
+        form.Controls.Add(label);
+        form.Controls.Add(btnYes);
+        form.Controls.Add(btnNo);
+        form.AcceptButton = btnYes;
+        form.CancelButton = btnNo;
+
+        return form.ShowDialog();
     }
 
     private void BtnPrintInvoice_Click(object? sender, EventArgs e)
@@ -1053,7 +1134,7 @@
             return;
         }
 
-            var ok = MessageBox.Show(AppLocalization.T("Delete this sale? The stock will be restored."), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Delete this sale? The stock will be restored."), AppLocalization.T("Confirm"));
         if (ok != DialogResult.Yes) return;
 
         using var db = new AppDbContext();
@@ -1500,7 +1581,7 @@
             MessageBox.Show(AppLocalization.T("Select an expense to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
-        var ok = MessageBox.Show(AppLocalization.T("Are you sure you want to delete the selected expense?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Are you sure you want to delete the selected expense?"), AppLocalization.T("Confirm"));
         if (ok != DialogResult.Yes) return;
         using var db = new AppDbContext();
         var expense = db.Expenses.Find(selectedExpenseId.Value);
@@ -1763,11 +1844,9 @@
             return;
         }
 
-        var confirm = MessageBox.Show(
+        var confirm = ShowEnglishYesNoConfirmation(
             AppLocalization.T("Are you sure you want to delete the selected invoice?"),
-            AppLocalization.T("Confirm"),
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
+            AppLocalization.T("Confirm"));
 
         if (confirm != DialogResult.Yes)
             return;
@@ -2970,7 +3049,7 @@
                 return;
             }
 
-            var ok = MessageBox.Show(AppLocalization.T("Delete this unit?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Delete this unit?"), AppLocalization.T("Confirm"));
             if (ok != DialogResult.Yes) return;
 
             _productUnits.RemoveAll(u => string.Equals(u, unitName, StringComparison.OrdinalIgnoreCase));
