@@ -251,7 +251,7 @@ namespace KabyliaTaste.Services
                 string.IsNullOrWhiteSpace(settings.GoogleDriveClientSecret) ||
                 string.IsNullOrWhiteSpace(settings.GoogleDriveRefreshToken))
             {
-                throw new InvalidOperationException("Google Drive settings are incomplete. Fill Client ID, Client Secret, and Refresh Token first.");
+                throw new InvalidOperationException("Les paramètres Google Drive sont incomplets. Renseignez d'abord l'ID client, le secret client et le jeton d'actualisation.");
             }
         }
 
@@ -260,7 +260,7 @@ namespace KabyliaTaste.Services
             if (string.IsNullOrWhiteSpace(settings.GoogleDriveClientId) ||
                 string.IsNullOrWhiteSpace(settings.GoogleDriveClientSecret))
             {
-                throw new InvalidOperationException("Google Drive Client ID and Client Secret are required to generate a refresh token.");
+                throw new InvalidOperationException("L'ID client et le secret client Google Drive sont requis pour générer un jeton d'actualisation.");
             }
         }
 

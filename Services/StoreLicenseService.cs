@@ -46,12 +46,12 @@ namespace KabyliaTaste.Services
                 var license = await context.GetAppLicenseAsync();
 
                 if (!license.IsActive)
-                    return StoreLicenseCheckResult.Invalid("A valid Microsoft Store license was not found.");
+                    return StoreLicenseCheckResult.Invalid("Une licence Microsoft Store valide est introuvable.");
 
                 if (license.IsTrial)
                 {
                     if (license.ExpirationDate <= DateTimeOffset.Now)
-                        return StoreLicenseCheckResult.Invalid("Your 7-day trial has expired.");
+                        return StoreLicenseCheckResult.Invalid("Votre essai de 7 jours a expiré.");
 
                     return StoreLicenseCheckResult.Valid(true, license.ExpirationDate);
                 }
@@ -60,7 +60,7 @@ namespace KabyliaTaste.Services
             }
             catch (Exception ex)
             {
-                return StoreLicenseCheckResult.Invalid($"Unable to verify Microsoft Store license: {ex.Message}");
+                return StoreLicenseCheckResult.Invalid($"Impossible de vérifier la licence Microsoft Store : {ex.Message}");
             }
         }
 

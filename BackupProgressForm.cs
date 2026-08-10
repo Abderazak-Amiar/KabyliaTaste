@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing;
 using System.Windows.Forms;
+using KabyliaTaste.Services;
 
 namespace KabyliaTaste
 {
@@ -25,7 +26,7 @@ namespace KabyliaTaste
                 Height = 58,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Font = new Font(Font.FontFamily, 9.5f, FontStyle.Regular),
-                Text = "Preparing database backup...",
+                Text = AppLocalization.T("Preparing database backup..."),
                 Padding = new Padding(10, 8, 10, 8)
             };
 
@@ -69,7 +70,7 @@ namespace KabyliaTaste
 
             var value = Math.Clamp(percent, 0, 100);
             _progressBar.Value = value;
-            _statusLabel.Text = statusText ?? $"Database backup {value}%";
+            _statusLabel.Text = statusText ?? $"{AppLocalization.T("Database backup")} {value}%";
             Refresh();
         }
     }

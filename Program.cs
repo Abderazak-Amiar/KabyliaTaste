@@ -20,7 +20,7 @@ namespace KabyliaTaste
 
                 if (license.IsPackagedApp && !license.IsLicenseValid)
                 {
-                    var message = license.ErrorMessage ?? "A valid Microsoft Store license was not found.";
+                    var message = license.ErrorMessage ?? "Une licence Microsoft Store valide est introuvable.";
                     MessageBox.Show(message, "Amiar Store Manager", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -131,7 +131,7 @@ namespace KabyliaTaste
             }
             catch (Exception ex)
             {
-                var error = $"Amiar Store Manager failed to start:{Environment.NewLine}{Environment.NewLine}{ex}";
+                var error = $"Amiar Store Manager n'a pas pu démarrer :{Environment.NewLine}{Environment.NewLine}{ex}";
                 try
                 {
                     var logFolder = Path.Combine(

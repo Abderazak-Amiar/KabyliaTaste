@@ -139,11 +139,11 @@ namespace KabyliaTaste
             }
 
             using var progressToast = new BackupToastForm();
-            progressToast.ShowToast("Downloading database backup from Google Drive...");
+            progressToast.ShowToast("Téléchargement de la sauvegarde de la base de données depuis Google Drive...");
 
             var progress = new Progress<int>(percent =>
             {
-                progressToast.SetProgress(percent, $"Downloading database backup from Google Drive... {percent}%");
+                progressToast.SetProgress(percent, $"Téléchargement de la sauvegarde de la base de données depuis Google Drive... {percent}%");
             });
 
             try
