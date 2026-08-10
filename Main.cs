@@ -970,46 +970,112 @@
             return;
         }
 
-        using var db = new AppDbContext();
+        using (var db = new AppDbContext())
+        {
+            var selectedSales = db.Sales
+                .Include(s => s.Product)
+                .Where(s => selectedIds.Contains(s.Id))
+                .ToList();
+
+            var existingInvoiceId = selectedSales[0].InvoiceId;
+
+            if (existingInvoiceId.HasValue && selectedSales.All(s => s.InvoiceId == existingInvoiceId))
+            {
+                PrintExistingInvoice(db, existingInvoiceId.Value);
+                ClearSelectedSalesCheckboxes();
+                return;
+            }
+
+            if (selectedSales.Any(s => s.InvoiceId.HasValue))
+            {
+                MessageBox.Show(AppLocalization.T("Some selected sales already belong to an invoice. Please select sales from the same unbilled set."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            foreach (var s in selectedSales)
+                s.BuyerName = buyerName;
+
+            var invoice = new KabyliaTaste.Models.Invoice
+            {
+                BuyerName = buyerName,
+                Date = DateTime.Now,
+                TotalAmount = selectedSales.Sum(s => s.TotalPrice),
+                PaymentStatus = KabyliaTaste.Models.InvoicePaymentStatus.No,
+                AmountPaid = 0
+            };
+            db.Invoices.Add(invoice);
+            db.SaveChanges();
+
+            foreach (var s in selectedSales)
+                s.InvoiceId = invoice.Id;
+            db.SaveChanges();
+
+            var storeForInvoice = db.StoreSettings.FirstOrDefault();
+            new KabyliaTaste.Services.InvoicePrinter(
+                selectedSales,
+                buyerName,
+                storeForInvoice?.StoreName ?? "KabyliaTaste",
+                storeForInvoice?.LogoData,
+                invoice.Id,
+                invoice.Date,
+                invoice.TotalAmount,
+                invoice.AmountPaid,
+                invoice.PaymentStatus,
+                storeForInvoice?.CurrencyCode).PrintPreview();
+
+            ClearSelectedSalesCheckboxes();
+        }
+        if (tabControlMain.SelectedTab == tabInvoices)
+            LoadInvoices();
+    }
+
+    private void PrintExistingInvoice(AppDbContext db, int invoiceId)
+    {
+        var invoice = db.Invoices.FirstOrDefault(i => i.Id == invoiceId);
+        if (invoice == null)
+        {
+            MessageBox.Show(AppLocalization.T("The selected invoice could not be found."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         var sales = db.Sales
             .Include(s => s.Product)
-            .Where(s => selectedIds.Contains(s.Id))
+            .Where(s => s.InvoiceId == invoiceId)
             .ToList();
 
-        foreach (var s in sales)
-            s.BuyerName = buyerName;
-
-        var invoice = new KabyliaTaste.Models.Invoice
+        if (sales.Count == 0)
         {
-            BuyerName = buyerName,
-            Date = DateTime.Now,
-            TotalAmount = sales.Sum(s => s.TotalPrice),
-            PaymentStatus = KabyliaTaste.Models.InvoicePaymentStatus.No,
-            AmountPaid = 0
-        };
-        db.Invoices.Add(invoice);
-        db.SaveChanges();
+            MessageBox.Show(AppLocalization.T("No sales were found for the selected invoice."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
 
-        foreach (var s in sales)
-            s.InvoiceId = invoice.Id;
-        db.SaveChanges();
-
-        using var dbStore1 = new AppDbContext();
-        var storeForInvoice = dbStore1.StoreSettings.FirstOrDefault();
+        var store = db.StoreSettings.FirstOrDefault();
         new KabyliaTaste.Services.InvoicePrinter(
             sales,
-            buyerName,
-            storeForInvoice?.StoreName ?? "KabyliaTaste",
-            storeForInvoice?.LogoData,
+            invoice.BuyerName,
+            store?.StoreName ?? "KabyliaTaste",
+            store?.LogoData,
             invoice.Id,
             invoice.Date,
             invoice.TotalAmount,
             invoice.AmountPaid,
             invoice.PaymentStatus,
-            storeForInvoice?.CurrencyCode).PrintPreview();
+            store?.CurrencyCode).PrintPreview();
+    }
 
-        if (tabControlMain.SelectedTab == tabInvoices)
-            LoadInvoices();
+    private void ClearSelectedSalesCheckboxes()
+    {
+        if (!dgvSales.Columns.Contains("Select"))
+            return;
+
+        foreach (DataGridViewRow row in dgvSales.Rows)
+        {
+            if (row.Cells["Select"] is DataGridViewCheckBoxCell chk)
+                chk.Value = false;
+        }
+
+        txtBuyerName.Clear();
+        RefreshInvoiceCheckboxColumn();
     }
 
     private void CmbSaleProduct_SelectedIndexChanged(object? sender, EventArgs e)
