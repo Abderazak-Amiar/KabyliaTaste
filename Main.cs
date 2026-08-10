@@ -199,11 +199,11 @@
                 }
 
                 using var progressToast = new BackupToastForm();
-                progressToast.ShowToast("Preparing database backup...");
+                progressToast.ShowToast(AppLocalization.T("Preparing database backup..."));
 
                 var progress = new Progress<int>(percent =>
                 {
-                    progressToast.SetProgress(percent, $"Uploading database backup... {percent}%");
+                    progressToast.SetProgress(percent, $"{AppLocalization.T("Uploading database backup...")} {percent}%");
                 });
 
                 await Task.Run(() =>
@@ -212,7 +212,7 @@
                     service.UploadDatabaseBackup(store, GetDatabaseFilePath(), progress);
                 });
 
-                progressToast.SetProgress(100, "Upload complete.");
+                progressToast.SetProgress(100, AppLocalization.T("Upload complete."));
                 _closingAfterBackup = true;
                 Close();
             }
@@ -224,8 +224,8 @@
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Failed to upload database to Google Drive before closing: {ex.Message}",
-                    "Google Drive",
+                    $"{AppLocalization.T("Failed to upload database to Google Drive before closing:")} {ex.Message}",
+                    AppLocalization.T("Google Drive"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
@@ -357,14 +357,14 @@
             var name = txtName.Text?.Trim();
             if (string.IsNullOrEmpty(name))
             {
-                MessageBox.Show("Name is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("Name is required."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             using var db = new AppDbContext();
             if (db.Products.Any(p => p.Name.ToLower() == name.ToLower()))
             {
-                MessageBox.Show("A product with this name already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("A product with this name already exists."), AppLocalization.T("Duplicate"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             var product = new Product
@@ -387,7 +387,7 @@
         {
             if (!selectedProductId.HasValue)
             {
-                MessageBox.Show("Select a product to update.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Select a product to update."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -397,7 +397,7 @@
             var updatedName = txtName.Text?.Trim() ?? string.Empty;
             if (db.Products.Any(p => p.Name.ToLower() == updatedName.ToLower() && p.Id != selectedProductId.Value))
             {
-                MessageBox.Show("A product with this name already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("A product with this name already exists."), AppLocalization.T("Duplicate"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             product.Name = updatedName;
@@ -416,11 +416,11 @@
         {
             if (!selectedProductId.HasValue)
             {
-                MessageBox.Show("Select a product to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Select a product to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            var ok = MessageBox.Show("Are you sure you want to delete the selected product?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = MessageBox.Show(AppLocalization.T("Are you sure you want to delete the selected product?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (ok != DialogResult.Yes) return;
 
             using var db = new AppDbContext();
@@ -813,7 +813,7 @@
         var buyerName = txtBuyerName.Text.Trim();
         if (string.IsNullOrWhiteSpace(buyerName))
         {
-            MessageBox.Show("Enter a buyer name to enable invoice printing.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Enter a buyer name to enable invoice printing."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -832,7 +832,7 @@
 
         if (selectedIds.Count == 0)
         {
-            MessageBox.Show("Select at least one sale to include in the invoice.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Select at least one sale to include in the invoice."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -902,7 +902,7 @@
     {
         if (cmbSaleProduct.SelectedValue is not int productId)
         {
-            MessageBox.Show("Select a product.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Select a product."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -915,7 +915,7 @@
 
         if (qty > product.Quantity)
         {
-            MessageBox.Show($"Not enough stock. Available: {product.Quantity}.", "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show($"{AppLocalization.T("Not enough stock. Available:")} {product.Quantity}.", AppLocalization.T("Stock Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -938,7 +938,7 @@
         RefreshBuyerFilterDropdown();
         LoadSalesTab();
         LoadProducts();
-        MessageBox.Show("Sale recorded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(AppLocalization.T("Sale recorded successfully."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void DgvSales_SelectionChanged(object? sender, EventArgs e)
@@ -984,15 +984,15 @@
 
     private void BtnUpdateSale_Click(object? sender, EventArgs e)
     {
-        if (!selectedSaleId.HasValue)
-        {
-            MessageBox.Show("Select a sale to update.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!selectedSaleId.HasValue)
+            {
+                MessageBox.Show(AppLocalization.T("Select a sale to update."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
-        if (cmbSaleProduct.SelectedValue is not int productId)
-        {
-            MessageBox.Show("Select a product.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (cmbSaleProduct.SelectedValue is not int productId)
+            {
+                MessageBox.Show(AppLocalization.T("Select a product."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -1013,7 +1013,7 @@
             if (newProduct == null) return;
             if (newQty > newProduct.Quantity)
             {
-                MessageBox.Show($"Not enough stock. Available: {newProduct.Quantity}.", "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"{AppLocalization.T("Not enough stock. Available:")} {newProduct.Quantity}.", AppLocalization.T("Stock Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 // Re-deduct the restored stock
                 sale.Product.Quantity -= sale.Quantity;
                 return;
@@ -1025,7 +1025,7 @@
         {
             if (newQty > sale.Product.Quantity)
             {
-                MessageBox.Show($"Not enough stock. Available: {sale.Product.Quantity}.", "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"{AppLocalization.T("Not enough stock. Available:")} {sale.Product.Quantity}.", AppLocalization.T("Stock Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 // Re-deduct the restored stock
                 sale.Product.Quantity -= sale.Quantity;
                 return;
@@ -1042,18 +1042,18 @@
 
         LoadSalesTab();
         LoadProducts();
-        MessageBox.Show("Sale updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(AppLocalization.T("Sale updated successfully."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void BtnDeleteSale_Click(object? sender, EventArgs e)
     {
-        if (!selectedSaleId.HasValue)
-        {
-            MessageBox.Show("Select a sale to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!selectedSaleId.HasValue)
+            {
+                MessageBox.Show(AppLocalization.T("Select a sale to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
-        var ok = MessageBox.Show("Delete this sale? The stock will be restored.", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = MessageBox.Show(AppLocalization.T("Delete this sale? The stock will be restored."), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (ok != DialogResult.Yes) return;
 
         using var db = new AppDbContext();
@@ -1451,7 +1451,7 @@
         var description = txtExpenseDescription.Text.Trim();
         if (string.IsNullOrEmpty(description))
         {
-            MessageBox.Show("Description is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Description is required."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
         using var db = new AppDbContext();
@@ -1472,13 +1472,13 @@
     {
         if (!selectedExpenseId.HasValue)
         {
-            MessageBox.Show("Select an expense to update.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("Select an expense to update."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         var description = txtExpenseDescription.Text.Trim();
         if (string.IsNullOrEmpty(description))
         {
-            MessageBox.Show("Description is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Description is required."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
         using var db = new AppDbContext();
@@ -1497,10 +1497,10 @@
     {
         if (!selectedExpenseId.HasValue)
         {
-            MessageBox.Show("Select an expense to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("Select an expense to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
-        var ok = MessageBox.Show("Are you sure you want to delete the selected expense?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        var ok = MessageBox.Show(AppLocalization.T("Are you sure you want to delete the selected expense?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (ok != DialogResult.Yes) return;
         using var db = new AppDbContext();
         var expense = db.Expenses.Find(selectedExpenseId.Value);
@@ -1704,14 +1704,14 @@
     {
         if (dgvInvoices.CurrentRow == null)
         {
-            MessageBox.Show("Select an invoice to preview.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("Select an invoice to preview."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
         var idCell = dgvInvoices.CurrentRow.Cells["Id"];
         if (idCell?.Value == null || !int.TryParse(idCell.Value.ToString(), out var invoiceId))
         {
-            MessageBox.Show("Select a valid invoice to preview.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("Select a valid invoice to preview."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
@@ -1719,7 +1719,7 @@
         var invoice = db.Invoices.FirstOrDefault(i => i.Id == invoiceId);
         if (invoice == null)
         {
-            MessageBox.Show("The selected invoice could not be found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("The selected invoice could not be found."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
@@ -1730,7 +1730,7 @@
 
         if (sales.Count == 0)
         {
-            MessageBox.Show("No sales were found for the selected invoice.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("No sales were found for the selected invoice."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
@@ -1752,20 +1752,20 @@
     {
         if (dgvInvoices.CurrentRow == null)
         {
-            MessageBox.Show("Select an invoice to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("Select an invoice to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
         var idCell = dgvInvoices.CurrentRow.Cells["Id"];
         if (idCell?.Value == null || !int.TryParse(idCell.Value.ToString(), out var invoiceId))
         {
-            MessageBox.Show("Select a valid invoice to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("Select a valid invoice to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
         var confirm = MessageBox.Show(
-            "Are you sure you want to delete the selected invoice?",
-            "Confirm Delete",
+            AppLocalization.T("Are you sure you want to delete the selected invoice?"),
+            AppLocalization.T("Confirm"),
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question);
 
@@ -1776,7 +1776,7 @@
         var invoice = db.Invoices.FirstOrDefault(i => i.Id == invoiceId);
         if (invoice == null)
         {
-            MessageBox.Show("The selected invoice could not be found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("The selected invoice could not be found."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
@@ -1825,7 +1825,7 @@
 
         if (!decimal.TryParse(text, out var paid))
         {
-            MessageBox.Show("Amount paid must be a valid number.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Amount paid must be a valid number."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             e.Cancel = true;
             return;
         }
@@ -1836,7 +1836,7 @@
 
         if (paid < 0 || paid > total)
         {
-            MessageBox.Show("Amount paid must not exceed the invoice total.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Amount paid must not exceed the invoice total."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             e.Cancel = true;
         }
     }
@@ -1886,14 +1886,14 @@
 
             if (!string.IsNullOrWhiteSpace(paidText) && !decimal.TryParse(paidText, out paid))
             {
-                MessageBox.Show("Amount paid must be a valid number.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("Amount paid must be a valid number."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 ReloadInvoices();
                 return;
             }
 
             if (paid < 0 || paid > invoice.TotalAmount)
             {
-                MessageBox.Show("Amount paid must not exceed the invoice total.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("Amount paid must not exceed the invoice total."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 ReloadInvoices();
                 return;
             }
@@ -2095,11 +2095,12 @@
 
             var openRepositoryButton = new Button
             {
+                Name = "btnOpenDocumentation",
                 Text = AppLocalization.T("Open Documentation"),
                 Location = new Point(20, 95),
                 Size = new Size(180, 30)
             };
-            openRepositoryButton.Click += (_, _) => OpenUrl("https://github.com/Abderazak-Amiar/amiar-store-manager-doc");
+            openRepositoryButton.Click += (_, _) => OpenUrl(GetDocumentationUrl());
 
             var contactRepositoryButton = new Button
             {
@@ -2116,7 +2117,7 @@
                 Text = "amiar.software@gmail.com",
                 LinkBehavior = LinkBehavior.HoverUnderline
             };
-            contactEmailLabel.Click += (_, _) => CopyToClipboard("amiar.software@gmail.com", "Email address copied to clipboard.");
+            contactEmailLabel.Click += (_, _) => CopyToClipboard("amiar.software@gmail.com", "Adresse e-mail copiée dans le presse-papiers.");
 
             var reportIssueButton = new Button
             {
@@ -2223,8 +2224,15 @@
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open link: {ex.Message}", "Help", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Échec de l'ouverture du lien : {ex.Message}", "Aide", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private static string GetDocumentationUrl()
+        {
+            return AppLocalization.CurrentLanguageCode == "fr"
+                ? "https://github.com/Abderazak-Amiar/amiar-store-manager-doc/blob/master/README.fr.md"
+                : "https://github.com/Abderazak-Amiar/amiar-store-manager-doc";
         }
 
         private static string GetAppVersionDisplay()
@@ -2244,11 +2252,11 @@
             try
             {
                 Clipboard.SetText(text);
-                MessageBox.Show(message, "Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(message, "Aide", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to copy text: {ex.Message}", "Help", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Échec de la copie du texte : {ex.Message}", "Aide", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -2839,6 +2847,7 @@
 
             AppLocalization.SetLanguage(language.Code);
             ApplyLocalizedSettingsTexts();
+            UpdateGreeting();
         }
 
         private void BtnSaveLanguagePreference_Click(object? sender, EventArgs e)
@@ -2849,11 +2858,13 @@
             UpdateStoreSettings(store => store.LanguageCode = language.Code);
             AppLocalization.SetLanguage(language.Code);
             ApplyLocalizedSettingsTexts();
+            UpdateGreeting();
             LoadInvoicesTab();
             LoadProducts(_productFilter);
             LoadSalesTab();
             LoadStatsTab();
             LoadExpensesTab();
+            MessageBox.Show(AppLocalization.T("Language changed successfully."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void CmbCurrency_SelectedIndexChanged(object? sender, EventArgs e)
@@ -2881,13 +2892,13 @@
             var unitName = txtProductUnitName?.Text.Trim();
             if (string.IsNullOrWhiteSpace(unitName))
             {
-                MessageBox.Show("Unit name is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("Unit name is required."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (_productUnits.Any(u => string.Equals(u, unitName, StringComparison.OrdinalIgnoreCase)))
             {
-                MessageBox.Show("This unit already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("This unit already exists."), AppLocalization.T("Duplicate"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -2900,7 +2911,7 @@
         {
             if (dgvProductUnits?.CurrentRow == null)
             {
-                MessageBox.Show("Select a unit to update.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Select a unit to update."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -2909,14 +2920,14 @@
 
             if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName))
             {
-                MessageBox.Show("Unit name is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("Unit name is required."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (!string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase) &&
                 _productUnits.Any(u => string.Equals(u, newName, StringComparison.OrdinalIgnoreCase)))
             {
-                MessageBox.Show("This unit already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("This unit already exists."), AppLocalization.T("Duplicate"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -2943,7 +2954,7 @@
         {
             if (dgvProductUnits?.CurrentRow == null)
             {
-                MessageBox.Show("Select a unit to delete.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Select a unit to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -2955,11 +2966,11 @@
             var inUse = db.Products.Any(p => p.UnitName == unitName);
             if (inUse)
             {
-                MessageBox.Show("This unit is used by one or more products and cannot be deleted.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("This unit is used by one or more products and cannot be deleted."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            var ok = MessageBox.Show("Delete this unit?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = MessageBox.Show(AppLocalization.T("Delete this unit?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (ok != DialogResult.Yes) return;
 
             _productUnits.RemoveAll(u => string.Equals(u, unitName, StringComparison.OrdinalIgnoreCase));
@@ -2987,16 +2998,16 @@
         if (Session.CurrentUser == null) return;
 
         var newUsername = txtUsernameProfile.Text.Trim();
-        if (string.IsNullOrEmpty(newUsername))
-        {
-            MessageBox.Show("Username cannot be empty.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (string.IsNullOrEmpty(newUsername))
+            {
+                MessageBox.Show(AppLocalization.T("Username cannot be empty."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
         using var db = new Data.AppDbContext();
         if (db.Users.Any(u => u.Username == newUsername && u.Id != Session.CurrentUser.Id))
         {
-            MessageBox.Show("That username is already taken.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("That username is already taken."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -3008,7 +3019,7 @@
         Session.CurrentUser.Username = newUsername;
 
         UpdateGreeting();
-        MessageBox.Show("Username updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(AppLocalization.T("Username updated successfully."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void BtnLogout_Click(object? sender, EventArgs e)
@@ -3027,13 +3038,13 @@
 
         if (string.IsNullOrWhiteSpace(current) || string.IsNullOrWhiteSpace(newPass))
         {
-            MessageBox.Show("Please fill in all password fields.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Please fill in all password fields."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
         if (newPass != confirm)
         {
-            MessageBox.Show("New password and confirmation do not match.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("New password and confirmation do not match."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -3043,7 +3054,7 @@
 
         if (user.Password != current)
         {
-            MessageBox.Show("Current password is incorrect.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(AppLocalization.T("Current password is incorrect."), AppLocalization.T("Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
 
@@ -3054,7 +3065,7 @@
         txtCurrentPassword.Clear();
         txtNewPassword.Clear();
         txtConfirmPassword.Clear();
-        MessageBox.Show("Password changed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(AppLocalization.T("Password changed successfully."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void BtnSaveStoreName_Click(object? sender, EventArgs e)
@@ -3062,7 +3073,7 @@
         var name = txtStoreName.Text.Trim();
         if (string.IsNullOrEmpty(name))
         {
-            MessageBox.Show("Store name cannot be empty.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(AppLocalization.T("Store name cannot be empty."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -3079,14 +3090,14 @@
         }
         db.SaveChanges();
         this.Text = name;
-        MessageBox.Show("Store name saved.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(AppLocalization.T("Store name saved."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void BtnChangeLogo_Click(object? sender, EventArgs e)
     {
         using var dlg = new OpenFileDialog
         {
-            Title = "Select Logo Image",
+            Title = "Sélectionner une image de logo",
                 Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif",
                 RestoreDirectory = true
         };
@@ -3109,7 +3120,7 @@
 
         using var ms = new System.IO.MemoryStream(imageData);
         picStoreLogo.Image = System.Drawing.Image.FromStream(ms);
-        MessageBox.Show("Logo updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(AppLocalization.T("Logo updated."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
         private void BtnSaveGoogleDriveConfig_Click(object? sender, EventArgs e)
@@ -3128,7 +3139,7 @@
             store.GoogleDriveRefreshToken = txtGoogleDriveRefreshToken.Text.Trim();
 
             db.SaveChanges();
-            MessageBox.Show("Google Drive settings saved.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(AppLocalization.T("Google Drive settings saved."), AppLocalization.T("Success"), MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private async void BtnGenerateGoogleDriveRefreshToken_Click(object? sender, EventArgs e)
@@ -3162,26 +3173,26 @@
                 settings.GoogleDriveRefreshToken = refreshToken;
                 db.SaveChanges();
 
-                MessageBox.Show("Refresh token generated and saved.", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Refresh token generated and saved."), AppLocalization.T("Google Drive"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to generate refresh token: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Échec de génération du jeton d'actualisation : {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void BtnGoogleDriveHelp_Click(object? sender, EventArgs e)
         {
             MessageBox.Show(
-                "Google Drive setup:\n\n" +
-                "1. Open Google Cloud Console and create a project.\n" +
-                "2. Enable the Google Drive API.\n" +
-                "3. Create OAuth Client ID for a Desktop app.\n" +
-                "4. Copy Client ID and Client Secret into this tab.\n" +
-                "5. Click 'Generate Refresh Token' and sign in.\n" +
-                "6. Paste the Google Drive folder ID or folder name if you want backups in a specific folder.\n" +
-                "7. Save the refresh token, then use Upload / Download from Google Drive.",
-                "Google Drive Help",
+                "Configuration Google Drive :\n\n" +
+                "1. Ouvrez Google Cloud Console et créez un projet.\n" +
+                "2. Activez l'API Google Drive.\n" +
+                "3. Créez un ID client OAuth pour une application de bureau.\n" +
+                "4. Copiez l'ID client et le secret client dans cet onglet.\n" +
+                "5. Cliquez sur 'Générer le jeton d'actualisation' puis connectez-vous.\n" +
+                "6. Collez l'ID ou le nom du dossier Google Drive si vous souhaitez enregistrer les sauvegardes dans un dossier spécifique.\n" +
+                "7. Enregistrez le jeton d'actualisation, puis utilisez Téléverser / Télécharger depuis Google Drive.",
+                "Aide Google Drive",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
@@ -3200,7 +3211,7 @@
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open Google Cloud Console: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Échec de l'ouverture de Google Cloud Console : {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -3209,13 +3220,13 @@
             var databasePath = GetDatabaseFilePath();
             if (!File.Exists(databasePath))
             {
-                MessageBox.Show("The database file was not found.", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(AppLocalization.T("The database file was not found."), AppLocalization.T("Backup"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             using var dlg = new SaveFileDialog
             {
-                Title = "Save Database Backup",
+                Title = AppLocalization.T("Save Database Backup"),
                 Filter = "SQLite Database|*.db",
                 FileName = $"KabyliaTaste-{DateTime.Now:yyyyMMdd-HHmmss}.db",
                 InitialDirectory = GetAppDataFolder(),
@@ -3229,11 +3240,11 @@
             {
                 File.Copy(databasePath, dlg.FileName, true);
                 CopyRelatedSqliteFiles(databasePath, dlg.FileName);
-                MessageBox.Show("Database backup created successfully.", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Database backup created successfully."), AppLocalization.T("Backup"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to create backup: {ex.Message}", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{AppLocalization.T("Failed to create backup:")} {ex.Message}", AppLocalization.T("Backup"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -3241,7 +3252,7 @@
         {
             using var dlg = new OpenFileDialog
             {
-                Title = "Select Database Backup",
+                Title = AppLocalization.T("Select Database Backup"),
                 Filter = "SQLite Database|*.db",
                 InitialDirectory = GetAppDataFolder(),
                 RestoreDirectory = true,
@@ -3252,8 +3263,8 @@
                 return;
 
             var confirm = MessageBox.Show(
-                "This will replace the current local database file. Continue?",
-                "Restore Backup",
+                AppLocalization.T("This will replace the current local database file. Continue?"),
+                AppLocalization.T("Restore Backup"),
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
 
@@ -3273,12 +3284,12 @@
                 File.Copy(dlg.FileName, databasePath, true);
                 CopyRelatedSqliteFiles(dlg.FileName, databasePath);
 
-                MessageBox.Show("Database restored. The application will restart.", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Database restored. The application will restart."), AppLocalization.T("Backup"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Application.Restart();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to restore backup: {ex.Message}", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{AppLocalization.T("Failed to restore backup:")} {ex.Message}", AppLocalization.T("Backup"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -3293,11 +3304,11 @@
                     service.UploadDatabaseBackup(store, GetDatabaseFilePath());
                 });
 
-                MessageBox.Show("Database uploaded to Google Drive successfully.", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(AppLocalization.T("Database uploaded to Google Drive successfully."), AppLocalization.T("Google Drive"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to upload database to Google Drive: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{AppLocalization.T("Failed to upload database to Google Drive:")} {ex.Message}", AppLocalization.T("Google Drive"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -3306,11 +3317,11 @@
             try
             {
                 using var progressToast = new BackupToastForm();
-                progressToast.ShowToast("Downloading database backup from Google Drive...");
+                progressToast.ShowToast(AppLocalization.T("Downloading database backup from Google Drive..."));
 
                 var progress = new Progress<int>(percent =>
                 {
-                    progressToast.SetProgress(percent, $"Downloading database backup from Google Drive... {percent}%");
+                    progressToast.SetProgress(percent, $"{AppLocalization.T("Downloading database backup from Google Drive...")} {percent}%");
                 });
 
                 await Task.Run(() =>
@@ -3320,13 +3331,13 @@
                     service.DownloadDatabaseBackup(store, GetDatabaseFilePath(), progress);
                 });
 
-                progressToast.SetProgress(100, "Database downloaded successfully.");
-                MessageBox.Show("Database downloaded from Google Drive successfully. The application will restart.", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                progressToast.SetProgress(100, AppLocalization.T("Download complete."));
+                MessageBox.Show(AppLocalization.T("Database downloaded from Google Drive successfully. The application will restart."), AppLocalization.T("Google Drive"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Application.Restart();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to download database from Google Drive: {ex.Message}", "Google Drive", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"{AppLocalization.T("Failed to download database from Google Drive:")} {ex.Message}", AppLocalization.T("Google Drive"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
