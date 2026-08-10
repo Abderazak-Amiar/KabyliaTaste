@@ -234,6 +234,10 @@ namespace KabyliaTaste.Services
                 ? CultureInfo.GetCultureInfo("fr-FR")
                 : CultureInfo.GetCultureInfo("en-US");
 
+            culture = (CultureInfo)culture.Clone();
+            culture.NumberFormat.NumberDecimalSeparator = ".";
+            culture.NumberFormat.NumberGroupSeparator = string.Empty;
+
             CultureInfo.CurrentCulture = culture;
             CultureInfo.CurrentUICulture = culture;
             CultureInfo.DefaultThreadCurrentCulture = culture;

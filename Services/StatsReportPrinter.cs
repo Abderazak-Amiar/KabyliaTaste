@@ -12,7 +12,7 @@ namespace KabyliaTaste.Services
         public string Product   { get; set; } = "";
         public DateTime Date    { get; set; }
         public string Hour      { get; set; } = "";
-        public int    UnitsSold { get; set; }
+        public decimal UnitsSold { get; set; }
         public decimal Revenue  { get; set; }
         public decimal Cost     { get; set; }
         public decimal Profit   { get; set; }
@@ -162,7 +162,7 @@ namespace KabyliaTaste.Services
                 g.DrawString(row.Date.ToString("yyyy-MM-dd"), bodyFont, Brushes.Black, colDate, y + 2);
                 g.DrawString(row.Hour,                       bodyFont, Brushes.Black, colHour, y + 2);
                 g.DrawString(row.Product,                       bodyFont, Brushes.Black,   colProduct,  y + 2);
-                g.DrawString(row.UnitsSold.ToString(),          bodyFont, Brushes.Black,   colUnits,    y + 2);
+                g.DrawString(CurrencyFormatting.FormatQuantity(row.UnitsSold), bodyFont, Brushes.Black,   colUnits,    y + 2);
                 g.DrawString(CurrencyFormatting.FormatAmount(row.Revenue, _currencyCode), bodyFont, Brushes.Black,   colRevenue,  y + 2);
                 g.DrawString(CurrencyFormatting.FormatAmount(row.Cost, _currencyCode),    bodyFont, Brushes.Black,   colCost,     y + 2);
                 g.DrawString(CurrencyFormatting.FormatAmount(row.Profit, _currencyCode),  bodyFont, profitBrush,     colProfit,   y + 2);
@@ -185,7 +185,7 @@ namespace KabyliaTaste.Services
             var totalProfitBrush = totalProfit >= 0 ? Brushes.DarkGreen : Brushes.Red;
 
             g.DrawString("TOTAL",                       headerFont, Brushes.Black,       colProduct,  y);
-            g.DrawString(totalUnits.ToString(),         headerFont, Brushes.Black,       colUnits,    y);
+            g.DrawString(CurrencyFormatting.FormatQuantity(totalUnits), headerFont, Brushes.Black,       colUnits,    y);
             g.DrawString(CurrencyFormatting.FormatAmount(totalRevenue, _currencyCode), headerFont, Brushes.Black,       colRevenue,  y);
             g.DrawString(CurrencyFormatting.FormatAmount(totalCost, _currencyCode),    headerFont, Brushes.Black,       colCost,     y);
             g.DrawString(CurrencyFormatting.FormatAmount(totalProfit, _currencyCode),  headerFont, totalProfitBrush,    colProfit,   y);

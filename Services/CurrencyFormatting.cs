@@ -32,8 +32,13 @@ namespace KabyliaTaste.Services
         {
             var symbol = GetCurrencySymbol(currencyCode);
             return string.IsNullOrWhiteSpace(symbol)
-                ? amount.ToString("F2")
-                : $"{amount:F2} {symbol}";
+                ? amount.ToString("F2", CultureInfo.InvariantCulture)
+                : $"{amount.ToString("F2", CultureInfo.InvariantCulture)} {symbol}";
+        }
+
+        public static string FormatQuantity(decimal quantity)
+        {
+            return quantity.ToString("0.#", CultureInfo.InvariantCulture);
         }
     }
 }

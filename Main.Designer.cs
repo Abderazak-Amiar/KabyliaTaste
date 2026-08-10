@@ -27,7 +27,7 @@
     private System.Windows.Forms.Label lblTotalProfit;
     private System.Windows.Forms.Label lblTotalProfitValue;
     private System.Windows.Forms.Label lblQuantity;
-    private System.Windows.Forms.NumericUpDown numQuantity;
+     private KabyliaTaste.Controls.QuantityNumericUpDown numQuantity;
     private System.Windows.Forms.Label lblUnit;
     private System.Windows.Forms.ComboBox cmbUnit;
     private System.Windows.Forms.Button btnAdd;
@@ -47,7 +47,7 @@
     private System.Windows.Forms.Label lblSaleProduct;
     private System.Windows.Forms.ComboBox cmbSaleProduct;
     private System.Windows.Forms.Label lblSaleQuantity;
-    private System.Windows.Forms.NumericUpDown numSaleQuantity;
+     private KabyliaTaste.Controls.QuantityNumericUpDown numSaleQuantity;
     private System.Windows.Forms.Label lblSaleUnitPrice;
     private System.Windows.Forms.NumericUpDown numSaleUnitPrice;
     private System.Windows.Forms.Label lblSaleTotal;
@@ -201,7 +201,7 @@
             this.lblTotalProfit = new System.Windows.Forms.Label();
             this.lblTotalProfitValue = new System.Windows.Forms.Label();
             this.lblQuantity = new System.Windows.Forms.Label();
-            this.numQuantity = new System.Windows.Forms.NumericUpDown();
+            this.numQuantity = new KabyliaTaste.Controls.QuantityNumericUpDown();
             this.lblUnit = new System.Windows.Forms.Label();
             this.cmbUnit = new System.Windows.Forms.ComboBox();
             this.btnAdd = new System.Windows.Forms.Button();
@@ -227,7 +227,7 @@
             this.lblSaleProduct = new System.Windows.Forms.Label();
             this.cmbSaleProduct = new System.Windows.Forms.ComboBox();
             this.lblSaleQuantity = new System.Windows.Forms.Label();
-            this.numSaleQuantity = new System.Windows.Forms.NumericUpDown();
+            this.numSaleQuantity = new KabyliaTaste.Controls.QuantityNumericUpDown();
             this.lblSaleUnitPrice = new System.Windows.Forms.Label();
             this.numSaleUnitPrice = new System.Windows.Forms.NumericUpDown();
             this.lblSaleTotal = new System.Windows.Forms.Label();

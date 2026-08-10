@@ -61,7 +61,7 @@
             public string Product { get; set; } = string.Empty;
             public DateTime Date { get; set; }
             public string Hour { get; set; } = string.Empty;
-            public int UnitsSold { get; set; }
+            public decimal UnitsSold { get; set; }
             public decimal Revenue { get; set; }
             public decimal Cost { get; set; }
             public decimal Profit { get; set; }
@@ -103,6 +103,7 @@
         public Main()
         {
             InitializeComponent();
+            ConfigureQuantityInputs();
 
             // wire events
             Load += Main_Load;
@@ -114,6 +115,8 @@
             dgvProducts.SelectionChanged += DgvProducts_SelectionChanged;
             dgvProducts.CellClick += DgvProducts_CellClick;
             dgvProducts.CellFormatting += DgvProducts_CellFormatting;
+            dgvSales.CellFormatting += DgvSales_CellFormatting;
+            dgvStats.CellFormatting += DgvStats_CellFormatting;
             chkShowBuyPrice.CheckedChanged += ChkShowBuyPrice_CheckedChanged;
             txtSearch.TextChanged += TxtSearch_TextChanged;
             tabControlMain.SelectedIndexChanged += TabControlMain_SelectedIndexChanged;
@@ -177,6 +180,21 @@
 
             InitializeSettingsUi();
             InitializeHelpUi();
+        }
+
+        private void ConfigureQuantityInputs()
+        {
+            ConfigureQuantityInput(numQuantity);
+            ConfigureQuantityInput(numSaleQuantity);
+        }
+
+        private static void ConfigureQuantityInput(KabyliaTaste.Controls.QuantityNumericUpDown input)
+        {
+            input.DecimalPlaces = 1;
+            input.Increment = 0.1M;
+            input.Minimum = 0;
+            input.Maximum = 1000000;
+            input.ThousandsSeparator = false;
         }
 
         private async void Main_FormClosing(object? sender, FormClosingEventArgs e)
@@ -346,7 +364,7 @@
         if (dgvProducts.Rows.Count > 0)
         {
             dgvProducts.ClearSelection();
-            dgvProducts.CurrentCell = dgvProducts.Rows[0].Cells[0];
+            SelectFirstVisibleCell(dgvProducts);
             dgvProducts.Rows[0].Selected = true;
             DgvProducts_SelectionChanged(null, EventArgs.Empty);
         }
@@ -373,7 +391,7 @@
                 Name = name,
                 BuyPrice = numBuyPrice.Value,
                 SellPrice = numSellPrice.Value,
-                Quantity = (int)numQuantity.Value,
+                Quantity = numQuantity.Value,
                 Unit = ProductUnit.Piece,
                 UnitName = GetSelectedProductUnit()
             };
@@ -403,7 +421,7 @@
             product.Name = updatedName;
             product.BuyPrice = numBuyPrice.Value;
             product.SellPrice = numSellPrice.Value;
-            product.Quantity = (int)numQuantity.Value;
+            product.Quantity = numQuantity.Value;
             product.UnitName = GetSelectedProductUnit();
             product.Unit = ProductUnit.Piece;
             product.Date = DateTime.Now;
@@ -420,7 +438,7 @@
                 return;
             }
 
-            var ok = MessageBox.Show(AppLocalization.T("Are you sure you want to delete the selected product?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Are you sure you want to delete the selected product?"), AppLocalization.T("Confirm"));
             if (ok != DialogResult.Yes) return;
 
             using var db = new AppDbContext();
@@ -558,7 +576,7 @@
         var quantityColumn = dgvProducts.Columns["Quantity"];
         if (quantityColumn == null || quantityColumn.Index != e.ColumnIndex) return;
 
-        if (e.Value is int qty && e.CellStyle != null)
+        if (e.Value is decimal qty && e.CellStyle != null)
         {
             e.CellStyle.BackColor = qty < 5
                 ? Color.LightCoral
@@ -566,11 +584,46 @@
                     ? Color.Orange
                     : Color.LightGreen;
 
-            if (qty == 0)
+            if (qty == 0m)
             {
                 e.Value = "0  ⚠ Out of stock";
                 e.FormattingApplied = true;
             }
+            else
+            {
+                e.Value = CurrencyFormatting.FormatQuantity(qty);
+                e.FormattingApplied = true;
+            }
+        }
+    }
+
+    private void DgvSales_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (dgvSales?.Columns == null || dgvSales.Columns.Count == 0 || e.RowIndex < 0) return;
+        if (!dgvSales.Columns.Contains("Quantity")) return;
+
+        var quantityColumn = dgvSales.Columns["Quantity"];
+        if (quantityColumn == null || quantityColumn.Index != e.ColumnIndex) return;
+
+        if (e.Value is decimal qty && e.CellStyle != null)
+        {
+            e.Value = CurrencyFormatting.FormatQuantity(qty);
+            e.FormattingApplied = true;
+        }
+    }
+
+    private void DgvStats_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (dgvStats?.Columns == null || dgvStats.Columns.Count == 0 || e.RowIndex < 0) return;
+        if (!dgvStats.Columns.Contains("UnitsSold")) return;
+
+        var unitsColumn = dgvStats.Columns["UnitsSold"];
+        if (unitsColumn == null || unitsColumn.Index != e.ColumnIndex) return;
+
+        if (e.Value is decimal qty && e.CellStyle != null)
+        {
+            e.Value = CurrencyFormatting.FormatQuantity(qty);
+            e.FormattingApplied = true;
         }
     }
 
@@ -614,7 +667,7 @@
         if (decimal.TryParse(sellPriceVal?.ToString(), out var sellPrice)) numSellPrice.Value = sellPrice;
         else numSellPrice.Value = 0;
 
-        if (int.TryParse(qtyVal?.ToString(), out var qty)) numQuantity.Value = qty;
+        if (decimal.TryParse(qtyVal?.ToString(), out var qty)) numQuantity.Value = qty;
         else numQuantity.Value = 0;
 
         if (unitVal is ProductUnit unit) cmbUnit.SelectedIndex = (int)unit;
@@ -759,7 +812,7 @@
         if (dgvSales.Rows.Count > 0)
         {
             dgvSales.ClearSelection();
-            dgvSales.CurrentCell = dgvSales.Rows[0].Cells[0];
+            SelectFirstVisibleCell(dgvSales);
             dgvSales.Rows[0].Selected = true;
             DgvSales_SelectionChanged(null, EventArgs.Empty);
         }
@@ -808,6 +861,87 @@
         }
     }
 
+    private static void SelectFirstVisibleCell(DataGridView grid)
+    {
+        if (grid.Rows.Count == 0)
+            return;
+
+        var firstVisibleCell = grid.Rows[0].Cells.Cast<DataGridViewCell>().FirstOrDefault(c => c.Visible);
+        if (firstVisibleCell != null)
+            grid.CurrentCell = firstVisibleCell;
+    }
+
+    private static DialogResult ShowEnglishYesNoConfirmation(string message, string title)
+    {
+        const int contentWidth = 340;
+        const int margin = 12;
+        const int iconSize = 32;
+        const int buttonWidth = 80;
+        const int buttonHeight = 28;
+        const int buttonGap = 8;
+
+        var textSize = TextRenderer.MeasureText(
+            message,
+            SystemFonts.MessageBoxFont,
+            new Size(contentWidth, 0),
+            TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
+
+        using var form = new Form
+        {
+            Text = title,
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            StartPosition = FormStartPosition.CenterParent,
+            MinimizeBox = false,
+            MaximizeBox = false,
+            ShowInTaskbar = false,
+            ClientSize = new Size(margin * 2 + iconSize + 10 + contentWidth, margin * 2 + Math.Max(iconSize, textSize.Height) + 20 + buttonHeight),
+            TopMost = true,
+            Font = SystemFonts.MessageBoxFont
+        };
+
+        var iconBox = new PictureBox
+        {
+            Image = SystemIcons.Question.ToBitmap(),
+            SizeMode = PictureBoxSizeMode.AutoSize,
+            Location = new Point(margin, margin)
+        };
+
+        var label = new Label
+        {
+            AutoSize = false,
+            Location = new Point(margin + iconSize + 10, margin),
+            Size = new Size(contentWidth, Math.Max(iconSize, textSize.Height)),
+            Text = message
+        };
+
+        var btnNo = new Button
+        {
+            Text = AppLocalization.T("No"),
+            DialogResult = DialogResult.No,
+            Size = new Size(buttonWidth, buttonHeight)
+        };
+
+        var btnYes = new Button
+        {
+            Text = AppLocalization.T("Yes"),
+            DialogResult = DialogResult.Yes,
+            Size = new Size(buttonWidth, buttonHeight)
+        };
+
+        var buttonTop = form.ClientSize.Height - margin - buttonHeight;
+        btnNo.Location = new Point(form.ClientSize.Width - margin - buttonWidth, buttonTop);
+        btnYes.Location = new Point(btnNo.Left - buttonGap - buttonWidth, buttonTop);
+
+        form.Controls.Add(iconBox);
+        form.Controls.Add(label);
+        form.Controls.Add(btnYes);
+        form.Controls.Add(btnNo);
+        form.AcceptButton = btnYes;
+        form.CancelButton = btnNo;
+
+        return form.ShowDialog();
+    }
+
     private void BtnPrintInvoice_Click(object? sender, EventArgs e)
     {
         var buyerName = txtBuyerName.Text.Trim();
@@ -836,46 +970,112 @@
             return;
         }
 
-        using var db = new AppDbContext();
+        using (var db = new AppDbContext())
+        {
+            var selectedSales = db.Sales
+                .Include(s => s.Product)
+                .Where(s => selectedIds.Contains(s.Id))
+                .ToList();
+
+            var existingInvoiceId = selectedSales[0].InvoiceId;
+
+            if (existingInvoiceId.HasValue && selectedSales.All(s => s.InvoiceId == existingInvoiceId))
+            {
+                PrintExistingInvoice(db, existingInvoiceId.Value);
+                ClearSelectedSalesCheckboxes();
+                return;
+            }
+
+            if (selectedSales.Any(s => s.InvoiceId.HasValue))
+            {
+                MessageBox.Show(AppLocalization.T("Some selected sales already belong to an invoice. Please select sales from the same unbilled set."), AppLocalization.T("Validation"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            foreach (var s in selectedSales)
+                s.BuyerName = buyerName;
+
+            var invoice = new KabyliaTaste.Models.Invoice
+            {
+                BuyerName = buyerName,
+                Date = DateTime.Now,
+                TotalAmount = selectedSales.Sum(s => s.TotalPrice),
+                PaymentStatus = KabyliaTaste.Models.InvoicePaymentStatus.No,
+                AmountPaid = 0
+            };
+            db.Invoices.Add(invoice);
+            db.SaveChanges();
+
+            foreach (var s in selectedSales)
+                s.InvoiceId = invoice.Id;
+            db.SaveChanges();
+
+            var storeForInvoice = db.StoreSettings.FirstOrDefault();
+            new KabyliaTaste.Services.InvoicePrinter(
+                selectedSales,
+                buyerName,
+                storeForInvoice?.StoreName ?? "KabyliaTaste",
+                storeForInvoice?.LogoData,
+                invoice.Id,
+                invoice.Date,
+                invoice.TotalAmount,
+                invoice.AmountPaid,
+                invoice.PaymentStatus,
+                storeForInvoice?.CurrencyCode).PrintPreview();
+
+            ClearSelectedSalesCheckboxes();
+        }
+        if (tabControlMain.SelectedTab == tabInvoices)
+            LoadInvoices();
+    }
+
+    private void PrintExistingInvoice(AppDbContext db, int invoiceId)
+    {
+        var invoice = db.Invoices.FirstOrDefault(i => i.Id == invoiceId);
+        if (invoice == null)
+        {
+            MessageBox.Show(AppLocalization.T("The selected invoice could not be found."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         var sales = db.Sales
             .Include(s => s.Product)
-            .Where(s => selectedIds.Contains(s.Id))
+            .Where(s => s.InvoiceId == invoiceId)
             .ToList();
 
-        foreach (var s in sales)
-            s.BuyerName = buyerName;
-
-        var invoice = new KabyliaTaste.Models.Invoice
+        if (sales.Count == 0)
         {
-            BuyerName = buyerName,
-            Date = DateTime.Now,
-            TotalAmount = sales.Sum(s => s.TotalPrice),
-            PaymentStatus = KabyliaTaste.Models.InvoicePaymentStatus.No,
-            AmountPaid = 0
-        };
-        db.Invoices.Add(invoice);
-        db.SaveChanges();
+            MessageBox.Show(AppLocalization.T("No sales were found for the selected invoice."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
 
-        foreach (var s in sales)
-            s.InvoiceId = invoice.Id;
-        db.SaveChanges();
-
-        using var dbStore1 = new AppDbContext();
-        var storeForInvoice = dbStore1.StoreSettings.FirstOrDefault();
+        var store = db.StoreSettings.FirstOrDefault();
         new KabyliaTaste.Services.InvoicePrinter(
             sales,
-            buyerName,
-            storeForInvoice?.StoreName ?? "KabyliaTaste",
-            storeForInvoice?.LogoData,
+            invoice.BuyerName,
+            store?.StoreName ?? "KabyliaTaste",
+            store?.LogoData,
             invoice.Id,
             invoice.Date,
             invoice.TotalAmount,
             invoice.AmountPaid,
             invoice.PaymentStatus,
-            storeForInvoice?.CurrencyCode).PrintPreview();
+            store?.CurrencyCode).PrintPreview();
+    }
 
-        if (tabControlMain.SelectedTab == tabInvoices)
-            LoadInvoices();
+    private void ClearSelectedSalesCheckboxes()
+    {
+        if (!dgvSales.Columns.Contains("Select"))
+            return;
+
+        foreach (DataGridViewRow row in dgvSales.Rows)
+        {
+            if (row.Cells["Select"] is DataGridViewCheckBoxCell chk)
+                chk.Value = false;
+        }
+
+        txtBuyerName.Clear();
+        RefreshInvoiceCheckboxColumn();
     }
 
     private void CmbSaleProduct_SelectedIndexChanged(object? sender, EventArgs e)
@@ -906,7 +1106,7 @@
             return;
         }
 
-        var qty = (int)numSaleQuantity.Value;
+        var qty = numSaleQuantity.Value;
         var unitPrice = numSaleUnitPrice.Value;
 
         using var db = new AppDbContext();
@@ -996,7 +1196,7 @@
             return;
         }
 
-        var newQty = (int)numSaleQuantity.Value;
+        var newQty = numSaleQuantity.Value;
         var newUnitPrice = numSaleUnitPrice.Value;
 
         using var db = new AppDbContext();
@@ -1053,7 +1253,7 @@
             return;
         }
 
-            var ok = MessageBox.Show(AppLocalization.T("Delete this sale? The stock will be restored."), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Delete this sale? The stock will be restored."), AppLocalization.T("Confirm"));
         if (ok != DialogResult.Yes) return;
 
         using var db = new AppDbContext();
@@ -1500,7 +1700,7 @@
             MessageBox.Show(AppLocalization.T("Select an expense to delete."), AppLocalization.T("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
-        var ok = MessageBox.Show(AppLocalization.T("Are you sure you want to delete the selected expense?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Are you sure you want to delete the selected expense?"), AppLocalization.T("Confirm"));
         if (ok != DialogResult.Yes) return;
         using var db = new AppDbContext();
         var expense = db.Expenses.Find(selectedExpenseId.Value);
@@ -1763,11 +1963,9 @@
             return;
         }
 
-        var confirm = MessageBox.Show(
+        var confirm = ShowEnglishYesNoConfirmation(
             AppLocalization.T("Are you sure you want to delete the selected invoice?"),
-            AppLocalization.T("Confirm"),
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
+            AppLocalization.T("Confirm"));
 
         if (confirm != DialogResult.Yes)
             return;
@@ -2559,7 +2757,12 @@
             if (dgvProducts.Columns.Contains("Name")) dgvProducts.Columns["Name"].HeaderText = AppLocalization.T("Name");
             if (dgvProducts.Columns.Contains("SellPrice")) dgvProducts.Columns["SellPrice"].HeaderText = AppLocalization.T("Sell Price");
             if (dgvProducts.Columns.Contains("BuyPrice")) dgvProducts.Columns["BuyPrice"].HeaderText = AppLocalization.T("Buy Price");
-            if (dgvProducts.Columns.Contains("Quantity")) dgvProducts.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+            if (dgvProducts.Columns.Contains("Quantity"))
+            {
+                dgvProducts.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+                dgvProducts.Columns["Quantity"].DefaultCellStyle.Format = "0.#";
+                dgvProducts.Columns["Quantity"].DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
+            }
 
             lblTotalProfit.Text = AppLocalization.T("Total Profit") + ":";
 
@@ -2585,14 +2788,24 @@
             if (dgvSales.Columns.Contains("Product")) dgvSales.Columns["Product"].HeaderText = AppLocalization.T("Product");
             if (dgvSales.Columns.Contains("Buyer")) dgvSales.Columns["Buyer"].HeaderText = AppLocalization.T("Client");
             if (dgvSales.Columns.Contains("Date")) dgvSales.Columns["Date"].HeaderText = AppLocalization.T("Date");
-            if (dgvSales.Columns.Contains("Quantity")) dgvSales.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+            if (dgvSales.Columns.Contains("Quantity"))
+            {
+                dgvSales.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+                dgvSales.Columns["Quantity"].DefaultCellStyle.Format = "0.#";
+                dgvSales.Columns["Quantity"].DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
+            }
             if (dgvSales.Columns.Contains("UnitPrice")) dgvSales.Columns["UnitPrice"].HeaderText = AppLocalization.T("Unit Price");
             if (dgvSales.Columns.Contains("Total")) dgvSales.Columns["Total"].HeaderText = AppLocalization.T("Total");
 
             if (dgvStats.Columns.Contains("Product")) dgvStats.Columns["Product"].HeaderText = AppLocalization.T("Product");
             if (dgvStats.Columns.Contains("Date")) dgvStats.Columns["Date"].HeaderText = AppLocalization.T("Date");
             if (dgvStats.Columns.Contains("Hour")) dgvStats.Columns["Hour"].HeaderText = AppLocalization.T("Hour");
-            if (dgvStats.Columns.Contains("UnitsSold")) dgvStats.Columns["UnitsSold"].HeaderText = AppLocalization.T("Units Sold");
+            if (dgvStats.Columns.Contains("UnitsSold"))
+            {
+                dgvStats.Columns["UnitsSold"].HeaderText = AppLocalization.T("Units Sold");
+                dgvStats.Columns["UnitsSold"].DefaultCellStyle.Format = "0.#";
+                dgvStats.Columns["UnitsSold"].DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
+            }
             if (dgvStats.Columns.Contains("Revenue")) dgvStats.Columns["Revenue"].HeaderText = AppLocalization.T("Revenue");
             if (dgvStats.Columns.Contains("Cost")) dgvStats.Columns["Cost"].HeaderText = AppLocalization.T("Cost");
             if (dgvStats.Columns.Contains("Profit")) dgvStats.Columns["Profit"].HeaderText = AppLocalization.T("Profit");
@@ -2970,7 +3183,7 @@
                 return;
             }
 
-            var ok = MessageBox.Show(AppLocalization.T("Delete this unit?"), AppLocalization.T("Confirm"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = ShowEnglishYesNoConfirmation(AppLocalization.T("Delete this unit?"), AppLocalization.T("Confirm"));
             if (ok != DialogResult.Yes) return;
 
             _productUnits.RemoveAll(u => string.Equals(u, unitName, StringComparison.OrdinalIgnoreCase));
