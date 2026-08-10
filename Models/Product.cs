@@ -6,7 +6,7 @@ namespace KabyliaTaste.Models
         public string Name { get; set; } = string.Empty;
         public decimal BuyPrice { get; set; }
         public decimal SellPrice { get; set; }
-        public int Quantity { get; set; }
+        public decimal Quantity { get; set; } = 0;
         public ProductUnit Unit { get; set; } = ProductUnit.Piece;
         public string UnitName { get; set; } = "Piece";
         public DateTime Date { get; set; } = DateTime.Now;

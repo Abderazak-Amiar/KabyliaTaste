@@ -61,7 +61,7 @@
             public string Product { get; set; } = string.Empty;
             public DateTime Date { get; set; }
             public string Hour { get; set; } = string.Empty;
-            public int UnitsSold { get; set; }
+            public decimal UnitsSold { get; set; }
             public decimal Revenue { get; set; }
             public decimal Cost { get; set; }
             public decimal Profit { get; set; }
@@ -103,6 +103,7 @@
         public Main()
         {
             InitializeComponent();
+            ConfigureQuantityInputs();
 
             // wire events
             Load += Main_Load;
@@ -114,6 +115,8 @@
             dgvProducts.SelectionChanged += DgvProducts_SelectionChanged;
             dgvProducts.CellClick += DgvProducts_CellClick;
             dgvProducts.CellFormatting += DgvProducts_CellFormatting;
+            dgvSales.CellFormatting += DgvSales_CellFormatting;
+            dgvStats.CellFormatting += DgvStats_CellFormatting;
             chkShowBuyPrice.CheckedChanged += ChkShowBuyPrice_CheckedChanged;
             txtSearch.TextChanged += TxtSearch_TextChanged;
             tabControlMain.SelectedIndexChanged += TabControlMain_SelectedIndexChanged;
@@ -177,6 +180,21 @@
 
             InitializeSettingsUi();
             InitializeHelpUi();
+        }
+
+        private void ConfigureQuantityInputs()
+        {
+            ConfigureQuantityInput(numQuantity);
+            ConfigureQuantityInput(numSaleQuantity);
+        }
+
+        private static void ConfigureQuantityInput(KabyliaTaste.Controls.QuantityNumericUpDown input)
+        {
+            input.DecimalPlaces = 1;
+            input.Increment = 0.1M;
+            input.Minimum = 0;
+            input.Maximum = 1000000;
+            input.ThousandsSeparator = false;
         }
 
         private async void Main_FormClosing(object? sender, FormClosingEventArgs e)
@@ -373,7 +391,7 @@
                 Name = name,
                 BuyPrice = numBuyPrice.Value,
                 SellPrice = numSellPrice.Value,
-                Quantity = (int)numQuantity.Value,
+                Quantity = numQuantity.Value,
                 Unit = ProductUnit.Piece,
                 UnitName = GetSelectedProductUnit()
             };
@@ -403,7 +421,7 @@
             product.Name = updatedName;
             product.BuyPrice = numBuyPrice.Value;
             product.SellPrice = numSellPrice.Value;
-            product.Quantity = (int)numQuantity.Value;
+            product.Quantity = numQuantity.Value;
             product.UnitName = GetSelectedProductUnit();
             product.Unit = ProductUnit.Piece;
             product.Date = DateTime.Now;
@@ -558,7 +576,7 @@
         var quantityColumn = dgvProducts.Columns["Quantity"];
         if (quantityColumn == null || quantityColumn.Index != e.ColumnIndex) return;
 
-        if (e.Value is int qty && e.CellStyle != null)
+        if (e.Value is decimal qty && e.CellStyle != null)
         {
             e.CellStyle.BackColor = qty < 5
                 ? Color.LightCoral
@@ -566,11 +584,46 @@
                     ? Color.Orange
                     : Color.LightGreen;
 
-            if (qty == 0)
+            if (qty == 0m)
             {
                 e.Value = "0  ⚠ Out of stock";
                 e.FormattingApplied = true;
             }
+            else
+            {
+                e.Value = CurrencyFormatting.FormatQuantity(qty);
+                e.FormattingApplied = true;
+            }
+        }
+    }
+
+    private void DgvSales_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (dgvSales?.Columns == null || dgvSales.Columns.Count == 0 || e.RowIndex < 0) return;
+        if (!dgvSales.Columns.Contains("Quantity")) return;
+
+        var quantityColumn = dgvSales.Columns["Quantity"];
+        if (quantityColumn == null || quantityColumn.Index != e.ColumnIndex) return;
+
+        if (e.Value is decimal qty && e.CellStyle != null)
+        {
+            e.Value = CurrencyFormatting.FormatQuantity(qty);
+            e.FormattingApplied = true;
+        }
+    }
+
+    private void DgvStats_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if (dgvStats?.Columns == null || dgvStats.Columns.Count == 0 || e.RowIndex < 0) return;
+        if (!dgvStats.Columns.Contains("UnitsSold")) return;
+
+        var unitsColumn = dgvStats.Columns["UnitsSold"];
+        if (unitsColumn == null || unitsColumn.Index != e.ColumnIndex) return;
+
+        if (e.Value is decimal qty && e.CellStyle != null)
+        {
+            e.Value = CurrencyFormatting.FormatQuantity(qty);
+            e.FormattingApplied = true;
         }
     }
 
@@ -614,7 +667,7 @@
         if (decimal.TryParse(sellPriceVal?.ToString(), out var sellPrice)) numSellPrice.Value = sellPrice;
         else numSellPrice.Value = 0;
 
-        if (int.TryParse(qtyVal?.ToString(), out var qty)) numQuantity.Value = qty;
+        if (decimal.TryParse(qtyVal?.ToString(), out var qty)) numQuantity.Value = qty;
         else numQuantity.Value = 0;
 
         if (unitVal is ProductUnit unit) cmbUnit.SelectedIndex = (int)unit;
@@ -987,7 +1040,7 @@
             return;
         }
 
-        var qty = (int)numSaleQuantity.Value;
+        var qty = numSaleQuantity.Value;
         var unitPrice = numSaleUnitPrice.Value;
 
         using var db = new AppDbContext();
@@ -1077,7 +1130,7 @@
             return;
         }
 
-        var newQty = (int)numSaleQuantity.Value;
+        var newQty = numSaleQuantity.Value;
         var newUnitPrice = numSaleUnitPrice.Value;
 
         using var db = new AppDbContext();
@@ -2638,7 +2691,12 @@
             if (dgvProducts.Columns.Contains("Name")) dgvProducts.Columns["Name"].HeaderText = AppLocalization.T("Name");
             if (dgvProducts.Columns.Contains("SellPrice")) dgvProducts.Columns["SellPrice"].HeaderText = AppLocalization.T("Sell Price");
             if (dgvProducts.Columns.Contains("BuyPrice")) dgvProducts.Columns["BuyPrice"].HeaderText = AppLocalization.T("Buy Price");
-            if (dgvProducts.Columns.Contains("Quantity")) dgvProducts.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+            if (dgvProducts.Columns.Contains("Quantity"))
+            {
+                dgvProducts.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+                dgvProducts.Columns["Quantity"].DefaultCellStyle.Format = "0.#";
+                dgvProducts.Columns["Quantity"].DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
+            }
 
             lblTotalProfit.Text = AppLocalization.T("Total Profit") + ":";
 
@@ -2664,14 +2722,24 @@
             if (dgvSales.Columns.Contains("Product")) dgvSales.Columns["Product"].HeaderText = AppLocalization.T("Product");
             if (dgvSales.Columns.Contains("Buyer")) dgvSales.Columns["Buyer"].HeaderText = AppLocalization.T("Client");
             if (dgvSales.Columns.Contains("Date")) dgvSales.Columns["Date"].HeaderText = AppLocalization.T("Date");
-            if (dgvSales.Columns.Contains("Quantity")) dgvSales.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+            if (dgvSales.Columns.Contains("Quantity"))
+            {
+                dgvSales.Columns["Quantity"].HeaderText = AppLocalization.T("Quantity");
+                dgvSales.Columns["Quantity"].DefaultCellStyle.Format = "0.#";
+                dgvSales.Columns["Quantity"].DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
+            }
             if (dgvSales.Columns.Contains("UnitPrice")) dgvSales.Columns["UnitPrice"].HeaderText = AppLocalization.T("Unit Price");
             if (dgvSales.Columns.Contains("Total")) dgvSales.Columns["Total"].HeaderText = AppLocalization.T("Total");
 
             if (dgvStats.Columns.Contains("Product")) dgvStats.Columns["Product"].HeaderText = AppLocalization.T("Product");
             if (dgvStats.Columns.Contains("Date")) dgvStats.Columns["Date"].HeaderText = AppLocalization.T("Date");
             if (dgvStats.Columns.Contains("Hour")) dgvStats.Columns["Hour"].HeaderText = AppLocalization.T("Hour");
-            if (dgvStats.Columns.Contains("UnitsSold")) dgvStats.Columns["UnitsSold"].HeaderText = AppLocalization.T("Units Sold");
+            if (dgvStats.Columns.Contains("UnitsSold"))
+            {
+                dgvStats.Columns["UnitsSold"].HeaderText = AppLocalization.T("Units Sold");
+                dgvStats.Columns["UnitsSold"].DefaultCellStyle.Format = "0.#";
+                dgvStats.Columns["UnitsSold"].DefaultCellStyle.FormatProvider = CultureInfo.InvariantCulture;
+            }
             if (dgvStats.Columns.Contains("Revenue")) dgvStats.Columns["Revenue"].HeaderText = AppLocalization.T("Revenue");
             if (dgvStats.Columns.Contains("Cost")) dgvStats.Columns["Cost"].HeaderText = AppLocalization.T("Cost");
             if (dgvStats.Columns.Contains("Profit")) dgvStats.Columns["Profit"].HeaderText = AppLocalization.T("Profit");

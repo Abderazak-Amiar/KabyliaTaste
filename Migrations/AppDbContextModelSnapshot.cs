@@ -85,8 +85,8 @@ namespace KabyliaTaste.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal>("SellPrice")
                         .HasColumnType("TEXT");
@@ -118,8 +118,8 @@ namespace KabyliaTaste.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("SaleDate")
                         .HasColumnType("TEXT");

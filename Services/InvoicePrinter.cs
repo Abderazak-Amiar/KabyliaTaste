@@ -154,10 +154,10 @@ namespace KabyliaTaste.Services
             decimal rowTotal = 0m;
             foreach (var sale in _sales)
             {
-                var rowBrush = sale.Quantity == 1 ? Brushes.Teal : Brushes.Black;
+                var rowBrush = sale.Quantity == 1m ? Brushes.Teal : Brushes.Black;
 
                 g.DrawString(sale.Product?.Name ?? "-",               bodyFont, rowBrush, colProduct,   y);
-                g.DrawString(sale.Quantity.ToString(),                 bodyFont, rowBrush, colQty,       y);
+                g.DrawString(CurrencyFormatting.FormatQuantity(sale.Quantity), bodyFont, rowBrush, colQty, y);
                 g.DrawString(CurrencyFormatting.FormatAmount(sale.UnitPrice, _currencyCode), bodyFont, rowBrush, colUnitPrice, y);
                 g.DrawString(CurrencyFormatting.FormatAmount(sale.TotalPrice, _currencyCode), bodyFont, rowBrush, colTotal,     y);
                 y += lineH;
