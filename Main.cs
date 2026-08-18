@@ -115,6 +115,8 @@
             InitializeComponent();
             ConfigureQuantityInputs();
             ConfigureExpenseCategorySuggestions();
+            ConfigureSaleDatePicker();
+            AdjustSalesFormLayout();
 
             // wire events
             Load += Main_Load;
@@ -202,6 +204,43 @@
         {
             ConfigureQuantityInput(numQuantity);
             ConfigureQuantityInput(numSaleQuantity);
+        }
+
+        private void ConfigureSaleDatePicker()
+        {
+            dtpSaleDate.Format = DateTimePickerFormat.Short;
+            dtpSaleDate.ShowUpDown = false;
+            dtpSaleDate.Size = new Size(150, dtpSaleDate.Height);
+            dtpSaleDate.Value = DateTime.Today;
+        }
+
+        private void AdjustSalesFormLayout()
+        {
+            lblSaleDate.Location = new Point(13, 15);
+            dtpSaleDate.Location = new Point(13, 35);
+            dtpSaleDate.Size = new Size(150, dtpSaleDate.Height);
+
+            lblSaleProduct.Location = new Point(13, 75);
+            cmbSaleProduct.Location = new Point(13, 95);
+
+            lblSaleQuantity.Location = new Point(13, 135);
+            numSaleQuantity.Location = new Point(13, 155);
+
+            lblSaleUnitPrice.Location = new Point(13, 195);
+            numSaleUnitPrice.Location = new Point(13, 215);
+
+            lblSaleTotal.Location = new Point(13, 255);
+            lblSaleTotalValue.Location = new Point(60, 255);
+
+            lblBuyerName.Location = new Point(13, 285);
+            txtBuyerName.Location = new Point(13, 305);
+            txtBuyerName.Size = new Size(150, txtBuyerName.Height);
+
+            btnSell.Location = new Point(13, 340);
+            btnDeleteSale.Location = new Point(98, 340);
+            btnPrintInvoice.Location = new Point(13, 375);
+            btnUpdateSale.Location = new Point(98, 375);
+            btnClearSale.Location = new Point(13, 410);
         }
 
         private void ConfigureExpenseCategorySuggestions()
@@ -1293,7 +1332,7 @@
             Quantity = qty,
             UnitPrice = unitPrice,
             TotalPrice = qty * unitPrice,
-            SaleDate = DateTime.Now,
+            SaleDate = dtpSaleDate.Value.Date,
             BuyerName = string.IsNullOrWhiteSpace(txtBuyerName.Text) ? null : txtBuyerName.Text.Trim()
         };
         db.Sales.Add(sale);
@@ -1330,6 +1369,7 @@
         cmbSaleProduct.SelectedValue = sale.ProductId;
         numSaleQuantity.Value = sale.Quantity;
         numSaleUnitPrice.Value = sale.UnitPrice;
+        dtpSaleDate.Value = sale.SaleDate.Date;
         txtBuyerName.Text = sale.BuyerName ?? string.Empty;
         UpdateSaleTotal();
     }
@@ -1343,6 +1383,7 @@
         if (cmbSaleProduct.Items.Count > 0)
             cmbSaleProduct.SelectedIndex = 0;
         numSaleQuantity.Value = 1;
+        dtpSaleDate.Value = DateTime.Today;
         txtBuyerName.Clear();
         UpdateSaleTotal();
     }
@@ -1401,6 +1442,7 @@
         sale.Quantity = newQty;
         sale.UnitPrice = newUnitPrice;
         sale.TotalPrice = newQty * newUnitPrice;
+        sale.SaleDate = dtpSaleDate.Value.Date;
         sale.BuyerName = string.IsNullOrWhiteSpace(txtBuyerName.Text) ? null : txtBuyerName.Text.Trim();
 
         db.SaveChanges();
@@ -2952,6 +2994,7 @@
             lblSaleQuantity.Text = AppLocalization.T("Quantity");
             lblSaleUnitPrice.Text = AppLocalization.T("Unit Price");
             lblSaleTotal.Text = AppLocalization.T("Total");
+            lblSaleDate.Text = AppLocalization.T("Date");
             lblBuyerName.Text = AppLocalization.T("Buyer");
             lblFilterBuyer.Text = AppLocalization.T("Buyer");
             lblFilterProduct.Text = AppLocalization.T("Product");
