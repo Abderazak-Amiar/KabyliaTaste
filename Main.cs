@@ -114,6 +114,7 @@
         {
             InitializeComponent();
             ConfigureQuantityInputs();
+            ConfigureExpenseCategorySuggestions();
 
             // wire events
             Load += Main_Load;
@@ -201,6 +202,31 @@
         {
             ConfigureQuantityInput(numQuantity);
             ConfigureQuantityInput(numSaleQuantity);
+        }
+
+        private void ConfigureExpenseCategorySuggestions()
+        {
+            cmbExpenseCategory.DropDownStyle = ComboBoxStyle.DropDown;
+            cmbExpenseCategory.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            cmbExpenseCategory.AutoCompleteSource = AutoCompleteSource.ListItems;
+        }
+
+        private void UpdateExpenseCategoryAutocomplete(IEnumerable<string> categories)
+        {
+            cmbExpenseCategory.BeginUpdate();
+            try
+            {
+                cmbExpenseCategory.Items.Clear();
+                cmbExpenseCategory.Items.AddRange(categories
+                .Where(category => !string.IsNullOrWhiteSpace(category))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(category => category)
+                .ToArray());
+            }
+            finally
+            {
+                cmbExpenseCategory.EndUpdate();
+            }
         }
 
         private static void ConfigureQuantityInput(KabyliaTaste.Controls.QuantityNumericUpDown input)
@@ -1786,6 +1812,7 @@
             .OrderBy(c => c)
             .ToList();
         categories.Insert(0, "");
+        UpdateExpenseCategoryAutocomplete(categories);
         cmbExpenseFilterCategory.SelectedIndexChanged -= ExpenseFilter_Changed;
         cmbExpenseFilterCategory.DataSource = categories;
         cmbExpenseFilterCategory.SelectedIndex = 0;
@@ -1837,7 +1864,7 @@
         selectedExpenseId = null;
         txtExpenseDescription.Clear();
         numExpenseAmount.Value = 0;
-        txtExpenseCategory.Clear();
+            cmbExpenseCategory.Text = string.Empty;
         dtpExpenseDate.Value = DateTime.Today;
         if (clearSelection && dgvExpenses.CurrentRow != null)
             dgvExpenses.ClearSelection();
@@ -1850,7 +1877,7 @@
         selectedExpenseId = expense.Id;
         txtExpenseDescription.Text = expense.Description;
         numExpenseAmount.Value = expense.Amount;
-        txtExpenseCategory.Text = expense.Category;
+        cmbExpenseCategory.Text = expense.Category;
         dtpExpenseDate.Value = expense.Date;
     }
 
@@ -1920,7 +1947,7 @@
         {
             Description = description,
             Amount = numExpenseAmount.Value,
-            Category = txtExpenseCategory.Text.Trim(),
+            Category = cmbExpenseCategory.Text.Trim(),
             Date = dtpExpenseDate.Value.Date
         };
         db.Expenses.Add(expense);
@@ -1947,7 +1974,7 @@
         if (expense == null) return;
         expense.Description = description;
         expense.Amount = numExpenseAmount.Value;
-        expense.Category = txtExpenseCategory.Text.Trim();
+        expense.Category = cmbExpenseCategory.Text.Trim();
         expense.Date = dtpExpenseDate.Value.Date;
         db.SaveChanges();
         _currentExpensePage = 1;
