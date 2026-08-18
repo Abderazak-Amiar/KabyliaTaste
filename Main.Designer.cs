@@ -56,8 +56,10 @@
     private System.Windows.Forms.Button btnDeleteSale;
     private System.Windows.Forms.Button btnUpdateSale;
     private System.Windows.Forms.Button btnClearSale;
-    private System.Windows.Forms.Label lblBuyerName;
-    private System.Windows.Forms.TextBox txtBuyerName;
+     private System.Windows.Forms.Label lblSaleDate;
+     private System.Windows.Forms.DateTimePicker dtpSaleDate;
+     private System.Windows.Forms.Label lblBuyerName;
+     private System.Windows.Forms.TextBox txtBuyerName;
     private System.Windows.Forms.Button btnPrintInvoice;
     private System.Windows.Forms.DataGridView dgvSales;
     private System.Windows.Forms.Panel panelSalePagination;
@@ -91,7 +93,7 @@
     private System.Windows.Forms.Label lblExpenseAmount;
     private System.Windows.Forms.NumericUpDown numExpenseAmount;
     private System.Windows.Forms.Label lblExpenseCategory;
-    private System.Windows.Forms.TextBox txtExpenseCategory;
+     private System.Windows.Forms.ComboBox cmbExpenseCategory;
     private System.Windows.Forms.Label lblExpenseDate;
     private System.Windows.Forms.DateTimePicker dtpExpenseDate;
     private System.Windows.Forms.Button btnAddExpense;
@@ -232,6 +234,8 @@
             this.numSaleUnitPrice = new System.Windows.Forms.NumericUpDown();
             this.lblSaleTotal = new System.Windows.Forms.Label();
             this.lblSaleTotalValue = new System.Windows.Forms.Label();
+            this.lblSaleDate = new System.Windows.Forms.Label();
+            this.dtpSaleDate = new System.Windows.Forms.DateTimePicker();
             this.lblBuyerName = new System.Windows.Forms.Label();
             this.txtBuyerName = new System.Windows.Forms.TextBox();
             this.btnSell = new System.Windows.Forms.Button();
@@ -307,7 +311,7 @@
             this.lblExpenseAmount = new System.Windows.Forms.Label();
             this.numExpenseAmount = new System.Windows.Forms.NumericUpDown();
             this.lblExpenseCategory = new System.Windows.Forms.Label();
-            this.txtExpenseCategory = new System.Windows.Forms.TextBox();
+            this.cmbExpenseCategory = new System.Windows.Forms.ComboBox();
             this.lblExpenseDate = new System.Windows.Forms.Label();
             this.dtpExpenseDate = new System.Windows.Forms.DateTimePicker();
             this.btnAddExpense = new System.Windows.Forms.Button();
@@ -591,6 +595,8 @@
             this.panelSaleLeft.Controls.Add(this.numSaleUnitPrice);
             this.panelSaleLeft.Controls.Add(this.lblSaleTotal);
             this.panelSaleLeft.Controls.Add(this.lblSaleTotalValue);
+            this.panelSaleLeft.Controls.Add(this.lblSaleDate);
+            this.panelSaleLeft.Controls.Add(this.dtpSaleDate);
             this.panelSaleLeft.Controls.Add(this.lblBuyerName);
             this.panelSaleLeft.Controls.Add(this.txtBuyerName);
             this.panelSaleLeft.Controls.Add(this.btnSell);
@@ -610,7 +616,7 @@
             // 
             this.txtBuyerName.Location = new System.Drawing.Point(13, 255);
             this.txtBuyerName.Name = "txtBuyerName";
-            this.txtBuyerName.Width = 260;
+            this.txtBuyerName.Width = 150;
             // 
             // btnSell
             // 
@@ -884,10 +890,13 @@
             this.lblExpenseCategory.Location = new System.Drawing.Point(13, 135);
             this.lblExpenseCategory.Name = "lblExpenseCategory";
             this.lblExpenseCategory.Text = "Category";
-            // txtExpenseCategory
-            this.txtExpenseCategory.Location = new System.Drawing.Point(13, 155);
-            this.txtExpenseCategory.Name = "txtExpenseCategory";
-            this.txtExpenseCategory.Width = 260;
+            // cmbExpenseCategory
+            this.cmbExpenseCategory.Location = new System.Drawing.Point(13, 155);
+            this.cmbExpenseCategory.Name = "cmbExpenseCategory";
+            this.cmbExpenseCategory.Width = 260;
+            this.cmbExpenseCategory.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
+            this.cmbExpenseCategory.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbExpenseCategory.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             // lblExpenseDate
             this.lblExpenseDate.AutoSize = true;
             this.lblExpenseDate.Location = new System.Drawing.Point(13, 195);
@@ -927,7 +936,7 @@
             this.panelExpenseLeft.Controls.Add(this.lblExpenseAmount);
             this.panelExpenseLeft.Controls.Add(this.numExpenseAmount);
             this.panelExpenseLeft.Controls.Add(this.lblExpenseCategory);
-            this.panelExpenseLeft.Controls.Add(this.txtExpenseCategory);
+            this.panelExpenseLeft.Controls.Add(this.cmbExpenseCategory);
             this.panelExpenseLeft.Controls.Add(this.lblExpenseDate);
             this.panelExpenseLeft.Controls.Add(this.dtpExpenseDate);
             this.panelExpenseLeft.Controls.Add(this.btnAddExpense);
