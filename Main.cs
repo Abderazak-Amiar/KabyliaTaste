@@ -80,6 +80,16 @@
         private const int InvoicePageSize = 20;
         private string _productFilter = "";
         private string _expenseCategoryFilter = "";
+        private string _expenseSortColumn = nameof(Expense.Date);
+        private bool _expenseSortDescending = true;
+        private string _productSortColumn = nameof(Product.Id);
+        private bool _productSortDescending = false;
+        private string _salesSortColumn = "Id";
+        private bool _salesSortDescending = false;
+        private string _statsSortColumn = nameof(StatsGridRow.Date);
+        private bool _statsSortDescending = true;
+        private string _invoiceSortColumn = nameof(InvoiceGridRow.Id);
+        private bool _invoiceSortDescending = true;
         private bool _closingAfterBackup = false;
         private bool _loadingSettingsUi = false;
         private bool _clearingProductForm = false;
@@ -115,8 +125,11 @@
             dgvProducts.SelectionChanged += DgvProducts_SelectionChanged;
             dgvProducts.CellClick += DgvProducts_CellClick;
             dgvProducts.CellFormatting += DgvProducts_CellFormatting;
+            dgvProducts.ColumnHeaderMouseClick += DgvProducts_ColumnHeaderMouseClick;
             dgvSales.CellFormatting += DgvSales_CellFormatting;
+            dgvSales.ColumnHeaderMouseClick += DgvSales_ColumnHeaderMouseClick;
             dgvStats.CellFormatting += DgvStats_CellFormatting;
+            dgvStats.ColumnHeaderMouseClick += DgvStats_ColumnHeaderMouseClick;
             chkShowBuyPrice.CheckedChanged += ChkShowBuyPrice_CheckedChanged;
             txtSearch.TextChanged += TxtSearch_TextChanged;
             tabControlMain.SelectedIndexChanged += TabControlMain_SelectedIndexChanged;
@@ -146,6 +159,7 @@
             btnDeleteExpense.Click += BtnDeleteExpense_Click;
             btnClearExpense.Click += BtnClearExpense_Click;
             dgvExpenses.SelectionChanged += DgvExpenses_SelectionChanged;
+            dgvExpenses.ColumnHeaderMouseClick += DgvExpenses_ColumnHeaderMouseClick;
             cmbExpenseFilterCategory.SelectedIndexChanged += ExpenseFilter_Changed;
             btnClearExpenseFilter.Click += BtnClearExpenseFilter_Click;
             btnExpensePrev.Click += BtnExpensePrev_Click;
@@ -177,6 +191,7 @@
             dgvInvoices.CellParsing += DgvInvoices_CellParsing;
             dgvInvoices.CellValidating += DgvInvoices_CellValidating;
             dgvInvoices.DataError += DgvInvoices_DataError;
+            dgvInvoices.ColumnHeaderMouseClick += DgvInvoices_ColumnHeaderMouseClick;
 
             InitializeSettingsUi();
             InitializeHelpUi();
@@ -326,20 +341,23 @@
         {
             _productFilter = filter;
             using var db = new AppDbContext();
-            var query = db.Products.OrderBy(p => p.Id).AsQueryable();
+            var query = db.Products.AsNoTracking().AsEnumerable();
             if (!string.IsNullOrEmpty(filter))
                 query = query.Where(p => p.Name.ToLower().Contains(filter.ToLower()));
 
-            var totalCount = query.Count();
+            var ordered = ApplyProductSorting(query);
+
+            var totalCount = ordered.Count();
             var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)ProductPageSize));
             _currentProductPage = Math.Clamp(_currentProductPage, 1, totalPages);
 
-            var list = query
+            var list = ordered
                 .Skip((_currentProductPage - 1) * ProductPageSize)
                 .Take(ProductPageSize)
                 .ToList();
             dgvProducts.DataSource = list;
             RefreshLocalizedGridHeaders();
+            ConfigureProductSortingUI();
 
             lblProductPage.Text = $"{AppLocalization.T("Page")} {_currentProductPage} / {totalPages}";
             btnProductPrev.Enabled = _currentProductPage > 1;
@@ -675,6 +693,66 @@
         else cmbUnit.SelectedIndex = 2;
     }
 
+    private void DgvProducts_ColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.ColumnIndex < 0 || e.ColumnIndex >= dgvProducts.Columns.Count)
+            return;
+
+        var column = dgvProducts.Columns[e.ColumnIndex];
+        var columnName = column?.DataPropertyName;
+        if (string.IsNullOrWhiteSpace(columnName))
+            return;
+
+        if (string.Equals(_productSortColumn, columnName, StringComparison.OrdinalIgnoreCase))
+            _productSortDescending = !_productSortDescending;
+        else
+        {
+            _productSortColumn = columnName;
+            _productSortDescending = false;
+        }
+
+        _currentProductPage = 1;
+        LoadProducts(_productFilter);
+    }
+
+    private IEnumerable<Product> ApplyProductSorting(IEnumerable<Product> query)
+    {
+        return (_productSortColumn.ToLowerInvariant(), _productSortDescending) switch
+        {
+            ("id", false) => query.OrderBy(p => p.Id),
+            ("id", true) => query.OrderByDescending(p => p.Id),
+            ("name", false) => query.OrderBy(p => p.Name),
+            ("name", true) => query.OrderByDescending(p => p.Name),
+            ("buyprice", false) => query.OrderBy(p => p.BuyPrice),
+            ("buyprice", true) => query.OrderByDescending(p => p.BuyPrice),
+            ("sellprice", false) => query.OrderBy(p => p.SellPrice),
+            ("sellprice", true) => query.OrderByDescending(p => p.SellPrice),
+            ("quantity", false) => query.OrderBy(p => p.Quantity),
+            ("quantity", true) => query.OrderByDescending(p => p.Quantity),
+            ("unitname", false) => query.OrderBy(p => p.UnitName),
+            ("unitname", true) => query.OrderByDescending(p => p.UnitName),
+            ("date", false) => query.OrderBy(p => p.Date),
+            _ => query.OrderByDescending(p => p.Date),
+        };
+    }
+
+    private void ConfigureProductSortingUI()
+    {
+        foreach (DataGridViewColumn column in dgvProducts.Columns)
+        {
+            column.SortMode = string.IsNullOrWhiteSpace(column.DataPropertyName)
+                ? DataGridViewColumnSortMode.NotSortable
+                : DataGridViewColumnSortMode.Programmatic;
+            column.HeaderCell.SortGlyphDirection = SortOrder.None;
+        }
+
+        if (!dgvProducts.Columns.Contains(_productSortColumn))
+            return;
+
+        var sortedColumn = dgvProducts.Columns[_productSortColumn];
+        sortedColumn.HeaderCell.SortGlyphDirection = _productSortDescending ? SortOrder.Descending : SortOrder.Ascending;
+    }
+
     // ── Sales Tab ────────────────────────────────────────────────────────────
 
     private void TabControlMain_SelectedIndexChanged(object? sender, EventArgs e)
@@ -786,8 +864,7 @@
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)SalePageSize));
         _currentSalePage = Math.Clamp(_currentSalePage, 1, totalPages);
 
-        var sales = query
-            .OrderBy(s => s.Id)
+        var sales = ApplySalesSorting(query.AsNoTracking().AsEnumerable())
             .Skip((_currentSalePage - 1) * SalePageSize)
             .Take(SalePageSize)
             .Select(s => new
@@ -808,6 +885,7 @@
             dgvSales.Columns["Date"].DefaultCellStyle.Format = "yyyy-MM-dd HH:mm";
 
         RefreshInvoiceCheckboxColumn();
+        ConfigureSalesSortingUI();
 
         if (dgvSales.Rows.Count > 0)
         {
@@ -825,6 +903,67 @@
         lblSalePage.Text = $"Page {_currentSalePage} / {totalPages}";
         btnSalePrev.Enabled = _currentSalePage > 1;
         btnSaleNext.Enabled = _currentSalePage < totalPages;
+    }
+
+    private void DgvSales_ColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.ColumnIndex < 0 || e.ColumnIndex >= dgvSales.Columns.Count)
+            return;
+
+        var column = dgvSales.Columns[e.ColumnIndex];
+        var columnName = column?.DataPropertyName;
+        if (string.IsNullOrWhiteSpace(columnName))
+            return;
+
+        if (string.Equals(_salesSortColumn, columnName, StringComparison.OrdinalIgnoreCase))
+            _salesSortDescending = !_salesSortDescending;
+        else
+        {
+            _salesSortColumn = columnName;
+            _salesSortDescending = false;
+        }
+
+        _currentSalePage = 1;
+        LoadSales();
+    }
+
+    private IEnumerable<Sale> ApplySalesSorting(IEnumerable<Sale> query)
+    {
+        return (_salesSortColumn.ToLowerInvariant(), _salesSortDescending) switch
+        {
+            ("id", false) => query.OrderBy(s => s.Id),
+            ("id", true) => query.OrderByDescending(s => s.Id),
+            ("product", false) => query.OrderBy(s => s.Product.Name),
+            ("product", true) => query.OrderByDescending(s => s.Product.Name),
+            ("quantity", false) => query.OrderBy(s => s.Quantity),
+            ("quantity", true) => query.OrderByDescending(s => s.Quantity),
+            ("unitprice", false) => query.OrderBy(s => s.UnitPrice),
+            ("unitprice", true) => query.OrderByDescending(s => s.UnitPrice),
+            ("total", false) => query.OrderBy(s => s.TotalPrice),
+            ("total", true) => query.OrderByDescending(s => s.TotalPrice),
+            ("date", false) => query.OrderBy(s => s.SaleDate),
+            ("date", true) => query.OrderByDescending(s => s.SaleDate),
+            ("buyer", false) => query.OrderBy(s => s.BuyerName),
+            ("buyer", true) => query.OrderByDescending(s => s.BuyerName),
+            _ => query.OrderBy(s => s.Id),
+        };
+    }
+
+    private void ConfigureSalesSortingUI()
+    {
+        foreach (DataGridViewColumn column in dgvSales.Columns)
+        {
+            column.SortMode = string.IsNullOrWhiteSpace(column.DataPropertyName)
+                ? DataGridViewColumnSortMode.NotSortable
+                : DataGridViewColumnSortMode.Programmatic;
+            column.HeaderCell.SortGlyphDirection = SortOrder.None;
+        }
+
+        if (!dgvSales.Columns.Contains(_salesSortColumn))
+            return;
+
+        var sortedColumn = dgvSales.Columns[_salesSortColumn];
+        sortedColumn.HeaderCell.SortGlyphDirection = _salesSortDescending ? SortOrder.Descending : SortOrder.Ascending;
     }
 
     private void TxtBuyerName_TextChanged(object? sender, EventArgs e)
@@ -1326,11 +1465,14 @@
                     Cost = s.Quantity * s.Product.BuyPrice,
                     Profit = s.TotalPrice - s.Quantity * s.Product.BuyPrice
                 })
-                .OrderByDescending(x => x.Date)
-                .ThenByDescending(x => x.Hour)
+                .AsEnumerable();
+
+            stats = ApplyStatsSorting(stats);
+
+            var statsList = stats
                 .ToList();
 
-            dgvStats.DataSource = stats;
+            dgvStats.DataSource = statsList;
 
             if (dgvStats.Columns.Contains("Product")) dgvStats.Columns["Product"].HeaderText = AppLocalization.T("Product");
             if (dgvStats.Columns.Contains("Date")) dgvStats.Columns["Date"].HeaderText = AppLocalization.T("Date");
@@ -1339,8 +1481,9 @@
             if (dgvStats.Columns.Contains("Revenue")) dgvStats.Columns["Revenue"].HeaderText = AppLocalization.T("Revenue");
             if (dgvStats.Columns.Contains("Cost")) dgvStats.Columns["Cost"].HeaderText = AppLocalization.T("Cost");
             if (dgvStats.Columns.Contains("Profit")) dgvStats.Columns["Profit"].HeaderText = AppLocalization.T("Profit");
+            ConfigureStatsSortingUI();
 
-            var grossProfit = stats.Sum(x => x.Profit);
+            var grossProfit = statsList.Sum(x => x.Profit);
             var invoiceTotals = GetInvoiceTotals(db, filteredSales);
             var totalExpenses = db.Expenses.AsEnumerable().Sum(e => e.Amount);
             var netProfit = grossProfit - totalExpenses;
@@ -1349,6 +1492,66 @@
                 ? System.Drawing.Color.Green
                 : System.Drawing.Color.Red;
         }
+
+    private void DgvStats_ColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.ColumnIndex < 0 || e.ColumnIndex >= dgvStats.Columns.Count)
+            return;
+
+        var column = dgvStats.Columns[e.ColumnIndex];
+        var columnName = column?.DataPropertyName;
+        if (string.IsNullOrWhiteSpace(columnName))
+            return;
+
+        if (string.Equals(_statsSortColumn, columnName, StringComparison.OrdinalIgnoreCase))
+            _statsSortDescending = !_statsSortDescending;
+        else
+        {
+            _statsSortColumn = columnName;
+            _statsSortDescending = false;
+        }
+
+        LoadStats();
+    }
+
+    private IEnumerable<StatsGridRow> ApplyStatsSorting(IEnumerable<StatsGridRow> query)
+    {
+        return (_statsSortColumn.ToLowerInvariant(), _statsSortDescending) switch
+        {
+            ("product", false) => query.OrderBy(x => x.Product),
+            ("product", true) => query.OrderByDescending(x => x.Product),
+            ("date", false) => query.OrderBy(x => x.Date).ThenBy(x => x.Hour),
+            ("date", true) => query.OrderByDescending(x => x.Date).ThenByDescending(x => x.Hour),
+            ("hour", false) => query.OrderBy(x => x.Hour),
+            ("hour", true) => query.OrderByDescending(x => x.Hour),
+            ("unitssold", false) => query.OrderBy(x => x.UnitsSold),
+            ("unitssold", true) => query.OrderByDescending(x => x.UnitsSold),
+            ("revenue", false) => query.OrderBy(x => x.Revenue),
+            ("revenue", true) => query.OrderByDescending(x => x.Revenue),
+            ("cost", false) => query.OrderBy(x => x.Cost),
+            ("cost", true) => query.OrderByDescending(x => x.Cost),
+            ("profit", false) => query.OrderBy(x => x.Profit),
+            ("profit", true) => query.OrderByDescending(x => x.Profit),
+            _ => query.OrderByDescending(x => x.Date).ThenByDescending(x => x.Hour),
+        };
+    }
+
+    private void ConfigureStatsSortingUI()
+    {
+        foreach (DataGridViewColumn column in dgvStats.Columns)
+        {
+            column.SortMode = string.IsNullOrWhiteSpace(column.DataPropertyName)
+                ? DataGridViewColumnSortMode.NotSortable
+                : DataGridViewColumnSortMode.Programmatic;
+            column.HeaderCell.SortGlyphDirection = SortOrder.None;
+        }
+
+        if (!dgvStats.Columns.Contains(_statsSortColumn))
+            return;
+
+        var sortedColumn = dgvStats.Columns[_statsSortColumn];
+        sortedColumn.HeaderCell.SortGlyphDirection = _statsSortDescending ? SortOrder.Descending : SortOrder.Ascending;
+    }
 
         private static (decimal Collected, decimal Debt) GetInvoiceTotals(AppDbContext db, IEnumerable<Sale> sales)
         {
@@ -1593,20 +1796,25 @@
     private void LoadExpenses()
     {
         using var db = new AppDbContext();
-        var query = db.Expenses.OrderByDescending(e => e.Date).AsQueryable();
+            var query = db.Expenses
+                .AsNoTracking()
+                .AsEnumerable();
         if (!string.IsNullOrEmpty(_expenseCategoryFilter))
             query = query.Where(e => e.Category == _expenseCategoryFilter);
 
-        var totalCount = query.Count();
+            var ordered = ApplyExpenseSorting(query);
+
+            var totalCount = ordered.Count();
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)ExpensePageSize));
         _currentExpensePage = Math.Clamp(_currentExpensePage, 1, totalPages);
 
-        var list = query
+            var list = ordered
             .Skip((_currentExpensePage - 1) * ExpensePageSize)
             .Take(ExpensePageSize)
             .ToList();
         dgvExpenses.DataSource = list;
         RefreshLocalizedGridHeaders();
+            ConfigureExpenseSortingUI();
 
         if (dgvExpenses.Columns.Contains("Date"))
             dgvExpenses.Columns["Date"].DefaultCellStyle.Format = "dd/MM/yyyy";
@@ -1645,6 +1853,59 @@
         txtExpenseCategory.Text = expense.Category;
         dtpExpenseDate.Value = expense.Date;
     }
+
+        private void DgvExpenses_ColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.ColumnIndex < 0 || e.ColumnIndex >= dgvExpenses.Columns.Count)
+                return;
+
+            var column = dgvExpenses.Columns[e.ColumnIndex];
+            if (column?.DataPropertyName is not { Length: > 0 } columnName)
+                return;
+
+            if (string.Equals(_expenseSortColumn, columnName, StringComparison.OrdinalIgnoreCase))
+                _expenseSortDescending = !_expenseSortDescending;
+            else
+            {
+                _expenseSortColumn = columnName;
+                _expenseSortDescending = false;
+            }
+
+            _currentExpensePage = 1;
+            LoadExpenses();
+        }
+
+        private IEnumerable<Expense> ApplyExpenseSorting(IEnumerable<Expense> query)
+        {
+            return (_expenseSortColumn.ToLowerInvariant(), _expenseSortDescending) switch
+            {
+                ("id", false) => query.OrderBy(e => e.Id),
+                ("id", true) => query.OrderByDescending(e => e.Id),
+                ("description", false) => query.OrderBy(e => e.Description),
+                ("description", true) => query.OrderByDescending(e => e.Description),
+                ("amount", false) => query.OrderBy(e => e.Amount),
+                ("amount", true) => query.OrderByDescending(e => e.Amount),
+                ("category", false) => query.OrderBy(e => e.Category),
+                ("category", true) => query.OrderByDescending(e => e.Category),
+                ("date", false) => query.OrderBy(e => e.Date),
+                _ => query.OrderByDescending(e => e.Date),
+            };
+        }
+
+        private void ConfigureExpenseSortingUI()
+        {
+            foreach (DataGridViewColumn column in dgvExpenses.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.Programmatic;
+                column.HeaderCell.SortGlyphDirection = SortOrder.None;
+            }
+
+            if (!dgvExpenses.Columns.Contains(_expenseSortColumn))
+                return;
+
+            var sortedColumn = dgvExpenses.Columns[_expenseSortColumn];
+            sortedColumn.HeaderCell.SortGlyphDirection = _expenseSortDescending ? SortOrder.Descending : SortOrder.Ascending;
+        }
 
     private void BtnAddExpense_Click(object? sender, EventArgs e)
     {
@@ -1789,8 +2050,7 @@
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)InvoicePageSize));
         _currentInvoicePage = Math.Clamp(_currentInvoicePage, 1, totalPages);
 
-        var invoices = query
-            .OrderByDescending(i => i.Id)
+        var invoices = ApplyInvoiceSorting(query.AsNoTracking().AsEnumerable())
             .Skip((_currentInvoicePage - 1) * InvoicePageSize)
             .Take(InvoicePageSize)
             .Select(i => new InvoiceGridRow
@@ -1852,6 +2112,8 @@
                     dgvInvoices.Columns["Paid"].ReadOnly = false;
                     dgvInvoices.Columns["Paid"].DefaultCellStyle.NullValue = 0m;
                 }
+
+                ConfigureInvoiceSortingUI();
             }
             finally
             {
@@ -1861,6 +2123,69 @@
         lblInvoicePage.Text = $"Page {_currentInvoicePage} / {totalPages}";
         btnInvoicePrev.Enabled = _currentInvoicePage > 1;
         btnInvoiceNext.Enabled = _currentInvoicePage < totalPages;
+    }
+
+    private void DgvInvoices_ColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.ColumnIndex < 0 || e.ColumnIndex >= dgvInvoices.Columns.Count)
+            return;
+
+        var column = dgvInvoices.Columns[e.ColumnIndex];
+        var columnName = column?.DataPropertyName;
+        if (string.IsNullOrWhiteSpace(columnName))
+            return;
+
+        if (string.Equals(_invoiceSortColumn, columnName, StringComparison.OrdinalIgnoreCase))
+            _invoiceSortDescending = !_invoiceSortDescending;
+        else
+        {
+            _invoiceSortColumn = columnName;
+            _invoiceSortDescending = false;
+        }
+
+        _currentInvoicePage = 1;
+        LoadInvoices();
+    }
+
+    private IEnumerable<Invoice> ApplyInvoiceSorting(IEnumerable<Invoice> query)
+    {
+        return (_invoiceSortColumn.ToLowerInvariant(), _invoiceSortDescending) switch
+        {
+            ("id", false) => query.OrderBy(i => i.Id),
+            ("id", true) => query.OrderByDescending(i => i.Id),
+            ("buyer", false) => query.OrderBy(i => i.BuyerName),
+            ("buyer", true) => query.OrderByDescending(i => i.BuyerName),
+            ("date", false) => query.OrderBy(i => i.Date).ThenBy(i => i.Id),
+            ("date", true) => query.OrderByDescending(i => i.Date).ThenByDescending(i => i.Id),
+            ("hour", false) => query.OrderBy(i => i.Date.TimeOfDay),
+            ("hour", true) => query.OrderByDescending(i => i.Date.TimeOfDay),
+            ("total", false) => query.OrderBy(i => i.TotalAmount),
+            ("total", true) => query.OrderByDescending(i => i.TotalAmount),
+            ("paid", false) => query.OrderBy(i => i.AmountPaid),
+            ("paid", true) => query.OrderByDescending(i => i.AmountPaid),
+            ("dueamount", false) => query.OrderBy(i => i.TotalAmount - i.AmountPaid),
+            ("dueamount", true) => query.OrderByDescending(i => i.TotalAmount - i.AmountPaid),
+            ("status", false) => query.OrderBy(i => i.PaymentStatus),
+            ("status", true) => query.OrderByDescending(i => i.PaymentStatus),
+            _ => query.OrderByDescending(i => i.Id),
+        };
+    }
+
+    private void ConfigureInvoiceSortingUI()
+    {
+        foreach (DataGridViewColumn column in dgvInvoices.Columns)
+        {
+            column.SortMode = string.IsNullOrWhiteSpace(column.DataPropertyName)
+                ? DataGridViewColumnSortMode.NotSortable
+                : DataGridViewColumnSortMode.Programmatic;
+            column.HeaderCell.SortGlyphDirection = SortOrder.None;
+        }
+
+        if (!dgvInvoices.Columns.Contains(_invoiceSortColumn))
+            return;
+
+        var sortedColumn = dgvInvoices.Columns[_invoiceSortColumn];
+        sortedColumn.HeaderCell.SortGlyphDirection = _invoiceSortDescending ? SortOrder.Descending : SortOrder.Ascending;
     }
 
     private void ReloadInvoices()
